@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "users")
-@Getter // 외부에서 값은 읽을 수 있게 하되
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTimeEntity {
 
@@ -54,7 +54,6 @@ public class User extends BaseTimeEntity {
         this.role = role != null ? role : Role.ROLE_USER;
     }
 
-    // 도메인 주도 설계(DDD): 객체의 상태를 변경하는 비즈니스 메서드
     public void updateProfile(String name, String userIcon) {
         this.name = name;
         this.userIcon = userIcon;

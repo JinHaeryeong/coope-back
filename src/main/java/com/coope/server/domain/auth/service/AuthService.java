@@ -8,10 +8,12 @@ import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.service.UserService;
 import com.coope.server.global.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +21,9 @@ public class AuthService {
     private final UserService userService;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+
+    @Value("${jwt.refresh-token-expiration}")
+    private long refreshTokenExpiration;
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
@@ -35,10 +40,12 @@ public class AuthService {
     }
 
     private void saveOrUpdateRefreshToken(User user, String tokenValue) {
+        LocalDateTime expiryDate = LocalDateTime.now().plus(refreshTokenExpiration, ChronoUnit.MILLIS);
+
         refreshTokenRepository.findByUser(user)
                 .ifPresentOrElse(
-                        token -> token.updateToken(tokenValue, LocalDateTime.now().plusDays(7)),
-                        () -> refreshTokenRepository.save(new RefreshToken(user, tokenValue, LocalDateTime.now().plusDays(7)))
+                        token -> token.updateToken(tokenValue, expiryDate),
+                        () -> refreshTokenRepository.save(new RefreshToken(user, tokenValue, expiryDate))
                 );
     }
 

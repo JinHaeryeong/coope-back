@@ -21,21 +21,30 @@ public class LocalFileService {
         if (file == null || file.isEmpty()) return null;
 
         try {
-            // 물리적 저장 경로 설정 (예: C:/Users/.../uploads/profiles/)
+            // 물리적 저장 경로 설정 (OS별 구분자 자동 대응)
             String fullPath = uploadDir + (uploadDir.endsWith("/") ? "" : "/") + subDir + "/";
             File dir = new File(fullPath);
             if (!dir.exists()) {
-                dir.mkdirs();
+                dir.mkdirs(); // 폴더가 없으면 생성
             }
 
-            // 저장 파일명 생성 (UUID 활용)
+            // Copilot 조언 반영: 원본 파일명 대신 확장자만 추출하여 보안 강화
             String originalFilename = file.getOriginalFilename();
-            String storeFilename = UUID.randomUUID() + "_" + originalFilename;
+            String extension = "";
+            if (originalFilename != null) {
+                int dotIndex = originalFilename.lastIndexOf('.');
+                if (dotIndex != -1 && dotIndex < originalFilename.length() - 1) {
+                    extension = originalFilename.substring(dotIndex); // 확장자 추출
+                }
+            }
+
+            // UUID 기반의 안전한 저장 파일명 생성
+            String storeFilename = UUID.randomUUID() + extension;
 
             // 파일 물리 저장
             file.transferTo(new File(fullPath + storeFilename));
 
-            // 브라우저 접근 URL 반환 (예: /images/profiles/uuid_name.png)
+            // 브라우저 접근 URL 반환
             return accessUrl + subDir + "/" + storeFilename;
 
         } catch (IOException e) {

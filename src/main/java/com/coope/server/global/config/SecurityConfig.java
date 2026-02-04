@@ -40,7 +40,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // 회원가입, 로그인 경로는 누구나 접근 가능
+                        .requestMatchers("/api/user/signup").permitAll()
+                        .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/images/**").permitAll()   // 업로드된 이미지 접근 허용
                         .anyRequest().authenticated()                // 그 외 요청은 인증 필요
                 )

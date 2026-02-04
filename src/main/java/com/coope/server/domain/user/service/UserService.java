@@ -28,7 +28,8 @@ public class UserService {
 
         // 닉네임 중복 확인
         if (userRepository.existsByNickname(request.getNickname())) {
-            throw new RuntimeException("이미 존재하는 닉네임입니다.");
+            // RuntimeException =>  throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");로 변경
+            throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
         }
 
         String userIconUrl = localFileService.upload(request.getUserIcon(), "profiles");

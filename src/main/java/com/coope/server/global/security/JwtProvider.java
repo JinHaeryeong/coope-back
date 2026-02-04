@@ -48,7 +48,7 @@ public class JwtProvider {
                 .compact();
     }
 
-    // refresh Toekn 생성
+    // refresh Token 생성
     public String createRefreshToken(String email) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + refreshTokenExpiration);

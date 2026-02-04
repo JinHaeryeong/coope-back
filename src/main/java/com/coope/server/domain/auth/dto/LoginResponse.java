@@ -6,15 +6,23 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
 public class LoginResponse {
-    private String accessToken; // JWT 토큰
-    private String email;
-    private String nickname;
-    private String userIcon;
+    private final String accessToken;
+    private final String email;
+    private final String nickname;
+    private final String userIcon;
 
-    @JsonIgnore // JSON 결과창에는 안 보이게 설정 (보안 및 깔끔한 응답)
-    private String refreshToken;
+    @JsonIgnore
+    private final String refreshToken;
+
+    @Builder
+    private LoginResponse(String accessToken, String email, String nickname, String userIcon, String refreshToken) {
+        this.accessToken = accessToken;
+        this.email = email;
+        this.nickname = nickname;
+        this.userIcon = userIcon;
+        this.refreshToken = refreshToken;
+    }
 
     public static LoginResponse of(User user, String accessToken, String refreshToken) {
         return LoginResponse.builder()
