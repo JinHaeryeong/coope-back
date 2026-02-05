@@ -1,10 +1,10 @@
 package com.coope.server.global.security;
 
 import com.coope.server.domain.auth.service.CustomUserDetailsService;
+import com.coope.server.global.config.JwtProperties;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,26 +18,20 @@ import java.util.Date;
 public class JwtProvider {
 
     private final SecretKey key;
-    private final long accessTokenExpiration;
-    private final long refreshTokenExpiration;
+    private final JwtProperties jwtProperties;
     private final CustomUserDetailsService userDetailsService;
 
-    public JwtProvider(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.access-token-expiration}") long accessTokenExpiration,
-            @Value("${jwt.refresh-token-expiration}") long refreshTokenExpiration,
-            CustomUserDetailsService userDetailsService) {
-        // yml의 secret 문자열을 SecretKey 객체로 변환
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.accessTokenExpiration = accessTokenExpiration;
-        this.refreshTokenExpiration = refreshTokenExpiration;
+    public JwtProvider(JwtProperties jwtProperties, CustomUserDetailsService userDetailsService) {
+        this.jwtProperties = jwtProperties;
         this.userDetailsService = userDetailsService;
+        // Properties에서 secret을 꺼내서 Key로 변환
+        this.key = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
     // Access Token 생성
     public String createAccessToken(String email, String role) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + accessTokenExpiration);
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getAccessTokenExpiration());
 
         return Jwts.builder()
                 .setSubject(email)
@@ -51,7 +45,7 @@ public class JwtProvider {
     // refresh Token 생성
     public String createRefreshToken(String email) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + refreshTokenExpiration);
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getRefreshTokenExpiration());
 
         return Jwts.builder()
                 .setSubject(email)
@@ -79,6 +73,21 @@ public class JwtProvider {
                 .getBody()
                 .getSubject();
     }
+
+
+    // 토큰의 남은 유효 기간(밀리초) 계산
+    public long getExpiration(String token) {
+        Date expiration = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration();
+
+        long now = new Date().getTime();
+        return (expiration.getTime() - now);
+    }
+
 
     public Authentication getAuthentication(String token) {
         String email = getEmail(token);

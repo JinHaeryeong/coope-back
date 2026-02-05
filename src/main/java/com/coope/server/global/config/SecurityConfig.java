@@ -5,6 +5,8 @@ import com.coope.server.global.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,6 +26,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -40,13 +43,18 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/user/signup").permitAll()
-                        .requestMatchers("/api/auth/login").permitAll()
-                        .requestMatchers("/images/**").permitAll()   // 업로드된 이미지 접근 허용
+                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/user/signup", "/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/notices/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/notices/detail/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/comments").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/notices/detail/views/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/notices/write").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/notices/detail/{id}").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/comments/**").authenticated()
                         .anyRequest().authenticated()                // 그 외 요청은 인증 필요
                 )
                 // 필터 추가
-                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, redisTemplate), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -54,7 +62,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // 프론트엔드 주소
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:4173")); // 프론트엔드 주소
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("*"));

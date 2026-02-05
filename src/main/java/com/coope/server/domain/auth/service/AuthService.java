@@ -2,69 +2,79 @@ package com.coope.server.domain.auth.service;
 
 import com.coope.server.domain.auth.dto.LoginRequest;
 import com.coope.server.domain.auth.dto.LoginResponse;
-import com.coope.server.domain.auth.entity.RefreshToken;
-import com.coope.server.domain.auth.repository.RefreshTokenRepository;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.service.UserService;
+import com.coope.server.global.config.JwtProperties;
+import com.coope.server.global.error.exception.InvalidTokenException;
 import com.coope.server.global.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
     private final UserService userService;
     private final JwtProvider jwtProvider;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final JwtProperties jwtProperties;
 
-    @Value("${jwt.refresh-token-expiration}")
-    private long refreshTokenExpiration;
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        // 유저 검증은 UserService에게 맡김
         User user = userService.validateUser(request);
 
         // 토큰 생성
         String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
         String refreshTokenValue = jwtProvider.createRefreshToken(user.getEmail());
 
-        saveOrUpdateRefreshToken(user, refreshTokenValue);
+        // 레디스에 Refresh Token 저장 (Key: 이메일, Value: 토큰값)
+        // 앞에 RT 같은 거 붙여주면 나중에 구분하기 좋음
+        redisTemplate.opsForValue().set(
+                "RT:" + user.getEmail(),
+                refreshTokenValue,
+                jwtProperties.getRefreshTokenExpiration(),
+                TimeUnit.MILLISECONDS
+        );
 
         return LoginResponse.of(user, accessToken, refreshTokenValue);
     }
 
-    private void saveOrUpdateRefreshToken(User user, String tokenValue) {
-        LocalDateTime expiryDate = LocalDateTime.now().plus(refreshTokenExpiration, ChronoUnit.MILLIS);
-
-        refreshTokenRepository.findByUser(user)
-                .ifPresentOrElse(
-                        token -> token.updateToken(tokenValue, expiryDate),
-                        () -> refreshTokenRepository.save(new RefreshToken(user, tokenValue, expiryDate))
-                );
-    }
-
     @Transactional
-    public void logout(String refreshTokenValue) {
-        refreshTokenRepository.deleteByTokenValue(refreshTokenValue);
+    public void logout(String accessToken, String refreshTokenValue) {
+        // 레디스에서 삭제
+        if (refreshTokenValue != null) {
+            String email = jwtProvider.getEmail(refreshTokenValue);
+            redisTemplate.delete("RT:" + email);
+        }
+
+        // 액세스 토큰 블랙리스트 등록
+        if (accessToken != null && accessToken.startsWith("Bearer ")) {
+            String token = accessToken.substring(7); // "Bearer " 제거
+            long expiration = jwtProvider.getExpiration(token);
+
+            redisTemplate.opsForValue().set(token, "logout", expiration, TimeUnit.MILLISECONDS);
+        }
     }
 
     @Transactional
     public String refresh(String refreshTokenValue) {
-        RefreshToken refreshToken = refreshTokenRepository.findByTokenValue(refreshTokenValue)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 토큰입니다."));
-
-        if (refreshToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            refreshTokenRepository.delete(refreshToken);
-            throw new IllegalArgumentException("리프레시 토큰이 만료되었습니다. 다시 로그인해주세요.");
+        if (!jwtProvider.validateToken(refreshTokenValue)) {
+            throw new InvalidTokenException("유효하지 않은 리프레시 토큰입니다.");
         }
 
-        User user = refreshToken.getUser();
-        return jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
+        String email = jwtProvider.getEmail(refreshTokenValue);
+        String savedToken = (String) redisTemplate.opsForValue().get("RT:" + email);
+
+        if (savedToken == null || !savedToken.equals(refreshTokenValue)) {
+            throw new InvalidTokenException("리프레시 토큰이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        User user = userService.findByEmail(email);
+
+        return jwtProvider.createAccessToken(email, user.getRole().name());
     }
 }
