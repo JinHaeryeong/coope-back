@@ -3,9 +3,11 @@ package com.coope.server.domain.auth.controller;
 import com.coope.server.domain.auth.dto.LoginRequest;
 import com.coope.server.domain.auth.dto.LoginResponse;
 import com.coope.server.domain.auth.service.AuthService;
+import com.coope.server.global.config.JwtProperties;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +18,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
+
+    private final JwtProperties jwtProperties;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
@@ -27,12 +32,13 @@ public class AuthController {
 
         LoginResponse loginResponse = authService.login(request);
 
+        long maxAgeSec = jwtProperties.getRefreshTokenExpiration() / 1000;
         // Refresh Token 쿠키 설정
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", loginResponse.getRefreshToken())
                 .httpOnly(true)
-                .secure(false) // HTTPS 환경에서는 true로 변경
+                .secure(jwtProperties.isCookieSecure())
                 .path("/")
-                .maxAge(604800)
+                .maxAge(maxAgeSec)
                 .sameSite("Lax")
                 .build();
 
@@ -43,19 +49,18 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
+            @RequestHeader("Authorization") String accessToken,
             @CookieValue(value = "refreshToken", required = false) String refreshToken,
             HttpServletResponse response) {
 
-        if (refreshToken != null) {
-            authService.logout(refreshToken); // 토큰 값으로 DB 삭제
-        }
+        authService.logout(accessToken, refreshToken);
 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(false) // 로컬 테스트 중이므로 false 유지
+                .secure(jwtProperties.isCookieSecure())
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax") // 쿠키 설정 일관성 유지
+                .sameSite("Lax")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());

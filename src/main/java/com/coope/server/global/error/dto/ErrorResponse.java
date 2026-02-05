@@ -1,11 +1,16 @@
 package com.coope.server.global.error.dto;
 
-import lombok.Builder;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
-@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ErrorResponse {
-    private final boolean success; // 프론트엔드 판단용
-    private final String message;  // 에러 메시지
+    private final boolean success;
+    private final String message;
+
+    public static ErrorResponse fail(String message) {
+        return new ErrorResponse(false, message);
+    }
 }
