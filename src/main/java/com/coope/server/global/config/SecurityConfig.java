@@ -1,8 +1,12 @@
 package com.coope.server.global.config;
 
+import com.coope.server.domain.auth.handler.OAuth2AuthenticationSuccessHandler;
+import com.coope.server.domain.auth.service.CustomOAuth2UserService;
 import com.coope.server.global.security.JwtAuthenticationFilter;
 import com.coope.server.global.security.JwtProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -27,6 +31,12 @@ public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
+    @Value("${client.url}")
+    private String clientUrl;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -46,15 +56,28 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/user/signup", "/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/notices/all").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/notices/detail/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/comments").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/notices/detail/views/**").permitAll()
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/notices/write").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/notices/detail/{id}").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/notices/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/notices/detail/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/comments/**").authenticated()
                         .anyRequest().authenticated()                // 그 외 요청은 인증 필요
                 )
+                .oauth2Login(oauth2 -> oauth2
+                                .userInfoEndpoint(userInfo -> userInfo
+                                        .userService(customOAuth2UserService) // 우리가 만든 서비스 연결
+                                )
+                         .successHandler(oAuth2AuthenticationSuccessHandler) // 나중에 JWT 발급 핸들러 만들어서 연결할 곳
+                )
                 // 필터 추가
-                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, redisTemplate), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, redisTemplate, objectMapper), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -62,7 +85,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:4173")); // 프론트엔드 주소
+        configuration.setAllowedOrigins(List.of(clientUrl, "http://localhost:4173")); // 프론트엔드 주소
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("*"));

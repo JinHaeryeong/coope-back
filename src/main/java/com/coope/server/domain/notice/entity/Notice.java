@@ -1,9 +1,13 @@
 package com.coope.server.domain.notice.entity;
 
+import com.coope.server.domain.comment.entity.Comment;
 import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "notices")
@@ -31,6 +35,10 @@ public class Notice extends BaseTimeEntity {
 
     private int views = 0;
 
+    // Notice.java에 추가
+    @OneToMany(mappedBy = "notice", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
     @Builder
     public Notice(String title, String content, String imageUrl, Integer views, User user) {
         this.title = title;
@@ -38,6 +46,15 @@ public class Notice extends BaseTimeEntity {
         this.imageUrl = imageUrl;
         this.views = (views != null) ? views : 0;
         this.user = user;
+    }
+
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
 }

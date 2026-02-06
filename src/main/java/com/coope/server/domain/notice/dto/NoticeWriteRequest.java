@@ -20,6 +20,7 @@ public class NoticeWriteRequest {
     private String content;
 
     private MultipartFile file;
+    private boolean deleteImage;
 
     public NoticeWriteRequest(String title, String content) {
         this.title = title;

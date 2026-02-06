@@ -4,18 +4,16 @@ import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.notice.entity.Notice;
 import com.coope.server.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "comments", indexes = {
-        @Index(name = "idx_notice_id_created_at", columnList = "notice_id, createdAt DESC")
+        @Index(name = "idx_notice_id_created_at", columnList = "notice_id, createdAt")
 })
+@ToString(exclude = "user")
 public class Comment extends BaseTimeEntity {
 
     @Id
@@ -48,5 +46,10 @@ public class Comment extends BaseTimeEntity {
         if (content != null && !content.isBlank()) {
             this.content = content;
         }
+    }
+
+    // Comment.java 엔티티 내부
+    public void updateImage(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

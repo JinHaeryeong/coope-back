@@ -1,5 +1,6 @@
 package com.coope.server.global.infra;
 
+import com.coope.server.global.error.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -7,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 @Component
@@ -23,6 +25,9 @@ public class LocalFileService {
         if (file == null || file.isEmpty()) return null;
 
         try {
+            if (subDir.contains("..") || subDir.contains("/") || subDir.contains("\\")) {
+                throw new IllegalArgumentException("유효하지 않은 디렉토리 경로입니다.");
+            }
             String fullPath = uploadDir + (uploadDir.endsWith("/") ? "" : "/") + subDir + "/";
             File dir = new File(fullPath);
             if (!dir.exists()) {
@@ -33,10 +38,16 @@ public class LocalFileService {
             String originalFilename = file.getOriginalFilename();
             String extension = "";
             if (originalFilename != null) {
-                int dotIndex = originalFilename.lastIndexOf('.');
-                if (dotIndex != -1 && dotIndex < originalFilename.length() - 1) {
-                    extension = originalFilename.substring(dotIndex); // 확장자 추출
+                String pureFileName = originalFilename.replaceAll(".+[\\\\/]", "");
+
+                int dotIndex = pureFileName.lastIndexOf('.');
+                if (dotIndex != -1 && dotIndex < pureFileName.length() - 1) {
+                    extension = pureFileName.substring(dotIndex).toLowerCase();
                 }
+            }
+
+            if (!extension.matches(".(jpg|jpeg|png|gif|webp)")) {
+                throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extension);
             }
 
             // UUID 기반의 안전한 저장 파일명 생성
@@ -49,31 +60,41 @@ public class LocalFileService {
             return accessUrl + subDir + "/" + storeFilename;
 
         } catch (IOException e) {
-            throw new RuntimeException("파일 저장 중 오류가 발생했습니다.", e);
+            throw new FileStorageException("파일 저장 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 
-    public void deleteFile(String imageUrl, String subDir) {
-        if (imageUrl == null || imageUrl.isEmpty()) return;
+    public boolean deleteFile(String imageUrl, String subDir) {
+        if (imageUrl == null || imageUrl.isEmpty()) return false;
 
         try {
-            String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+            String fileName = Paths.get(imageUrl).getFileName().toString();
 
-            String fullPath = uploadDir + (uploadDir.endsWith("/") ? "" : "/") + subDir + "/";
+            if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
+                log.error("보안 위협 감지: 유효하지 않은 파일명 접근 시도 ({})", fileName);
+                return false;
+            }
+
+            String separator = uploadDir.endsWith("/") ? "" : "/";
+            String fullPath = uploadDir + separator + subDir + "/";
             File file = new File(fullPath + fileName);
 
             if (file.exists()) {
                 if (file.delete()) {
                     log.info("파일 삭제 완료: {}/{}", subDir, fileName);
+                    return true;
                 } else {
                     log.warn("파일 삭제 실패 (권한 등): {}/{}", subDir, fileName);
+                    return false;
                 }
             } else {
                 log.warn("삭제할 파일이 존재하지 않습니다: {}", file.getPath());
+                return true;
             }
 
         } catch (Exception e) {
             log.error("파일 삭제 도중 예상치 못한 에러 발생: {}", e.getMessage());
+            return false;
         }
     }
 }
