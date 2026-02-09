@@ -15,10 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -61,11 +59,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         String targetUrl = UriComponentsBuilder.fromUriString(clientUrl + "/login-success")
                 .queryParam("accessToken", accessToken)
-                .queryParam("id", user.getId())
-                .queryParam("nickname", UriUtils.encode(user.getNickname(), StandardCharsets.UTF_8))
-                .queryParam("userIcon", user.getUserIcon())
-                .queryParam("email", user.getEmail())
-                .queryParam("role", user.getRole().name())
                 .build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);

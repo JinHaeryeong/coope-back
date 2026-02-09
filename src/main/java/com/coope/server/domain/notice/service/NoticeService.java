@@ -10,6 +10,7 @@ import com.coope.server.domain.user.enums.Role;
 import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.error.exception.FileStorageException;
 import com.coope.server.global.error.exception.NoticeNotFoundException;
+import com.coope.server.global.infra.ImageCategory;
 import com.coope.server.global.infra.LocalFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,7 +38,7 @@ public class NoticeService {
     public NoticeResponse createNotice(NoticeWriteRequest request, User user, MultipartFile file) {
         String savedImageUrl = null;
         if (file != null && !file.isEmpty()) {
-            savedImageUrl = localFileService.upload(file, "notices");
+            savedImageUrl = localFileService.upload(file, ImageCategory.NOTICE);
         }
 
         Notice notice = request.toEntity(user, savedImageUrl);
@@ -74,13 +75,16 @@ public class NoticeService {
 
         if (requestDto.isDeleteImage() || (requestDto.getFile() != null && !requestDto.getFile().isEmpty())) {
             if (currentImageUrl != null) {
-                localFileService.deleteFile(currentImageUrl, "notices");
+                boolean isDeleted = localFileService.deleteFile(currentImageUrl, "notices");
+                if (!isDeleted) {
+                    throw new FileStorageException("기존 이미지 삭제에 실패하여 수정을 완료할 수 없습니다: " + currentImageUrl);
+                }
                 notice.updateImageUrl(null);
             }
         }
 
         if (requestDto.getFile() != null && !requestDto.getFile().isEmpty()) {
-            String newImageUrl = localFileService.upload(requestDto.getFile(), "notices");
+            String newImageUrl = localFileService.upload(requestDto.getFile(), ImageCategory.NOTICE);
             notice.updateImageUrl(newImageUrl);
         }
 
@@ -94,11 +98,12 @@ public class NoticeService {
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new NoticeNotFoundException("해당 공지사항을 찾을 수 없습니다."));
 
-        if (notice.getImageUrl() != null && !notice.getImageUrl().isEmpty()) {
-            boolean isDeleted = localFileService.deleteFile(notice.getImageUrl(), "notices");
+        String currentImageUrl = notice.getImageUrl();
+        if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
+            boolean isDeleted = localFileService.deleteFile(currentImageUrl, "notices");
 
             if (!isDeleted) {
-                throw new FileStorageException("공지사항 이미지 삭제에 실패하여 삭제를 진행할 수 없습니다.");
+                throw new FileStorageException("파일 삭제에 실패하여 삭제를 완료할 수 없습니다." + currentImageUrl);
             }
         }
 

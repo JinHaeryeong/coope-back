@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
@@ -17,12 +18,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
+    private static final String LOGOUT_MSG = "이미 로그아웃된 토큰입니다.";
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -36,27 +39,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             if (token != null && jwtProvider.validateToken(token)) {
                 if (isBlacklisted(token)) {
-                    sendErrorResponse(response, "이미 로그아웃된 토큰입니다.");
+                    sendErrorResponse(response);
                     return;
                 }
                 Authentication authentication = jwtProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            // 토큰 파싱 중 에러(만료, 위조 등)가 발생했을 때 공통 응답 처리
-            sendErrorResponse(response, "유효하지 않은 인증 토큰입니다.");
-            return;
+            log.info("인증되지 않은 사용자 또는 만료된 토큰: {}", e.getMessage());
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
     }
 
 
-    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+    private void sendErrorResponse(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json;charset=UTF-8");
 
-        String json = objectMapper.writeValueAsString(ErrorResponse.fail(message));
+        String json = objectMapper.writeValueAsString(ErrorResponse.fail(LOGOUT_MSG));
         response.getWriter().write(json);
     }
 

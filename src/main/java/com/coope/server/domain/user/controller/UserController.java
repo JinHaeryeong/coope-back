@@ -2,12 +2,14 @@ package com.coope.server.domain.user.controller;
 
 import com.coope.server.domain.user.dto.SignupRequest;
 import com.coope.server.domain.user.dto.SignupResponse;
+import com.coope.server.domain.user.dto.UserResponse;
 import com.coope.server.domain.user.service.UserService;
-import com.coope.server.global.security.JwtProvider;
+import com.coope.server.global.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,4 +28,8 @@ public class UserController {
         return ResponseEntity.ok(SignupResponse.success(request.getEmail()));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getMyInfo(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return ResponseEntity.ok(userService.getMyInfo(userDetails.getUser().getId()));
+    }
 }
