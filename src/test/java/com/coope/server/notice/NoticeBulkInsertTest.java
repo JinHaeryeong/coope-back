@@ -4,6 +4,7 @@ import com.coope.server.domain.notice.dto.NoticeWriteRequest;
 import com.coope.server.domain.notice.service.NoticeService;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,7 +22,8 @@ public class NoticeBulkInsertTest {
 
     @Test
     @Transactional
-    @Rollback(false) // 테스트가 끝나도 DB에서 지우지 말고 남기기
+    @Rollback(false) // 데이터를 남기기 위해 false 유지
+    @Disabled("더미 데이터 생성이 필요할 때만 수동으로 실행하세요.")
     void insert1000Notices() {
         // 어드민 계정 하나를 가져오기
         User admin = userRepository.findByEmail("admin@admin.com")

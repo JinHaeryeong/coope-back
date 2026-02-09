@@ -43,6 +43,16 @@ public class NoticeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<NoticeResponse> updateNotice(
+            @PathVariable("id") Long id,
+            @Valid @ModelAttribute NoticeWriteRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        NoticeResponse response = noticeService.updateNotice(id, request, userDetails.getUser());
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/detail/{id}")
     public ResponseEntity<NoticeDetailResponse> getNoticeDetail(@PathVariable("id") Long id) {
         NoticeDetailResponse response = noticeService.getNoticeDetail(id);

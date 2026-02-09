@@ -1,5 +1,7 @@
 package com.coope.server.global.security;
 
+import com.coope.server.global.error.dto.ErrorResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +21,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(
@@ -30,21 +33,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 요청 헤더에서 Bearer 토큰 추출
         String token = resolveToken(request);
 
-        // 토큰이 유효하면 시큐리티 컨텍스트에 인증 정보 저장
-        if (token != null && jwtProvider.validateToken(token)) {
-            String isLogout = (String) redisTemplate.opsForValue().get(token);
-
-            if (isLogout != null) {
-                // 로그아웃된 토큰이라면 인증을 거부하고 다음 필터로 넘기거나 에러 응답
-                filterChain.doFilter(request, response);
-                return;
+        try {
+            if (token != null && jwtProvider.validateToken(token)) {
+                if (isBlacklisted(token)) {
+                    sendErrorResponse(response, "이미 로그아웃된 토큰입니다.");
+                    return;
+                }
+                Authentication authentication = jwtProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-
-            Authentication authentication = jwtProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } catch (Exception e) {
+            // 토큰 파싱 중 에러(만료, 위조 등)가 발생했을 때 공통 응답 처리
+            sendErrorResponse(response, "유효하지 않은 인증 토큰입니다.");
+            return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+
+    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+
+        String json = objectMapper.writeValueAsString(ErrorResponse.fail(message));
+        response.getWriter().write(json);
+    }
+
+    private boolean isBlacklisted(String token) {
+        Object logoutIndicator = redisTemplate.opsForValue().get(token);
+        return logoutIndicator != null;
     }
 
     private String resolveToken(HttpServletRequest request) {

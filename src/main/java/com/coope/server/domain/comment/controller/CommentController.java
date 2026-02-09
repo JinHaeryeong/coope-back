@@ -42,7 +42,7 @@ public class CommentController {
     @PatchMapping("/{id}")
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable("id") Long id,
-            @RequestBody CommentRequest request,
+            @Valid @ModelAttribute CommentRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
         CommentResponse response = commentService.updateComment(id, request, userDetails.getUser());

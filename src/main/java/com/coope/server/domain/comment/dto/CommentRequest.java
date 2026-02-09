@@ -18,6 +18,8 @@ public class CommentRequest {
 
     private MultipartFile file;
 
+    private Boolean DeleteImage;
+
     public Comment toEntity(Notice notice, User user, String savedImageUrl) {
         return Comment.builder()
                 .content(this.content)
