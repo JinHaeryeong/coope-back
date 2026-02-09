@@ -8,7 +8,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -21,46 +24,35 @@ public class LocalFileService {
     @Value("${file.access-url}")
     private String accessUrl;
 
-    public String upload(MultipartFile file, String subDir) {
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp");
+    public String upload(MultipartFile file, ImageCategory category) {
         if (file == null || file.isEmpty()) return null;
 
         try {
-            if (subDir.contains("..") || subDir.contains("/") || subDir.contains("\\")) {
-                throw new IllegalArgumentException("유효하지 않은 디렉토리 경로입니다.");
-            }
-            String fullPath = uploadDir + (uploadDir.endsWith("/") ? "" : "/") + subDir + "/";
-            File dir = new File(fullPath);
-            if (!dir.exists()) {
-                dir.mkdirs(); // 폴더가 없으면 생성
-            }
+            Path basePath = Paths.get(uploadDir)
+                    .toAbsolutePath()
+                    .normalize();
 
-            // Copilot 조언 반영: 원본 파일명 대신 확장자만 추출하여 보안 강화
-            String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null) {
-                String pureFileName = originalFilename.replaceAll(".+[\\\\/]", "");
+            Path targetDir = basePath
+                    .resolve(category.dir())
+                    .normalize();
 
-                int dotIndex = pureFileName.lastIndexOf('.');
-                if (dotIndex != -1 && dotIndex < pureFileName.length() - 1) {
-                    extension = pureFileName.substring(dotIndex).toLowerCase();
-                }
+            if (!targetDir.startsWith(basePath)) {
+                throw new IllegalStateException("Path traversal detected");
             }
 
-            if (!extension.matches(".(jpg|jpeg|png|gif|webp)")) {
-                throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extension);
-            }
+            Files.createDirectories(targetDir);
 
-            // UUID 기반의 안전한 저장 파일명 생성
-            String storeFilename = UUID.randomUUID() + extension;
+            String extension = extractExtension(file);
+            String fileName = UUID.randomUUID() + extension;
 
-            // 파일 물리 저장
-            file.transferTo(new File(fullPath + storeFilename));
+            Path targetFile = targetDir.resolve(fileName).normalize();
+            file.transferTo(targetFile.toFile());
 
-            // 브라우저 접근 URL 반환
-            return accessUrl + subDir + "/" + storeFilename;
+            return accessUrl + category.dir() + "/" + fileName;
 
         } catch (IOException e) {
-            throw new FileStorageException("파일 저장 중 오류가 발생했습니다: " + e.getMessage());
+            throw new FileStorageException("파일 저장 실패", e);
         }
     }
 
@@ -97,4 +89,29 @@ public class LocalFileService {
             return false;
         }
     }
+
+    private String extractExtension(MultipartFile file) {
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new IllegalArgumentException("파일명이 존재하지 않습니다.");
+        }
+
+        // 경로 제거 (IE, 악성 입력 대비)
+        String pureFileName = originalFilename.replaceAll("^.*[\\\\/]", "");
+
+        int dotIndex = pureFileName.lastIndexOf('.');
+        if (dotIndex == -1 || dotIndex == pureFileName.length() - 1) {
+            throw new IllegalArgumentException("확장자가 없는 파일은 업로드할 수 없습니다.");
+        }
+
+        String extension = pureFileName.substring(dotIndex).toLowerCase();
+
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extension);
+        }
+
+        return extension;
+    }
+
+
 }

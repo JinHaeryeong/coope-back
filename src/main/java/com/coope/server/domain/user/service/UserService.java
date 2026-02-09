@@ -2,10 +2,12 @@ package com.coope.server.domain.user.service;
 
 import com.coope.server.domain.auth.dto.LoginRequest;
 import com.coope.server.domain.user.dto.SignupRequest;
+import com.coope.server.domain.user.dto.UserResponse;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.error.exception.AuthenticationException;
 import com.coope.server.global.error.exception.UserNotFoundException;
+import com.coope.server.global.infra.ImageCategory;
 import com.coope.server.global.infra.LocalFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,7 +33,7 @@ public class UserService {
             throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
         }
 
-        String userIconUrl = localFileService.upload(request.getUserIcon(), "profiles");
+        String userIconUrl = localFileService.upload(request.getUserIcon(), ImageCategory.PROFILE);
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
@@ -56,5 +58,11 @@ public class UserService {
             throw new AuthenticationException("비밀번호가 일치하지 않습니다.");
         }
         return user;
+    }
+
+    public UserResponse getMyInfo(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 계정입니다."));
+        return UserResponse.of(user);
     }
 }

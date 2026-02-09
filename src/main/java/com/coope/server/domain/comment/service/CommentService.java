@@ -12,6 +12,7 @@ import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.error.exception.CommentNotFoundException;
 import com.coope.server.global.error.exception.FileStorageException;
 import com.coope.server.global.error.exception.NoticeNotFoundException;
+import com.coope.server.global.infra.ImageCategory;
 import com.coope.server.global.infra.LocalFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class CommentService {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new NoticeNotFoundException("해당 공지사항이 존재하지 않습니다."));
 
-        String savedImageUrl = localFileService.upload(requestDto.getFile(), "comments");
+        String savedImageUrl = localFileService.upload(requestDto.getFile(), ImageCategory.COMMENT);
 
         Comment comment = requestDto.toEntity(notice, user, savedImageUrl);
         Comment savedComment = commentRepository.save(comment);
@@ -58,11 +59,12 @@ public class CommentService {
             throw new AccessDeniedException("댓글 삭제 권한이 없습니다.");
         }
 
-        if (comment.getImageUrl() != null) {
-            boolean isFileDeleted = localFileService.deleteFile(comment.getImageUrl(), "comments");
+        String currentImageUrl = comment.getImageUrl();
+        if (currentImageUrl != null) {
+            boolean isFileDeleted = localFileService.deleteFile(currentImageUrl, "comments");
 
             if (!isFileDeleted) {
-                throw new FileStorageException("파일 삭제에 실패하여 댓글을 삭제할 수 없습니다.");
+                throw new FileStorageException("파일 삭제에 실패하여 댓글을 삭제할 수 없습니다." + currentImageUrl);
             }
         }
 
@@ -86,14 +88,14 @@ public class CommentService {
                 boolean isDeleted = localFileService.deleteFile(currentImageUrl, "comments");
 
                 if (!isDeleted) {
-                    throw new FileStorageException("기존 이미지 삭제에 실패하여 수정을 완료할 수 없습니다.");
+                    throw new FileStorageException("파일 삭제에 실패하여 수정을 완료할 수 없습니다." + comment.getImageUrl());
                 }
                 comment.updateImage(null);
             }
         }
 
         if (requestDto.getFile() != null && !requestDto.getFile().isEmpty()) {
-            String newImageUrl = localFileService.upload(requestDto.getFile(), "comments");
+            String newImageUrl = localFileService.upload(requestDto.getFile(), ImageCategory.COMMENT);
             comment.updateImage(newImageUrl);
         }
 
