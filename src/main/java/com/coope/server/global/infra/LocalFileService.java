@@ -3,6 +3,7 @@ package com.coope.server.global.infra;
 import com.coope.server.global.error.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,12 +12,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Set;
 import java.util.UUID;
 
 @Component
+@Profile("dev")
 @Slf4j
-public class LocalFileService {
+public class LocalFileService implements FileService{
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -24,7 +25,8 @@ public class LocalFileService {
     @Value("${file.access-url}")
     private String accessUrl;
 
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp");
+
+    @Override
     public String upload(MultipartFile file, ImageCategory category) {
         if (file == null || file.isEmpty()) return null;
 
@@ -56,7 +58,8 @@ public class LocalFileService {
         }
     }
 
-    public boolean deleteFile(String imageUrl, String subDir) {
+    @Override
+    public boolean deleteFile(String imageUrl, ImageCategory category) {
         if (imageUrl == null || imageUrl.isEmpty()) return false;
 
         try {
@@ -67,6 +70,7 @@ public class LocalFileService {
                 return false;
             }
 
+            String subDir = category.dir();
             String separator = uploadDir.endsWith("/") ? "" : "/";
             String fullPath = uploadDir + separator + subDir + "/";
             File file = new File(fullPath + fileName);
@@ -89,29 +93,5 @@ public class LocalFileService {
             return false;
         }
     }
-
-    private String extractExtension(MultipartFile file) {
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null) {
-            throw new IllegalArgumentException("파일명이 존재하지 않습니다.");
-        }
-
-        // 경로 제거 (IE, 악성 입력 대비)
-        String pureFileName = originalFilename.replaceAll("^.*[\\\\/]", "");
-
-        int dotIndex = pureFileName.lastIndexOf('.');
-        if (dotIndex == -1 || dotIndex == pureFileName.length() - 1) {
-            throw new IllegalArgumentException("확장자가 없는 파일은 업로드할 수 없습니다.");
-        }
-
-        String extension = pureFileName.substring(dotIndex).toLowerCase();
-
-        if (!ALLOWED_EXTENSIONS.contains(extension)) {
-            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다: " + extension);
-        }
-
-        return extension;
-    }
-
 
 }

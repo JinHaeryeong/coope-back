@@ -61,7 +61,7 @@ public class CommentService {
 
         String currentImageUrl = comment.getImageUrl();
         if (currentImageUrl != null) {
-            boolean isFileDeleted = localFileService.deleteFile(currentImageUrl, "comments");
+            boolean isFileDeleted = localFileService.deleteFile(currentImageUrl, ImageCategory.COMMENT);
 
             if (!isFileDeleted) {
                 throw new FileStorageException("파일 삭제에 실패하여 댓글을 삭제할 수 없습니다." + currentImageUrl);
@@ -85,7 +85,7 @@ public class CommentService {
 
         if (Boolean.TRUE.equals(requestDto.getDeleteImage()) || (requestDto.getFile() != null && !requestDto.getFile().isEmpty())) {
             if (currentImageUrl != null) {
-                boolean isDeleted = localFileService.deleteFile(currentImageUrl, "comments");
+                boolean isDeleted = localFileService.deleteFile(currentImageUrl, ImageCategory.COMMENT);
 
                 if (!isDeleted) {
                     throw new FileStorageException("파일 삭제에 실패하여 수정을 완료할 수 없습니다." + comment.getImageUrl());
