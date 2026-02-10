@@ -10,8 +10,8 @@ import com.coope.server.domain.user.enums.Role;
 import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.error.exception.FileStorageException;
 import com.coope.server.global.error.exception.NoticeNotFoundException;
+import com.coope.server.global.infra.FileService;
 import com.coope.server.global.infra.ImageCategory;
-import com.coope.server.global.infra.LocalFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class NoticeService {
 
     private final NoticeRepository noticeRepository;
-    private final LocalFileService localFileService;
+    private final FileService fileService;
 
     public Page<NoticeResponse> getAllNotices(Pageable pageable) {
 
@@ -38,7 +38,7 @@ public class NoticeService {
     public NoticeResponse createNotice(NoticeWriteRequest request, User user, MultipartFile file) {
         String savedImageUrl = null;
         if (file != null && !file.isEmpty()) {
-            savedImageUrl = localFileService.upload(file, ImageCategory.NOTICE);
+            savedImageUrl = fileService.upload(file, ImageCategory.NOTICE);
         }
 
         Notice notice = request.toEntity(user, savedImageUrl);
@@ -75,7 +75,7 @@ public class NoticeService {
 
         if (requestDto.isDeleteImage() || (requestDto.getFile() != null && !requestDto.getFile().isEmpty())) {
             if (currentImageUrl != null) {
-                boolean isDeleted = localFileService.deleteFile(currentImageUrl, ImageCategory.NOTICE);
+                boolean isDeleted = fileService.deleteFile(currentImageUrl, ImageCategory.NOTICE);
                 if (!isDeleted) {
                     throw new FileStorageException("기존 이미지 삭제에 실패하여 수정을 완료할 수 없습니다: " + currentImageUrl);
                 }
@@ -84,7 +84,7 @@ public class NoticeService {
         }
 
         if (requestDto.getFile() != null && !requestDto.getFile().isEmpty()) {
-            String newImageUrl = localFileService.upload(requestDto.getFile(), ImageCategory.NOTICE);
+            String newImageUrl = fileService.upload(requestDto.getFile(), ImageCategory.NOTICE);
             notice.updateImageUrl(newImageUrl);
         }
 
@@ -100,7 +100,7 @@ public class NoticeService {
 
         String currentImageUrl = notice.getImageUrl();
         if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
-            boolean isDeleted = localFileService.deleteFile(currentImageUrl, ImageCategory.NOTICE);
+            boolean isDeleted = fileService.deleteFile(currentImageUrl, ImageCategory.NOTICE);
 
             if (!isDeleted) {
                 throw new FileStorageException("파일 삭제에 실패하여 삭제를 완료할 수 없습니다." + currentImageUrl);

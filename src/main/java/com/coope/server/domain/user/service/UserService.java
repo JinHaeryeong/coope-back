@@ -7,8 +7,8 @@ import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.error.exception.AuthenticationException;
 import com.coope.server.global.error.exception.UserNotFoundException;
+import com.coope.server.global.infra.FileService;
 import com.coope.server.global.infra.ImageCategory;
-import com.coope.server.global.infra.LocalFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final LocalFileService localFileService;
+    private final FileService fileService;
 
     @Transactional // 쓰기 작업이므로 별도의 트랜잭션 적용
     public Long signup(SignupRequest request) {
@@ -33,7 +33,7 @@ public class UserService {
             throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
         }
 
-        String userIconUrl = localFileService.upload(request.getUserIcon(), ImageCategory.PROFILE);
+        String userIconUrl = fileService.upload(request.getUserIcon(), ImageCategory.PROFILE);
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
