@@ -12,8 +12,8 @@ import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.error.exception.CommentNotFoundException;
 import com.coope.server.global.error.exception.FileStorageException;
 import com.coope.server.global.error.exception.NoticeNotFoundException;
+import com.coope.server.global.infra.FileService;
 import com.coope.server.global.infra.ImageCategory;
-import com.coope.server.global.infra.LocalFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,14 +28,14 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final NoticeRepository noticeRepository;
-    private final LocalFileService localFileService;
+    private final FileService fileService;
 
     @Transactional
     public CommentResponse createComment(Long noticeId, CommentRequest requestDto, User user) {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new NoticeNotFoundException("해당 공지사항이 존재하지 않습니다."));
 
-        String savedImageUrl = localFileService.upload(requestDto.getFile(), ImageCategory.COMMENT);
+        String savedImageUrl = fileService.upload(requestDto.getFile(), ImageCategory.COMMENT);
 
         Comment comment = requestDto.toEntity(notice, user, savedImageUrl);
         Comment savedComment = commentRepository.save(comment);
@@ -61,7 +61,7 @@ public class CommentService {
 
         String currentImageUrl = comment.getImageUrl();
         if (currentImageUrl != null) {
-            boolean isFileDeleted = localFileService.deleteFile(currentImageUrl, ImageCategory.COMMENT);
+            boolean isFileDeleted = fileService.deleteFile(currentImageUrl, ImageCategory.COMMENT);
 
             if (!isFileDeleted) {
                 throw new FileStorageException("파일 삭제에 실패하여 댓글을 삭제할 수 없습니다." + currentImageUrl);
@@ -85,7 +85,7 @@ public class CommentService {
 
         if (Boolean.TRUE.equals(requestDto.getDeleteImage()) || (requestDto.getFile() != null && !requestDto.getFile().isEmpty())) {
             if (currentImageUrl != null) {
-                boolean isDeleted = localFileService.deleteFile(currentImageUrl, ImageCategory.COMMENT);
+                boolean isDeleted = fileService.deleteFile(currentImageUrl, ImageCategory.COMMENT);
 
                 if (!isDeleted) {
                     throw new FileStorageException("파일 삭제에 실패하여 수정을 완료할 수 없습니다." + comment.getImageUrl());
@@ -95,7 +95,7 @@ public class CommentService {
         }
 
         if (requestDto.getFile() != null && !requestDto.getFile().isEmpty()) {
-            String newImageUrl = localFileService.upload(requestDto.getFile(), ImageCategory.COMMENT);
+            String newImageUrl = fileService.upload(requestDto.getFile(), ImageCategory.COMMENT);
             comment.updateImage(newImageUrl);
         }
 
