@@ -2,9 +2,11 @@ package com.coope.server.global.config;
 
 import com.coope.server.domain.auth.handler.OAuth2AuthenticationSuccessHandler;
 import com.coope.server.domain.auth.service.CustomOAuth2UserService;
+import com.coope.server.global.security.CustomAuthenticationEntryPoint;
 import com.coope.server.global.security.JwtAuthenticationFilter;
 import com.coope.server.global.security.JwtProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -35,6 +37,8 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+
     @Value("${client.url}")
     private String clientUrl;
 
@@ -51,8 +55,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // CSRF 비활성화 (Stateless한 API 서버이므로 필수)
                 .csrf(AbstractHttpConfigurer::disable)
+                // 비동기 요청 시에도 인증 정보를 유지하도록 설정
+                // 이 설정이 있어야 스트리밍 중에도 사용자가 누군지 잊어버리지 않음
+                .securityContext(context -> context.requireExplicitSave(false))
+                // 예외 핸들링
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                )
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/user/signup", "/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/notices/all").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/notices/detail/**").permitAll()
@@ -71,13 +83,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/comments/**").authenticated()
                         .requestMatchers("/api/workspaces/**").authenticated()
                         .requestMatchers("/api/documents/**").authenticated()
+                        .requestMatchers("/api/ai-chat/**").authenticated()
                         .anyRequest().authenticated()                // 그 외 요청은 인증 필요
                 )
                 .oauth2Login(oauth2 -> oauth2
                                 .userInfoEndpoint(userInfo -> userInfo
                                         .userService(customOAuth2UserService) // 우리가 만든 서비스 연결
                                 )
-                         .successHandler(oAuth2AuthenticationSuccessHandler) // 나중에 JWT 발급 핸들러 만들어서 연결할 곳
+                         .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
                 // 필터 추가
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider, redisTemplate, objectMapper), UsernamePasswordAuthenticationFilter.class);
