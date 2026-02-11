@@ -46,4 +46,44 @@ public class DocumentController {
 
         return ResponseEntity.ok(responses);
     }
+
+    // 휴지통 목록 조회
+    @GetMapping("/trash")
+    public ResponseEntity<List<DocumentResponse>> getTrash(
+            @RequestParam("workspaceCode") String workspaceCode) {
+
+        List<DocumentResponse> responses = documentService.getTrashDocuments(workspaceCode);
+        return ResponseEntity.ok(responses);
+    }
+
+    // 문서 아카이브
+    @PatchMapping("/{documentId}/archive")
+    public ResponseEntity<Void> archive(
+            @PathVariable("documentId") Long documentId) {
+
+        documentService.archiveDocument(documentId);
+        log.info("문서 휴지통 이동 성공 - ID: {}", documentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 문서 복구
+    @PatchMapping("/{documentId}/restore")
+    public ResponseEntity<DocumentResponse> restore(
+            @PathVariable("documentId") Long documentId) {
+
+        DocumentResponse response = documentService.restoreDocument(documentId);
+        log.info("문서 복구 성공 - ID: {}, 제목: {}", documentId, response.getTitle());
+        return ResponseEntity.ok(response);
+    }
+
+    // 문서 영구 삭제
+    @DeleteMapping("/{documentId}")
+    public ResponseEntity<Void> hardDelete(
+            @PathVariable("documentId") Long documentId) {
+
+        documentService.hardDeleteDocument(documentId);
+        log.info("문서 영구 삭제 성공 - ID: {}", documentId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

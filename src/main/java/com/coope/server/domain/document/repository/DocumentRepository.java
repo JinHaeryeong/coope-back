@@ -35,4 +35,11 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
             @Param("workspaceId") Long workspaceId,
             @Param("parentId") Long parentId
     );
+
+    @Query("select d from Document d " +
+            "join fetch d.user " +
+            "where d.workspace.id = :workspaceId " +
+            "and d.isArchived = true " +
+            "order by d.updatedAt desc")
+    List<Document> findAllTrashDocuments(@Param("workspaceId") Long workspaceId);
 }

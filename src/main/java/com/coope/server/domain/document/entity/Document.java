@@ -67,11 +67,24 @@ public class Document extends BaseTimeEntity {
         this.isPublished = false;
     }
 
+    public void restore() {
+        this.isArchived = false;
+
+        // 노션 로직 반영
+        // 부모가 없거나, 부모가 이미 휴지통(archived) 상태라면 최상위(null)로 이동
+        if (this.parentDocument != null && this.parentDocument.isArchived()) {
+            this.parentDocument = null;
+        }
+    }
+
     public void updateTitle(String title) {
         this.title = title;
     }
 
-    public void archive() {
+    public void archiveWithChildren() {
         this.isArchived = true;
+        if (this.childDocuments != null) {
+            this.childDocuments.forEach(Document::archiveWithChildren);
+        }
     }
 }

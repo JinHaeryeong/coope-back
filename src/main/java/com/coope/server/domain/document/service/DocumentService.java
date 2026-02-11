@@ -53,4 +53,35 @@ public class DocumentService {
 
         return DocumentResponse.from(savedDocument, false);
     }
+
+    @Transactional
+    public void archiveDocument(Long documentId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
+
+        document.archiveWithChildren();
+    }
+
+    @Transactional
+    public DocumentResponse restoreDocument(Long documentId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
+
+        document.restore();
+
+        return DocumentResponse.from(document, false);
+    }
+
+    @Transactional
+    public void hardDeleteDocument(Long documentId) {
+        documentRepository.deleteById(documentId);
+    }
+
+    public List<DocumentResponse> getTrashDocuments(String workspaceCode) {
+        Workspace workspace = workspaceService.getByInviteCode(workspaceCode);
+        return documentRepository.findAllTrashDocuments(workspace.getId())
+                .stream()
+                .map(doc -> DocumentResponse.from(doc, false))
+                .collect(Collectors.toList());
+    }
 }
