@@ -69,6 +69,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/notices/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/notices/detail/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/comments/**").authenticated()
+                        .requestMatchers("/api/workspaces/**").authenticated()
+                        .requestMatchers("/api/documents/**").authenticated()
                         .anyRequest().authenticated()                // 그 외 요청은 인증 필요
                 )
                 .oauth2Login(oauth2 -> oauth2

@@ -32,7 +32,14 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.fail(e.getMessage()));
     }
 
-    @ExceptionHandler({UserNotFoundException.class, NoticeNotFoundException.class, CommentNotFoundException.class})
+    @ExceptionHandler({
+            UserNotFoundException.class,
+            NoticeNotFoundException.class,
+            CommentNotFoundException.class,
+            DocumentNotFoundException.class,
+            WorkspaceNotFoundException.class,
+            jakarta.persistence.EntityNotFoundException.class //보험용
+    })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.fail(e.getMessage()));
