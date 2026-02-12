@@ -32,7 +32,14 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.fail(e.getMessage()));
     }
 
-    @ExceptionHandler({UserNotFoundException.class, NoticeNotFoundException.class, CommentNotFoundException.class})
+    @ExceptionHandler({
+            UserNotFoundException.class,
+            NoticeNotFoundException.class,
+            CommentNotFoundException.class,
+            DocumentNotFoundException.class,
+            WorkspaceNotFoundException.class,
+            jakarta.persistence.EntityNotFoundException.class // JPA 프록시나 지연 로딩 접근 시 발생하는 엔티티 부재 예외를 404로 매핑
+    })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.fail(e.getMessage()));
