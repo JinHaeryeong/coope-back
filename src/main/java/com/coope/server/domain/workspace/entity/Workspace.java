@@ -1,15 +1,19 @@
 package com.coope.server.domain.workspace.entity;
 
 import com.coope.server.domain.common.entity.BaseTimeEntity;
+import com.coope.server.domain.document.entity.Document;
 import com.coope.server.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "workspaces")
-@ToString(exclude = {"creator"})
+@ToString(exclude = {"creator", "members", "documents"})
 public class Workspace extends BaseTimeEntity {
 
     @Id
@@ -26,10 +30,23 @@ public class Workspace extends BaseTimeEntity {
     @Column(unique = true, nullable = false, length = 10)
     private String inviteCode;
 
+    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WorkspaceMember> members = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Document> documents = new ArrayList<>();
+
     @Builder
     public Workspace(String name, User creator, String inviteCode) {
         this.name = name;
         this.creator = creator;
         this.inviteCode = inviteCode;
+    }
+
+    public void updateName(String name) {
+        if (name != null && !name.isBlank()) {
+            this.name = name;
+        }
     }
 }
