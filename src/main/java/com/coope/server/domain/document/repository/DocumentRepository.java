@@ -46,4 +46,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
             "and d.isArchived = true " +
             "order by d.updatedAt desc")
     List<Document> findAllTrashDocuments(@Param("workspaceId") Long workspaceId);
+
+    boolean existsByParentDocumentAndArchivedFalse(Document parentDocument);
 }

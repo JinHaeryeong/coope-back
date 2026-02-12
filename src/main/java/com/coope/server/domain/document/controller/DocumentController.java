@@ -48,6 +48,18 @@ public class DocumentController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/{documentId}")
+    public ResponseEntity<DocumentResponse> getDocument(
+            @PathVariable("documentId") Long documentId,
+            @RequestParam("workspaceCode") String workspaceCode,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        // 문서 상세 정보를 가져오는 서비스 로직 호출
+        DocumentResponse response = documentService.getDocumentDetail(documentId, workspaceCode, userDetails.getUser());
+
+        return ResponseEntity.ok(response);
+    }
+
     // 휴지통 목록 조회
     @GetMapping("/trash")
     public ResponseEntity<List<DocumentResponse>> getTrash(

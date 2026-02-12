@@ -97,9 +97,26 @@ public class DocumentService {
                 .collect(Collectors.toList());
     }
 
+
+    public DocumentResponse getDocumentDetail(Long documentId, String workspaceCode, User user) {
+        Document document = findDocumentById(documentId);
+
+        if (!document.getWorkspace().getInviteCode().equals(workspaceCode)) {
+            throw new DocumentNotFoundException("해당 워크스페이스에 존재하지 않는 문서입니다.");
+        }
+
+        workspaceService.validateMember(document.getWorkspace().getId(), user.getId());
+
+        boolean hasChildren = documentRepository.existsByParentDocumentAndArchivedFalse(document);
+
+        return DocumentResponse.from(document, hasChildren);
+    }
+
     // 헬퍼 메서드
     private Document findDocumentById(Long documentId) {
         return documentRepository.findById(documentId)
                 .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
     }
+
+
 }
