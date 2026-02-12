@@ -47,5 +47,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
             "order by d.updatedAt desc")
     List<Document> findAllTrashDocuments(@Param("workspaceId") Long workspaceId);
 
-    boolean existsByParentDocumentAndArchivedFalse(Document parentDocument);
+    @Query("SELECT COUNT(d) > 0 FROM Document d WHERE d.parentDocument = :parentDocument AND d.archived = false")
+    boolean existsByParentDocumentAndArchivedFalse(@Param("parentDocument") Document parentDocument);
 }
