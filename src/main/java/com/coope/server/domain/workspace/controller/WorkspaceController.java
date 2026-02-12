@@ -29,8 +29,11 @@ public class WorkspaceController {
 
         WorkspaceResponse response = workspaceService.createWorkspace(request, userDetails.getUser());
 
-        log.info("워크스페이스 생성 성공 - 생성자: {}, 초대코드: {}",
-                userDetails.getUser().getNickname(), response.getInviteCode());
+        log.info("워크스페이스 생성 성공 - 생성자: {}, 이름: {}",
+                userDetails.getUser().getNickname(), response.getName());
+
+        log.debug("워크스페이스 초대코드 상세 - ID: {}, 초대코드: {}",
+                response.getId(), response.getInviteCode());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

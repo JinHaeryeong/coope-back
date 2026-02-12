@@ -3,16 +3,14 @@ package com.coope.server.domain.workspace.entity;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.workspace.enums.WorkspaceRole;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "workspace_members",
         uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "workspace_id"}))
+@ToString(exclude = {"workspace", "user"})
 public class WorkspaceMember {
 
     @Id

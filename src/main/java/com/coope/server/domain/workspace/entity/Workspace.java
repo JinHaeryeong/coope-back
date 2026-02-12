@@ -3,15 +3,13 @@ package com.coope.server.domain.workspace.entity;
 import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "workspaces")
+@ToString(exclude = {"user"})
 public class Workspace extends BaseTimeEntity {
 
     @Id

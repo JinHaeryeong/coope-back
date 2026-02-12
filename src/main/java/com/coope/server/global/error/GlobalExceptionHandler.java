@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
             CommentNotFoundException.class,
             DocumentNotFoundException.class,
             WorkspaceNotFoundException.class,
-            jakarta.persistence.EntityNotFoundException.class //보험용
+            jakarta.persistence.EntityNotFoundException.class // JPA 프록시나 지연 로딩 접근 시 발생하는 엔티티 부재 예외를 404로 매핑
     })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

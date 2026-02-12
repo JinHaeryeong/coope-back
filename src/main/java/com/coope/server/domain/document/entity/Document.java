@@ -17,6 +17,7 @@ import java.util.List;
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString(exclude = {"user", "workspace", "parentDocument", "childDocuments"})
 public class Document extends BaseTimeEntity {
 
     @Id

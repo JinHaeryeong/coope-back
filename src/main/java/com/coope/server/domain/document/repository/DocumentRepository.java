@@ -28,7 +28,11 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
             "(SELECT COUNT(c) > 0 FROM Document c WHERE c.parentDocument = d AND c.isArchived = false) " +
             "FROM Document d JOIN FETCH d.user " +
             "WHERE d.workspace.id = :workspaceId " +
-            "AND (:parentId IS NULL AND d.parentDocument IS NULL OR d.parentDocument.id = :parentId) " +
+            "AND ( " +
+            "    (:parentId IS NULL AND d.parentDocument IS NULL) " +
+            "    OR " +
+            "    (:parentId IS NOT NULL AND d.parentDocument.id = :parentId) " +
+            ") " +
             "AND d.isArchived = false " +
             "ORDER BY d.createdAt DESC")
     List<Object[]> findAllByWorkspaceAndParentWithChildCheck(

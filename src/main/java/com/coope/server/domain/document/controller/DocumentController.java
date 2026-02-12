@@ -40,9 +40,10 @@ public class DocumentController {
     @GetMapping("/sidebar")
     public ResponseEntity<List<DocumentResponse>> getSidebar(
             @RequestParam("workspaceCode") String workspaceCode,
-            @RequestParam(value = "parentId", required = false) Long parentId) {
+            @RequestParam(value = "parentId", required = false) Long parentId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        List<DocumentResponse> responses = documentService.getSidebarDocuments(workspaceCode, parentId);
+        List<DocumentResponse> responses = documentService.getSidebarDocuments(workspaceCode, parentId, userDetails.getUser());
 
         return ResponseEntity.ok(responses);
     }
@@ -50,18 +51,20 @@ public class DocumentController {
     // 휴지통 목록 조회
     @GetMapping("/trash")
     public ResponseEntity<List<DocumentResponse>> getTrash(
-            @RequestParam("workspaceCode") String workspaceCode) {
+            @RequestParam("workspaceCode") String workspaceCode,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        List<DocumentResponse> responses = documentService.getTrashDocuments(workspaceCode);
+        List<DocumentResponse> responses = documentService.getTrashDocuments(workspaceCode, userDetails.getUser());
         return ResponseEntity.ok(responses);
     }
 
     // 문서 아카이브
     @PatchMapping("/{documentId}/archive")
     public ResponseEntity<Void> archive(
-            @PathVariable("documentId") Long documentId) {
+            @PathVariable("documentId") Long documentId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        documentService.archiveDocument(documentId);
+        documentService.archiveDocument(documentId, userDetails.getUser());
         log.info("문서 휴지통 이동 성공 - ID: {}", documentId);
         return ResponseEntity.noContent().build();
     }
@@ -69,9 +72,10 @@ public class DocumentController {
     // 문서 복구
     @PatchMapping("/{documentId}/restore")
     public ResponseEntity<DocumentResponse> restore(
-            @PathVariable("documentId") Long documentId) {
+            @PathVariable("documentId") Long documentId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        DocumentResponse response = documentService.restoreDocument(documentId);
+        DocumentResponse response = documentService.restoreDocument(documentId, userDetails.getUser());
         log.info("문서 복구 성공 - ID: {}, 제목: {}", documentId, response.getTitle());
         return ResponseEntity.ok(response);
     }
@@ -79,9 +83,10 @@ public class DocumentController {
     // 문서 영구 삭제
     @DeleteMapping("/{documentId}")
     public ResponseEntity<Void> hardDelete(
-            @PathVariable("documentId") Long documentId) {
+            @PathVariable("documentId") Long documentId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        documentService.hardDeleteDocument(documentId);
+        documentService.hardDeleteDocument(documentId, userDetails.getUser());
         log.info("문서 영구 삭제 성공 - ID: {}", documentId);
         return ResponseEntity.noContent().build();
     }

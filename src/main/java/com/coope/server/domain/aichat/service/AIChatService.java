@@ -1,5 +1,6 @@
 package com.coope.server.domain.aichat.service;
 
+import com.coope.server.domain.aichat.dto.AIChatMessage;
 import com.coope.server.domain.aichat.dto.AIChatRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,15 +24,15 @@ public class AIChatService {
     private final ObjectMapper objectMapper;
     private final WebClient webClient = WebClient.builder().build();
 
-    public Flux<String> getAIStreamResponse(String userPrompt, List<AIChatRequest.Message> history) {
+    public Flux<String> getAIStreamResponse(String userPrompt, List<AIChatMessage> history) {
 
-        AIChatRequest.Message systemMsg = AIChatRequest.createSystemMessage();
+        AIChatMessage systemMsg = AIChatRequest.createSystemMessage();
 
         // 전체 메시지 조립 (System -> History -> Current User Prompt)
-        List<AIChatRequest.Message> allMessages = new ArrayList<>();
+        List<AIChatMessage> allMessages = new ArrayList<>();
         allMessages.add(systemMsg);
         allMessages.addAll(history);
-        allMessages.add(new AIChatRequest.Message("user", userPrompt));
+        allMessages.add(new AIChatMessage("user", userPrompt));
 
         // 요청 객체 생성
         AIChatRequest requestBody = AIChatRequest.createDefault(allMessages);
@@ -46,6 +47,7 @@ public class AIChatService {
                 .bodyToFlux(String.class) // 조각(chunk) 단위로 받음
                 .filter(data -> !data.equals("[DONE]")) // 끝 신호 제외
                 .map(this::parseDeltaContent) // 텍스트만 추출
+                .filter(content -> !content.isEmpty())
                 .onErrorResume(e -> Flux.just(" 에러: AI 응답 중 오류가 발생했습니다"));
     }
 
