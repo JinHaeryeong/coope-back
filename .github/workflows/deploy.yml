@@ -20,5 +20,5 @@ jobs:
           script: |
             cd /home/ubuntu/coope-spring 
             git pull origin main
-            docker compose up -d --build
+            docker compose up -d
             docker image prune -f # 안쓰는 이미지 정리

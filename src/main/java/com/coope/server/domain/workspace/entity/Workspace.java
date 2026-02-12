@@ -9,7 +9,7 @@ import lombok.*;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "workspaces")
-@ToString(exclude = {"user"})
+@ToString(exclude = {"creator"})
 public class Workspace extends BaseTimeEntity {
 
     @Id

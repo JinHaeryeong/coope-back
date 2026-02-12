@@ -34,10 +34,10 @@ public class Document extends BaseTimeEntity {
     private String coverImage;
 
     @Column(nullable = false)
-    private boolean isArchived;
+    private boolean archived;
 
     @Column(nullable = false)
-    private boolean isPublished;
+    private boolean published;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
@@ -64,12 +64,12 @@ public class Document extends BaseTimeEntity {
         this.workspace = workspace;
         this.user = user;
         this.parentDocument = parentDocument;
-        this.isArchived = false;
-        this.isPublished = false;
+        this.archived = false;
+        this.published = false;
     }
 
     public void restore() {
-        this.isArchived = false;
+        this.archived = false;
 
         // 노션 로직 반영
         // 부모가 없거나, 부모가 이미 휴지통(archived) 상태라면 최상위(null)로 이동
@@ -83,7 +83,7 @@ public class Document extends BaseTimeEntity {
     }
 
     public void archiveWithChildren() {
-        this.isArchived = true;
+        this.archived = true;
         if (this.childDocuments != null) {
             this.childDocuments.forEach(Document::archiveWithChildren);
         }

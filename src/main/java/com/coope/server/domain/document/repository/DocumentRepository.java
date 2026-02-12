@@ -13,19 +13,19 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
             "join fetch d.user " +
             "where d.workspace.id = :workspaceId " +
             "and d.parentDocument is null " +
-            "and d.isArchived = false " +
+            "and d.archived = false " +
             "order by d.createdAt desc")
     List<Document> findAllRootDocuments(@Param("workspaceId") Long workspaceId);
 
     @Query("select d from Document d " +
             "join fetch d.user " +
             "where d.parentDocument.id = :parentId " +
-            "and d.isArchived = false " +
+            "and d.archived = false " +
             "order by d.createdAt desc")
     List<Document> findAllByParentDocumentIdWithUser(@Param("parentId") Long parentId);
 
     @Query("SELECT d, " +
-            "(SELECT COUNT(c) > 0 FROM Document c WHERE c.parentDocument = d AND c.isArchived = false) " +
+            "(SELECT COUNT(c) > 0 FROM Document c WHERE c.parentDocument = d AND c.archived = false) " +
             "FROM Document d JOIN FETCH d.user " +
             "WHERE d.workspace.id = :workspaceId " +
             "AND ( " +
@@ -33,7 +33,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
             "    OR " +
             "    (:parentId IS NOT NULL AND d.parentDocument.id = :parentId) " +
             ") " +
-            "AND d.isArchived = false " +
+            "AND d.archived = false " +
             "ORDER BY d.createdAt DESC")
     List<Object[]> findAllByWorkspaceAndParentWithChildCheck(
             @Param("workspaceId") Long workspaceId,
@@ -43,7 +43,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     @Query("select d from Document d " +
             "join fetch d.user " +
             "where d.workspace.id = :workspaceId " +
-            "and d.isArchived = true " +
+            "and d.archived = true " +
             "order by d.updatedAt desc")
     List<Document> findAllTrashDocuments(@Param("workspaceId") Long workspaceId);
 

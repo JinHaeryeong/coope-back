@@ -12,8 +12,8 @@ public class DocumentResponse {
     private String icon;
     private String coverImage;
     private Long parentId;
-    private boolean isArchived;
-    private boolean isPublished;
+    private boolean archived;
+    private boolean published;
     private String lastEditedBy;
     private boolean hasChildren;
 
@@ -24,8 +24,8 @@ public class DocumentResponse {
                 .icon(document.getIcon())
                 .coverImage(document.getCoverImage())
                 .parentId(document.getParentDocument() != null ? document.getParentDocument().getId() : null)
-                .isArchived(document.isArchived())
-                .isPublished(document.isPublished())
+                .archived(document.isArchived())
+                .published(document.isPublished())
                 .lastEditedBy(document.getUser().getNickname())
                 .hasChildren(hasChildren)
                 .build();
