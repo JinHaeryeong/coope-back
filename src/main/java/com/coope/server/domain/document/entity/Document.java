@@ -33,10 +33,10 @@ public class Document extends BaseTimeEntity {
     private String icon;
     private String coverImage;
 
-    @Column(nullable = false)
+    @Column(name = "archived", nullable = false)
     private boolean archived;
 
-    @Column(nullable = false)
+    @Column(name = "published", nullable = false)
     private boolean published;
 
     @ManyToOne(fetch = FetchType.LAZY)
