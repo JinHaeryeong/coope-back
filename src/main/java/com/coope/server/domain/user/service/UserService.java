@@ -23,7 +23,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final FileService fileService;
 
-    @Transactional // 쓰기 작업이므로 별도의 트랜잭션 적용
+    @Transactional
     public Long signup(SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
@@ -63,6 +63,13 @@ public class UserService {
     public UserResponse getMyInfo(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 계정입니다."));
+        return UserResponse.of(user);
+    }
+
+    public UserResponse searchUserByNickname(String nickname) {
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new UserNotFoundException("해당 닉네임을 가진 유저가 존재하지 않습니다."));
+
         return UserResponse.of(user);
     }
 }

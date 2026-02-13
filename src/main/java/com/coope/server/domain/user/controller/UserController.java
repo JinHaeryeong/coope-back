@@ -32,4 +32,11 @@ public class UserController {
     public ResponseEntity<UserResponse> getMyInfo(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(userService.getMyInfo(userDetails.getUser().getId()));
     }
+
+
+    @GetMapping("/search")
+    public ResponseEntity<UserResponse> searchUser(@RequestParam String nickname) {
+        UserResponse response = userService.searchUserByNickname(nickname);
+        return ResponseEntity.ok(response);
+    }
 }

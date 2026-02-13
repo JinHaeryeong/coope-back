@@ -77,13 +77,14 @@ public class WorkspaceService {
 
     @Transactional
     public void deleteWorkspace(String workspaceCode, User user) {
-        List<WorkspaceMember> myMemberships = workspaceMemberRepository.findAllByUserId(user.getId());
-        if (myMemberships.size() <= 1) {
-            throw new BadRequestException("최소 한 개의 워크스페이스는 유지해야 합니다.");
-        }
         Workspace workspace = getByInviteCode(workspaceCode);
 
         validateOwner(workspace.getId(), user.getId());
+        long membershipCount = workspaceMemberRepository.countByUserId(user.getId());
+        if (membershipCount <= 1) {
+            throw new BadRequestException("최소 한 개의 워크스페이스는 유지해야 합니다.");
+        }
+
 
         workspaceRepository.delete(workspace);
     }
@@ -106,11 +107,11 @@ public class WorkspaceService {
 
     // OWNER 권한 검증 헬퍼 메서드
     private void validateOwner(Long workspaceId, Long userId) {
-        WorkspaceMember member = workspaceMemberRepository
-                .findByWorkspaceIdAndUserId(workspaceId, userId)
-                .orElseThrow(() -> new AccessDeniedException("접근 권한이 없습니다."));
+        boolean isOwner = workspaceMemberRepository.existsByWorkspaceIdAndUserIdAndRole(
+                workspaceId, userId, WorkspaceRole.OWNER
+        );
 
-        if (!member.isOwner()) {
+        if (!isOwner) {
             throw new AccessDeniedException("워크스페이스 소유자만 이 작업을 수행할 수 있습니다.");
         }
     }
