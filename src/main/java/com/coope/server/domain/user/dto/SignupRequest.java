@@ -12,16 +12,22 @@ import jakarta.validation.constraints.*;
 @AllArgsConstructor
 public class SignupRequest {
 
-    @NotBlank @Email
+    @NotBlank
+    @Email(message = "이메일 형식이 올바르지 않습니다.")
     private String email; // final 제거
 
     @NotBlank @Size(min = 8)
     private String password; // final 제거
 
     @NotBlank
+    @Size(min = 2, max = 20, message = "이름은 2~20자 이내여야 합니다.")
     private String name; // final 제거
 
     @NotBlank
+    @Pattern(
+            regexp = "^[a-zA-Z0-9가-힣 ]{2,20}$",
+            message = "닉네임은 특수문자를 제외한 2~20자 이내여야 합니다."
+    )
     private String nickname; // final 제거
 
     private MultipartFile userIcon; // final 제거

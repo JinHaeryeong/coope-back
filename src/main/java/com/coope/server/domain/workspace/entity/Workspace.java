@@ -3,6 +3,7 @@ package com.coope.server.domain.workspace.entity;
 import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.document.entity.Document;
 import com.coope.server.domain.user.entity.User;
+import com.coope.server.global.error.exception.BadRequestException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,7 +34,6 @@ public class Workspace extends BaseTimeEntity {
     @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WorkspaceMember> members = new ArrayList<>();
 
-
     @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Document> documents = new ArrayList<>();
 
@@ -45,8 +45,9 @@ public class Workspace extends BaseTimeEntity {
     }
 
     public void updateName(String name) {
-        if (name != null && !name.isBlank()) {
-            this.name = name;
+        if (name == null || name.isBlank() || name.length() > 20) {
+            throw new BadRequestException("워크스페이스 이름은 1~20자 사이여야 합니다.");
         }
+        this.name = name;
     }
 }

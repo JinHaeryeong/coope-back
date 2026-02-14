@@ -53,14 +53,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.fail(e.getMessage()));
     }
 
-    @ExceptionHandler(FriendException.class)
-    public ResponseEntity<ErrorResponse> handleFriendException(FriendException e) {
-        log.warn("친구 로직 에러: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResponse.fail(e.getMessage()));
-    }
-
     @ExceptionHandler({
+            FriendException.class,
             IllegalArgumentException.class,
             IllegalStateException.class,
             BadRequestException.class

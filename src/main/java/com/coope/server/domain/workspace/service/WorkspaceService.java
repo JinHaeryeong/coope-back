@@ -85,7 +85,6 @@ public class WorkspaceService {
             throw new BadRequestException("최소 한 개의 워크스페이스는 유지해야 합니다.");
         }
 
-
         workspaceRepository.delete(workspace);
     }
 

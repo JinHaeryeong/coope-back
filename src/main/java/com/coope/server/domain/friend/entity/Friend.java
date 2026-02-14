@@ -11,6 +11,7 @@ import lombok.*;
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@ToString(exclude = {"user", "friend"})
 public class Friend extends BaseTimeEntity {
 
     @Id

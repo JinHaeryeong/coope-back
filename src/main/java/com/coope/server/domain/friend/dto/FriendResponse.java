@@ -1,7 +1,8 @@
-package com.coope.server.domain.friend.dto; // 패키지 경로는 프로젝트에 맞게!
+package com.coope.server.domain.friend.dto;
 
 import com.coope.server.domain.friend.entity.Friend;
 import com.coope.server.domain.friend.entity.FriendStatus;
+import com.coope.server.domain.user.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -25,7 +26,7 @@ public class FriendResponse {
                 .build();
     }
 
-    public static FriendResponse of(Friend friend, com.coope.server.domain.user.entity.User targetUser) {
+    public static FriendResponse of(Friend friend, User targetUser) {
         return FriendResponse.builder()
                 .id(friend.getId())
                 .friendId(targetUser.getId())

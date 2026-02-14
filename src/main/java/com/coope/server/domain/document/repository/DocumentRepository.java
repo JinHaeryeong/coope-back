@@ -49,6 +49,4 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     @Query("SELECT COUNT(d) > 0 FROM Document d WHERE d.parentDocument = :parentDocument AND d.archived = false")
     boolean existsByParentDocumentAndArchivedFalse(@Param("parentDocument") Document parentDocument);
-
-
 }

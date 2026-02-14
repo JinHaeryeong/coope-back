@@ -22,13 +22,12 @@ public class FriendController {
      * 친구 목록 조회 (ACCEPTED, PENDING 등)
      * GET /api/friends?status=ACCEPTED
      */
-    // FriendController.java
     @GetMapping
     public ResponseEntity<List<FriendResponse>> getFriends(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam(required = false, defaultValue = "ACCEPTED") FriendStatus status) {
 
-        // 💡 프론트엔드 친구 목록 페이지에서는 인자 없이 호출하면 ACCEPTED인 친구만 싹 가져옵니다.
+        // 프론트엔드 친구 목록 페이지에서는 인자 없이 호출하면 ACCEPTED인 친구만
         List<FriendResponse> responses = friendService.getFriends(userDetails.getUser().getId(), status);
         return ResponseEntity.ok(responses);
     }
@@ -68,7 +67,7 @@ public class FriendController {
     }
 
     /**
-     * 4. 친구 삭제 또는 요청 거절
+     * 친구 삭제 또는 요청 거절
      * DELETE /api/friends?friendId=2
      */
     @DeleteMapping

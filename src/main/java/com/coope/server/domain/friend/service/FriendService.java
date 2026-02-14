@@ -31,9 +31,9 @@ public class FriendService {
         User me = findUserById(currentUserId);
         User targetFriend = findUserById(friendId);
 
-        friendRepository.findByUserAndFriend(me, targetFriend).ifPresent(f -> {
+        if (friendRepository.existsFriendship(me, targetFriend)) {
             throw new FriendException("이미 신청 중이거나 친구 관계입니다.");
-        });
+        }
 
         Friend request = Friend.sendRequest(me, targetFriend);
         friendRepository.save(request);
@@ -73,8 +73,11 @@ public class FriendService {
         User friend = findUserById(friendId);
 
         // 양방향 모두 삭제
-        friendRepository.deleteByUserAndFriend(me, friend);
-        friendRepository.deleteByUserAndFriend(friend, me);
+        int deletedCount = friendRepository.deleteFriendship(me, friend);
+
+        if (deletedCount == 0) {
+            throw new FriendException("삭제할 친구 관계가 존재하지 않습니다.");
+        }
     }
 
     private User findUserById(Long userId) {
@@ -90,12 +93,19 @@ public class FriendService {
     }
 
     public List<FriendResponse> getFriends(Long userId, FriendStatus status) {
-        return friendRepository.findAllByUserIdOrFriendId(userId, userId).stream()
+        return friendRepository.findAllByUserIdOrFriendIdWithFetchJoin(userId).stream()
                 .filter(f -> f.getStatus() == status)
                 .map(f -> {
                     User targetUser = f.getUser().getId().equals(userId) ? f.getFriend() : f.getUser();
                     return FriendResponse.of(f, targetUser);
                 })
                 .collect(Collectors.toList());
+    }
+
+    public String getRelationStatus(Long userId, Long targetId) {
+        // 양방향 중 하나라도 있으면 해당 상태 반환, 없으면 "NONE"
+        return friendRepository.findStatusBetweenUsers(userId, targetId)
+                .map(Enum::name)
+                .orElse("NONE");
     }
 }
