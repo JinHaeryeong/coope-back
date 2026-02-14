@@ -53,7 +53,12 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.fail(e.getMessage()));
     }
 
-    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    @ExceptionHandler({
+            FriendException.class,
+            IllegalArgumentException.class,
+            IllegalStateException.class,
+            BadRequestException.class
+    })
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception e) {
         log.warn("비즈니스 로직 에러: {}", e.getMessage());
         return ResponseEntity.badRequest()

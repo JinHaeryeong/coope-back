@@ -26,10 +26,10 @@ public class User extends BaseTimeEntity {
     @Column
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private String name;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 20)
     private String nickname;
 
     private String userIcon;

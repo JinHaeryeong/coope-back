@@ -49,4 +49,32 @@ public class WorkspaceController {
 
         return ResponseEntity.ok(responses);
     }
+
+    @GetMapping("/{workspaceCode}")
+    public ResponseEntity<WorkspaceResponse> getWorkspace(
+            @PathVariable("workspaceCode") String workspaceCode,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        WorkspaceResponse response = workspaceService.getWorkspaceByCode(workspaceCode, userDetails.getUser());
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{workspaceCode}")
+    public ResponseEntity<WorkspaceResponse> update(
+            @PathVariable("workspaceCode") String workspaceCode,
+            @Valid @RequestBody WorkspaceWriteRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        WorkspaceResponse response = workspaceService.updateWorkspaceName(workspaceCode, request.getName(), userDetails.getUser());
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{workspaceCode}")
+    public ResponseEntity<Void> delete(
+            @PathVariable("workspaceCode") String workspaceCode,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        workspaceService.deleteWorkspace(workspaceCode, userDetails.getUser());
+        return ResponseEntity.noContent().build();
+    }
 }

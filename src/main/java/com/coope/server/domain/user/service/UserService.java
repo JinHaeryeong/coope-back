@@ -1,8 +1,10 @@
 package com.coope.server.domain.user.service;
 
 import com.coope.server.domain.auth.dto.LoginRequest;
+import com.coope.server.domain.friend.service.FriendService;
 import com.coope.server.domain.user.dto.SignupRequest;
 import com.coope.server.domain.user.dto.UserResponse;
+import com.coope.server.domain.user.dto.UserSearchResponse;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.error.exception.AuthenticationException;
@@ -22,8 +24,10 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileService fileService;
+    private final FriendService friendService;
 
-    @Transactional // 쓰기 작업이므로 별도의 트랜잭션 적용
+    // 쓰기 작업이므로 readOnly = true 설정을 덮어쓰기 위해 별도 선언
+    @Transactional
     public Long signup(SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
@@ -64,5 +68,14 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 계정입니다."));
         return UserResponse.of(user);
+    }
+
+    public UserSearchResponse searchUserByNickname(Long currentUserId, String nickname) {
+        User targetUser = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new UserNotFoundException("유저를 찾을 수 없습니다."));
+
+        String status = friendService.getRelationStatus(currentUserId, targetUser.getId());
+
+        return UserSearchResponse.from(targetUser, status);
     }
 }
