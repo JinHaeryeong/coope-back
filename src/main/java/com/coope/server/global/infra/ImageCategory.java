@@ -3,7 +3,8 @@ package com.coope.server.global.infra;
 public enum ImageCategory {
     NOTICE("notices"),
     COMMENT("comments"),
-    PROFILE("profiles");
+    PROFILE("profiles"),
+    CHAT("chats");
 
     private final String dir;
 

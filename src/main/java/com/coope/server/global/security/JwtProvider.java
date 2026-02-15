@@ -29,12 +29,13 @@ public class JwtProvider {
     }
 
     // Access Token 생성
-    public String createAccessToken(String email, String role) {
+    public String createAccessToken(Long id, String email, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getAccessTokenExpiration());
 
         return Jwts.builder()
                 .setSubject(email)
+                .claim("id", id)
                 .claim("role", role) // 유저 권한 정보 포함
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
@@ -62,6 +63,16 @@ public class JwtProvider {
         } catch (Exception e) {
             return false; // 만료되었거나 변조된 경우
         }
+    }
+
+    public String getUserId(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("id")
+                .toString();
     }
 
     // 토큰에서 이메일(Subject) 추출

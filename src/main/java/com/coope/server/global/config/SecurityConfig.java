@@ -76,6 +76,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers("/ws-stomp/**").permitAll()
                         .requestMatchers("/api/user/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/notices/write").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/notices/**").hasAuthority("ROLE_ADMIN")
@@ -86,6 +87,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/ai-chat/**").authenticated()
                         .requestMatchers("/api/user/search").authenticated()
                         .requestMatchers("/api/friends/**").authenticated()
+                        .requestMatchers("/api/chat/**").authenticated()
                         .anyRequest().authenticated()                // 그 외 요청은 인증 필요
                 )
                 .oauth2Login(oauth2 -> oauth2
