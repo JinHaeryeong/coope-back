@@ -4,11 +4,14 @@ import com.coope.server.global.error.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,16 +48,30 @@ public class LocalFileService implements FileService{
 
             Files.createDirectories(targetDir);
 
-            String extension = extractExtension(file);
+            String extension = extractExtension(file, category);
             String fileName = UUID.randomUUID() + extension;
 
             Path targetFile = targetDir.resolve(fileName).normalize();
             file.transferTo(targetFile.toFile());
 
-            return accessUrl + category.dir() + "/" + fileName;
+            return "http://localhost:8080" + accessUrl + category.dir() + "/" + fileName;
 
         } catch (IOException e) {
             throw new FileStorageException("파일 저장 실패", e);
+        }
+    }
+
+    @Override
+    public Resource loadAsResource(String fileUrl, ImageCategory category) {
+        try {
+            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            Path file = Paths.get(uploadDir).resolve(category.dir()).resolve(fileName);
+            Resource resource = new UrlResource(file.toUri());
+
+            if (resource.exists() || resource.isReadable()) return resource;
+            throw new RuntimeException("파일을 읽을 수 없습니다.");
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("파일 경로 오류", e);
         }
     }
 

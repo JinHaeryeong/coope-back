@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -28,7 +29,7 @@ public class S3FileService implements FileService {
     public String upload(MultipartFile file, ImageCategory category) {
         if (file == null || file.isEmpty()) return null;
 
-        String extension = extractExtension(file);
+        String extension = extractExtension(file, category);
         String fileName = UUID.randomUUID() + extension;
         String s3Key = category.dir() + "/" + fileName;
 
@@ -41,6 +42,12 @@ public class S3FileService implements FileService {
         } catch (IOException e) {
             throw new FileStorageException("S3 파일 업로드 실패", e);
         }
+    }
+
+    @Override
+    public Resource loadAsResource(String fileUrl, ImageCategory category) {
+        String s3Key = fileUrl.substring(fileUrl.lastIndexOf(".com/") + 5);
+        return s3Template.download(bucket, s3Key);
     }
 
     @Override

@@ -14,14 +14,15 @@ public class FriendResponse {
     private String nickname;
     private String userIcon;
     private FriendStatus status;
+    private Long roomId;
 
 
     public static FriendResponse of(Friend friend) {
         return FriendResponse.builder()
                 .id(friend.getId())
-                .friendId(friend.getFriend().getId())
-                .nickname(friend.getFriend().getNickname())
-                .userIcon(friend.getFriend().getUserIcon())
+                .friendId(friend.getUser().getId())
+                .nickname(friend.getUser().getNickname())
+                .userIcon(friend.getUser().getUserIcon())
                 .status(friend.getStatus())
                 .build();
     }
