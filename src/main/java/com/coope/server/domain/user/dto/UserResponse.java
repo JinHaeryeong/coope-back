@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
 public class UserResponse {
     private final Long id;
     private final String email;
@@ -13,7 +12,16 @@ public class UserResponse {
     private final String userIcon;
     private final String role;
 
-    public static UserResponse of(User user) {
+    @Builder
+    private UserResponse(Long id, String email, String nickname, String userIcon, String role) {
+        this.id = id;
+        this.email = email;
+        this.nickname = nickname;
+        this.userIcon = userIcon;
+        this.role = role;
+    }
+
+    public static UserResponse from(User user) {
         return UserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())

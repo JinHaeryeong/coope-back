@@ -31,7 +31,7 @@ public class DocumentService {
         List<Object[]> results = documentRepository.findAllByWorkspaceAndParentWithChildCheck(workspace.getId(), parentId);
 
         return results.stream()
-                .map(result -> DocumentResponse.from((Document) result[0], (Boolean) result[1]))
+                .map(result -> DocumentResponse.of((Document) result[0], (Boolean) result[1]))
                 .collect(Collectors.toList());
     }
 
@@ -54,7 +54,7 @@ public class DocumentService {
         Document document = request.toEntity(user, workspace, parentDocument);
         Document savedDocument = documentRepository.save(document);
 
-        return DocumentResponse.from(savedDocument, false);
+        return DocumentResponse.of(savedDocument, false);
     }
 
     @Transactional
@@ -74,7 +74,7 @@ public class DocumentService {
 
         document.restore();
 
-        return DocumentResponse.from(document, false);
+        return DocumentResponse.of(document, false);
     }
 
     @Transactional
@@ -93,7 +93,7 @@ public class DocumentService {
 
         return documentRepository.findAllTrashDocuments(workspace.getId())
                 .stream()
-                .map(doc -> DocumentResponse.from(doc, false))
+                .map(doc -> DocumentResponse.of(doc, false))
                 .collect(Collectors.toList());
     }
 
@@ -109,7 +109,7 @@ public class DocumentService {
 
         boolean hasChildren = documentRepository.existsByParentDocumentAndArchivedFalse(document);
 
-        return DocumentResponse.from(document, hasChildren);
+        return DocumentResponse.of(document, hasChildren);
     }
 
     // 헬퍼 메서드

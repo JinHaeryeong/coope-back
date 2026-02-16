@@ -5,12 +5,14 @@ import com.coope.server.domain.document.entity.Document;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.workspace.entity.Workspace;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DocumentCreateRequest {
+
     @NotBlank(message = "제목은 필수입니다.")
     private String title;
 
@@ -18,6 +20,7 @@ public class DocumentCreateRequest {
 
     @NotBlank(message = "워크스페이스 코드는 필수입니다.")
     private String workspaceCode;
+
     private String icon;
 
     public Document toEntity(User user, Workspace workspace, Document parentDocument) {

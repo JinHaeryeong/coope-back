@@ -31,7 +31,7 @@ public class AuthService {
         User user = userService.validateUser(request);
 
         // 토큰 생성
-        String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
+        String accessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.getRole().name());
         String refreshTokenValue = jwtProvider.createRefreshToken(user.getEmail());
 
         // 레디스에 Refresh Token 저장 (Key: 이메일, Value: 토큰값)
@@ -92,6 +92,6 @@ public class AuthService {
             throw new InvalidTokenException("존재하지 않는 사용자입니다. 다시 로그인해주세요.");
         }
 
-        return jwtProvider.createAccessToken(email, user.getRole().name());
+        return jwtProvider.createAccessToken(user.getId(), email, user.getRole().name());
     }
 }

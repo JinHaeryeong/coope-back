@@ -67,7 +67,7 @@ public class UserService {
     public UserResponse getMyInfo(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 계정입니다."));
-        return UserResponse.of(user);
+        return UserResponse.from(user);
     }
 
     public UserSearchResponse searchUserByNickname(Long currentUserId, String nickname) {
@@ -76,6 +76,6 @@ public class UserService {
 
         String status = friendService.getRelationStatus(currentUserId, targetUser.getId());
 
-        return UserSearchResponse.from(targetUser, status);
+        return UserSearchResponse.of(targetUser, status);
     }
 }

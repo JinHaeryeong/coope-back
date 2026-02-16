@@ -35,7 +35,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         User user = userDetails.getUser();
 
         // 토큰 생성 (기존 로직과 동일)
-        String accessToken = jwtProvider.createAccessToken(user.getEmail(), user.getRole().name());
+        String accessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.getRole().name());
         String refreshTokenValue = jwtProvider.createRefreshToken(user.getEmail());
 
         // Redis 저장

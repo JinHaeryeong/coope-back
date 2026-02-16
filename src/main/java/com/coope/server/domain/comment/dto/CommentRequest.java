@@ -5,20 +5,20 @@ import com.coope.server.domain.comment.entity.Comment;
 import com.coope.server.domain.notice.entity.Notice;
 import com.coope.server.domain.user.entity.User;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.springframework.web.multipart.MultipartFile;
 
-@Data
-@NoArgsConstructor
+@Getter
+@AllArgsConstructor // ModelAttribute가 생성자 바인딩을 할 수 있게 함
 public class CommentRequest {
 
     @NotBlank(message = "댓글 내용을 입력해주세요.")
-    private String content;
+    private final String content;
 
-    private MultipartFile file;
+    private final MultipartFile file;
 
-    private Boolean deleteImage;
+    private final Boolean deleteImage;
 
     public Comment toEntity(Notice notice, User user, String savedImageUrl) {
         return Comment.builder()

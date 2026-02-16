@@ -6,13 +6,21 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 
 @Getter
-@Builder
 public class NoticeResponse {
-    private Long id;
-    private String title;
-    private String author; // "관리자" 고정
-    private int views;
-    private LocalDateTime createdAt;
+    private final Long id;
+    private final String title;
+    private final String author;
+    private final int views;
+    private final LocalDateTime createdAt;
+
+    @Builder
+    private NoticeResponse(Long id, String title, String author, int views, LocalDateTime createdAt) {
+        this.id = id;
+        this.title = title;
+        this.author = author;
+        this.views = views;
+        this.createdAt = createdAt;
+    }
 
     public static NoticeResponse from(Notice notice) {
         return NoticeResponse.builder()

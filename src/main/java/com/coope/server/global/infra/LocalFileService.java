@@ -4,11 +4,15 @@ import com.coope.server.global.error.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,16 +49,34 @@ public class LocalFileService implements FileService{
 
             Files.createDirectories(targetDir);
 
-            String extension = extractExtension(file);
+            String extension = extractExtension(file, category);
             String fileName = UUID.randomUUID() + extension;
 
             Path targetFile = targetDir.resolve(fileName).normalize();
             file.transferTo(targetFile.toFile());
 
-            return accessUrl + category.dir() + "/" + fileName;
+            return "http://localhost:8080" + accessUrl + category.dir() + "/" + fileName;
 
         } catch (IOException e) {
             throw new FileStorageException("파일 저장 실패", e);
+        }
+    }
+
+    @Override
+    public Resource loadAsResource(String fileUrl, ImageCategory category) {
+        try {
+            String decodedUrl = java.net.URLDecoder.decode(fileUrl, StandardCharsets.UTF_8);
+            String fileName = decodedUrl.substring(decodedUrl.lastIndexOf("/") + 1);
+            Path file = Paths.get(uploadDir).resolve(category.dir()).resolve(fileName);
+            Resource resource = new UrlResource(file.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                return resource;
+            }
+
+            throw new FileStorageException("파일을 찾을 수 없거나 읽기 권한이 없습니다: " + fileName);
+        } catch (MalformedURLException e) {
+            throw new FileStorageException("파일 경로 형식이 올바르지 않습니다.", e);
         }
     }
 
@@ -63,7 +85,8 @@ public class LocalFileService implements FileService{
         if (imageUrl == null || imageUrl.isEmpty()) return false;
 
         try {
-            String fileName = Paths.get(imageUrl).getFileName().toString();
+            String decodedUrl = java.net.URLDecoder.decode(imageUrl, StandardCharsets.UTF_8);
+            String fileName = Paths.get(decodedUrl).getFileName().toString();
 
             if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
                 log.error("보안 위협 감지: 유효하지 않은 파일명 접근 시도 ({})", fileName);

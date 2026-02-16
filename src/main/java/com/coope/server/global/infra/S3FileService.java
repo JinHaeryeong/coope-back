@@ -8,8 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Component
@@ -28,7 +30,7 @@ public class S3FileService implements FileService {
     public String upload(MultipartFile file, ImageCategory category) {
         if (file == null || file.isEmpty()) return null;
 
-        String extension = extractExtension(file);
+        String extension = extractExtension(file, category);
         String fileName = UUID.randomUUID() + extension;
         String s3Key = category.dir() + "/" + fileName;
 
@@ -44,11 +46,29 @@ public class S3FileService implements FileService {
     }
 
     @Override
+    public Resource loadAsResource(String fileUrl, ImageCategory category) {
+        try {
+
+            String decodedUrl = java.net.URLDecoder.decode(fileUrl, StandardCharsets.UTF_8);
+            java.net.URI uri = new java.net.URI(decodedUrl);
+            String path = uri.getPath();
+
+            String s3Key = path.startsWith("/") ? path.substring(1) : path;
+            return s3Template.download(bucket, s3Key);
+        } catch (Exception e) {
+            throw new FileStorageException("유효하지 않은 S3 URL 형식입니다: " + fileUrl, e);
+        }
+    }
+
+    @Override
     public boolean deleteFile(String imageUrl, ImageCategory category) {
         if (imageUrl == null || imageUrl.isEmpty()) return true;
 
         try {
-            String s3Key = imageUrl.substring(imageUrl.lastIndexOf(".com/") + 5);
+            String decodedUrl = java.net.URLDecoder.decode(imageUrl, StandardCharsets.UTF_8);
+            java.net.URI uri = new java.net.URI(decodedUrl);
+            String path = uri.getPath();
+            String s3Key = path.startsWith("/") ? path.substring(1) : path;
 
             s3Template.deleteObject(bucket, s3Key);
             log.info("S3 파일 삭제 완료: {}", s3Key);

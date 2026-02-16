@@ -9,6 +9,7 @@ import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.error.exception.FriendException;
 import com.coope.server.global.error.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class FriendService {
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public void sendFriendRequest(Long currentUserId, Long friendId) {
@@ -37,6 +39,12 @@ public class FriendService {
 
         Friend request = Friend.sendRequest(me, targetFriend);
         friendRepository.save(request);
+
+        messagingTemplate.convertAndSendToUser(
+                friendId.toString(),
+                "/queue/friend-update",
+                "REFRESH"
+        );
     }
 
     // 친구 수락 (양방향 데이터 생성)
@@ -53,16 +61,22 @@ public class FriendService {
             throw new FriendException("이미 처리된 요청입니다.");
         }
 
-        request.updateStatus(FriendStatus.ACCEPTED);
+        request.accept();
 
         // 반대 방향 데이터 생성 (나 -> 상대방)
         createInverseFriendshipIfAbsent(me, friend);
+
+        messagingTemplate.convertAndSendToUser(
+                friendId.toString(),
+                "/queue/friend-update",
+                "REFRESH"
+        );
     }
 
     public List<FriendResponse> getReceivedRequests(Long currentUserId) {
         return friendRepository.findAllByFriendIdAndStatus(currentUserId, FriendStatus.PENDING)
                 .stream()
-                .map(FriendResponse::of)
+                .map(FriendResponse::from)
                 .collect(Collectors.toList());
     }
 
@@ -93,12 +107,8 @@ public class FriendService {
     }
 
     public List<FriendResponse> getFriends(Long userId, FriendStatus status) {
-        return friendRepository.findAllByUserIdOrFriendIdWithFetchJoin(userId).stream()
-                .filter(f -> f.getStatus() == status)
-                .map(f -> {
-                    User targetUser = f.getUser().getId().equals(userId) ? f.getFriend() : f.getUser();
-                    return FriendResponse.of(f, targetUser);
-                })
+        return friendRepository.findFriendsByMe(userId, status).stream()
+                .map(f -> FriendResponse.of(f, f.getFriend()))
                 .collect(Collectors.toList());
     }
 

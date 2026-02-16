@@ -7,15 +7,26 @@ import lombok.Getter;
 import java.time.format.DateTimeFormatter;
 
 @Getter
-@Builder
 public class CommentResponse {
-    private Long id;
-    private String content;
-    private String author;
-    private Long userId;
-    private String authorImgUrl;
-    private String imageUrl;
-    private String createdAt;
+    private final Long id;
+    private final String content;
+    private final String author;
+    private final Long userId;
+    private final String authorImgUrl;
+    private final String imageUrl;
+    private final String createdAt;
+
+    @Builder
+    private CommentResponse(Long id, String content, String author, Long userId,
+                            String authorImgUrl, String imageUrl, String createdAt) {
+        this.id = id;
+        this.content = content;
+        this.author = author;
+        this.userId = userId;
+        this.authorImgUrl = authorImgUrl;
+        this.imageUrl = imageUrl;
+        this.createdAt = createdAt;
+    }
 
     public static CommentResponse from(Comment comment) {
         return CommentResponse.builder()
