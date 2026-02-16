@@ -3,29 +3,24 @@ package com.coope.server.domain.notice.dto;
 import com.coope.server.domain.notice.entity.Notice;
 import com.coope.server.domain.user.entity.User;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.springframework.web.multipart.MultipartFile;
 
 
-@Data
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // 빈 생성자 막기
+@Getter
+@AllArgsConstructor
 public class NoticeWriteRequest {
 
     @NotBlank(message = "공지사항 제목은 필수입니다.")
-    private String title;
+    private final String title;
 
     @NotBlank(message = "공지사항 내용은 필수입니다.")
-    private String content;
+    private final String content;
 
-    private MultipartFile file;
-    private boolean deleteImage;
+    private final MultipartFile file;
+    private final Boolean deleteImage;
 
-    public NoticeWriteRequest(String title, String content) {
-        this.title = title;
-        this.content = content;
-    }
 
     public Notice toEntity(User user, String savedImageUrl) {
         return Notice.builder()

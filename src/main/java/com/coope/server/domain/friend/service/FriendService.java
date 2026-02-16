@@ -61,7 +61,7 @@ public class FriendService {
             throw new FriendException("이미 처리된 요청입니다.");
         }
 
-        request.updateStatus(FriendStatus.ACCEPTED);
+        request.accept();
 
         // 반대 방향 데이터 생성 (나 -> 상대방)
         createInverseFriendshipIfAbsent(me, friend);
@@ -76,7 +76,7 @@ public class FriendService {
     public List<FriendResponse> getReceivedRequests(Long currentUserId) {
         return friendRepository.findAllByFriendIdAndStatus(currentUserId, FriendStatus.PENDING)
                 .stream()
-                .map(FriendResponse::of)
+                .map(FriendResponse::from)
                 .collect(Collectors.toList());
     }
 

@@ -28,27 +28,37 @@ public class FilterChannelInterceptor implements ChannelInterceptor {
             return message;
         }
 
-        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+        StompCommand command = accessor.getCommand();
+
+        if (StompCommand.CONNECT.equals(command)) {
             String authToken = accessor.getFirstNativeHeader("Authorization");
-            log.info("웹소켓 연결 시도 - 헤더 확인: {}", authToken);
 
-            if (authToken != null && authToken.startsWith("Bearer ")) {
-                String token = authToken.substring(7);
+            if (authToken == null || !authToken.startsWith("Bearer ")) {
+                log.warn("웹소켓 인증 실패 - Authorization 헤더 누락 또는 형식 오류");
+                return null;
+            }
 
-                if (jwtProvider.validateToken(token)) {
-                    String userId = jwtProvider.getUserId(token);
-                    log.info("웹소켓 인증 성공 - 유저 PK: {}", userId);
+            String token = authToken.substring(7);
 
-                    accessor.setUser(new StompPrincipal(userId));
-                } else {
-                    log.warn("웹소켓 인증 실패 - 유효하지 않은 토큰");
-                }
+            if (!jwtProvider.validateToken(token)) {
+                log.warn("웹소켓 인증 실패 - 유효하지 않은 토큰");
+                return null;
+            }
+
+            String userId = jwtProvider.getUserId(token);
+            log.info("웹소켓 인증 성공 - 유저 PK: {}", userId);
+            accessor.setUser(new StompPrincipal(userId));
+
+        } else if (StompCommand.SUBSCRIBE.equals(command) || StompCommand.SEND.equals(command)) {
+            if (accessor.getUser() == null) {
+                log.warn("웹소켓 권한 오류 - 인증되지 않은 세션의 {} 요청", command);
+                return null;
             }
         }
+
         return message;
     }
 }
-
 // 웹소켓 세션 동안 유지될 유저 명찰
 class StompPrincipal implements Principal {
     private final String name;

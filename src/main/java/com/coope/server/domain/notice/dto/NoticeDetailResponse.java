@@ -8,17 +8,27 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 
 @Getter
-@Builder
 public class NoticeDetailResponse {
-    private Long id;
-    private String title;
-    private String content;
-    private String author;
-    private String imageUrl;
-    private Integer views;
-    private LocalDateTime createdAt;
+    private final Long id;
+    private final String title;
+    private final String content;
+    private final String author;
+    private final String imageUrl;
+    private final Integer views;
+    private final LocalDateTime createdAt;
 
-    // Entity -> DTO 변환 메서드 (정적 팩토리 메서드 패턴)
+    @Builder
+    private NoticeDetailResponse(Long id, String title, String content, String author,
+                                 String imageUrl, Integer views, LocalDateTime createdAt) {
+        this.id = id;
+        this.title = title;
+        this.content = content;
+        this.author = author;
+        this.imageUrl = imageUrl;
+        this.views = views;
+        this.createdAt = createdAt;
+    }
+
     public static NoticeDetailResponse from(Notice notice) {
         return NoticeDetailResponse.builder()
                 .id(notice.getId())

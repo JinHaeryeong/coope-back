@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Component
@@ -46,8 +47,17 @@ public class S3FileService implements FileService {
 
     @Override
     public Resource loadAsResource(String fileUrl, ImageCategory category) {
-        String s3Key = fileUrl.substring(fileUrl.lastIndexOf(".com/") + 5);
-        return s3Template.download(bucket, s3Key);
+        try {
+
+            String decodedUrl = java.net.URLDecoder.decode(fileUrl, StandardCharsets.UTF_8);
+            java.net.URI uri = new java.net.URI(decodedUrl);
+            String path = uri.getPath();
+
+            String s3Key = path.startsWith("/") ? path.substring(1) : path;
+            return s3Template.download(bucket, s3Key);
+        } catch (Exception e) {
+            throw new FileStorageException("유효하지 않은 S3 URL 형식입니다: " + fileUrl, e);
+        }
     }
 
     @Override
@@ -55,7 +65,10 @@ public class S3FileService implements FileService {
         if (imageUrl == null || imageUrl.isEmpty()) return true;
 
         try {
-            String s3Key = imageUrl.substring(imageUrl.lastIndexOf(".com/") + 5);
+            String decodedUrl = java.net.URLDecoder.decode(imageUrl, StandardCharsets.UTF_8);
+            java.net.URI uri = new java.net.URI(decodedUrl);
+            String path = uri.getPath();
+            String s3Key = path.startsWith("/") ? path.substring(1) : path;
 
             s3Template.deleteObject(bucket, s3Key);
             log.info("S3 파일 삭제 완료: {}", s3Key);

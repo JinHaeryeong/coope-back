@@ -1,16 +1,18 @@
 package com.coope.server.domain.chat.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ChatUploadResponse {
-    private String fileUrl;
-    private String fileName;
-    private String fileFormat;
+    private final String fileUrl;
+    private final String fileName;
+    private final String fileFormat;
+
+    @Builder
+    private ChatUploadResponse(String fileUrl, String fileName, String fileFormat) {
+        this.fileUrl = fileUrl;
+        this.fileName = fileName;
+        this.fileFormat = fileFormat;
+    }
 }

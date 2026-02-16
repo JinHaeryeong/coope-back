@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -60,13 +60,17 @@ public class ChatController {
         return ResponseEntity.ok(room);
     }
 
+
     @GetMapping("/room/{roomId}/messages")
-    public ResponseEntity<List<MessageResponse>> getChatMessages(
+    public ResponseEntity<Slice<MessageResponse>> getChatMessages(
             @PathVariable Long roomId,
-            @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PageableDefault(size = 20) Pageable pageable
     ) {
         Long userId = userDetails.getUser().getId();
-        List<MessageResponse> messages = chatService.getChatMessages(roomId, userId);
+
+        Slice<MessageResponse> messages = chatService.getChatMessages(roomId, userId, pageable);
+
         return ResponseEntity.ok(messages);
     }
 

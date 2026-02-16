@@ -7,30 +7,29 @@ import lombok.*; // NoArgsConstructor, AllArgsConstructor 추가를 위해
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.constraints.*;
 
-@Data
-@NoArgsConstructor
+@Getter
 @AllArgsConstructor
 public class SignupRequest {
 
     @NotBlank
     @Email(message = "이메일 형식이 올바르지 않습니다.")
-    private String email; // final 제거
+    private final String email;
 
     @NotBlank @Size(min = 8)
-    private String password; // final 제거
+    private final String password;
 
     @NotBlank
     @Size(min = 2, max = 20, message = "이름은 2~20자 이내여야 합니다.")
-    private String name; // final 제거
+    private final String name;
 
     @NotBlank
     @Pattern(
-            regexp = "^[a-zA-Z0-9가-힣 ]{2,20}$",
+            regexp = "^[a-zA-Z0-9가-힣]{2,20}$",
             message = "닉네임은 특수문자를 제외한 2~20자 이내여야 합니다."
     )
-    private String nickname; // final 제거
+    private final String nickname;
 
-    private MultipartFile userIcon; // final 제거
+    private final MultipartFile userIcon;
 
     // 서비스에서 호출할 엔티티 변환 메서드
     public User toEntity(String encodedPassword, String profileImageUrl) {

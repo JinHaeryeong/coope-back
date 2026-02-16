@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -64,14 +65,18 @@ public class LocalFileService implements FileService{
     @Override
     public Resource loadAsResource(String fileUrl, ImageCategory category) {
         try {
-            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            String decodedUrl = java.net.URLDecoder.decode(fileUrl, StandardCharsets.UTF_8);
+            String fileName = decodedUrl.substring(decodedUrl.lastIndexOf("/") + 1);
             Path file = Paths.get(uploadDir).resolve(category.dir()).resolve(fileName);
             Resource resource = new UrlResource(file.toUri());
 
-            if (resource.exists() || resource.isReadable()) return resource;
-            throw new RuntimeException("파일을 읽을 수 없습니다.");
+            if (resource.exists() && resource.isReadable()) {
+                return resource;
+            }
+
+            throw new FileStorageException("파일을 찾을 수 없거나 읽기 권한이 없습니다: " + fileName);
         } catch (MalformedURLException e) {
-            throw new RuntimeException("파일 경로 오류", e);
+            throw new FileStorageException("파일 경로 형식이 올바르지 않습니다.", e);
         }
     }
 
@@ -80,7 +85,8 @@ public class LocalFileService implements FileService{
         if (imageUrl == null || imageUrl.isEmpty()) return false;
 
         try {
-            String fileName = Paths.get(imageUrl).getFileName().toString();
+            String decodedUrl = java.net.URLDecoder.decode(imageUrl, StandardCharsets.UTF_8);
+            String fileName = Paths.get(decodedUrl).getFileName().toString();
 
             if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
                 log.error("보안 위협 감지: 유효하지 않은 파일명 접근 시도 ({})", fileName);

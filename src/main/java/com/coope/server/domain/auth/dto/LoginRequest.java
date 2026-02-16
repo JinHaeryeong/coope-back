@@ -4,7 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*; // NoArgsConstructor, AllArgsConstructor 추가
 
-@Data
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginRequest {

@@ -55,9 +55,10 @@ public class Friend extends BaseTimeEntity {
                 .status(FriendStatus.PENDING)
                 .build();
     }
-
-    // 상태 변경 편의 메서드
-    public void updateStatus(FriendStatus newStatus) {
-        this.status = newStatus;
+    public void accept() {
+        if (this.status != FriendStatus.PENDING) {
+            throw new IllegalStateException("대기 중인 요청만 수락할 수 있습니다.");
+        }
+        this.status = FriendStatus.ACCEPTED;
     }
 }

@@ -13,18 +13,7 @@ public interface FileService {
     Resource loadAsResource(String fileUrl, ImageCategory category);
 
     default String extractExtension(MultipartFile file, ImageCategory category) {
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null) {
-            throw new IllegalArgumentException("파일명이 존재하지 않습니다.");
-        }
-
-        String pureFileName = originalFilename.replaceAll("^.*[\\\\/]", "");
-        int dotIndex = pureFileName.lastIndexOf('.');
-        if (dotIndex == -1 || dotIndex == pureFileName.length() - 1) {
-            throw new IllegalArgumentException("확장자가 없는 파일은 업로드할 수 없습니다.");
-        }
-
-        String extension = pureFileName.substring(dotIndex).toLowerCase();
+        String extension = getString(file);
 
         Set<String> imageExtensions = Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp");
 
@@ -42,5 +31,21 @@ public interface FileService {
         }
 
         return extension;
+    }
+
+    private static String getString(MultipartFile file) {
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new IllegalArgumentException("파일명이 존재하지 않습니다.");
+        }
+
+        String pureFileName = originalFilename.replaceAll("^.*[\\\\/]", "");
+        int dotIndex = pureFileName.lastIndexOf('.');
+        if (dotIndex == -1 || dotIndex == pureFileName.length() - 1) {
+            throw new IllegalArgumentException("확장자가 없는 파일은 업로드할 수 없습니다.");
+        }
+
+
+        return pureFileName.substring(dotIndex).toLowerCase();
     }
 }

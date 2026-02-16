@@ -73,7 +73,7 @@ public class NoticeService {
 
         String currentImageUrl = notice.getImageUrl();
 
-        if (requestDto.isDeleteImage() || (requestDto.getFile() != null && !requestDto.getFile().isEmpty())) {
+        if (Boolean.TRUE.equals(requestDto.getDeleteImage()) || (requestDto.getFile() != null && !requestDto.getFile().isEmpty())) {
             if (currentImageUrl != null) {
                 boolean isDeleted = fileService.deleteFile(currentImageUrl, ImageCategory.NOTICE);
                 if (!isDeleted) {

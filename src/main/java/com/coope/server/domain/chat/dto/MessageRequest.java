@@ -4,11 +4,13 @@ import com.coope.server.domain.chat.entity.ChatRoom;
 import com.coope.server.domain.chat.entity.Message;
 import com.coope.server.domain.user.entity.User;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Data
+@Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class MessageRequest {
 
     private Long roomId;

@@ -5,14 +5,21 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
 public class UserSearchResponse {
     private final Long id;
     private final String nickname;
     private final String userIcon;
     private final String status;
 
-    public static UserSearchResponse from(User user, String status) {
+    @Builder
+    private UserSearchResponse(Long id, String nickname, String userIcon, String status) {
+        this.id = id;
+        this.nickname = nickname;
+        this.userIcon = userIcon;
+        this.status = status;
+    }
+
+    public static UserSearchResponse of(User user, String status) {
         return UserSearchResponse.builder()
                 .id(user.getId())
                 .nickname(user.getNickname())

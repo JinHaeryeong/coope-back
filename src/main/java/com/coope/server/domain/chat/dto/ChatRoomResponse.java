@@ -4,14 +4,18 @@ import com.coope.server.domain.chat.entity.ChatRoom;
 import lombok.Builder;
 import lombok.Getter;
 
-// ChatRoomResponse.java
 @Getter
-@Builder
 public class ChatRoomResponse {
-    private Long roomId;
-    private String title;
-    private String type; // INDIVIDUAL, GROUP
+    private final Long roomId;
+    private final String title;
+    private final String type;
 
+    @Builder
+    private ChatRoomResponse(Long roomId, String title, String type) {
+        this.roomId = roomId;
+        this.title = title;
+        this.type = type;
+    }
     public static ChatRoomResponse from(ChatRoom room) {
         return ChatRoomResponse.builder()
                 .roomId(room.getId())

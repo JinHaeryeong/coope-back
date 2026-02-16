@@ -4,7 +4,6 @@ import com.coope.server.domain.chat.dto.ChatListResponse;
 import com.coope.server.domain.chat.dto.ChatRoomResponse;
 import com.coope.server.domain.chat.dto.MessageRequest;
 import com.coope.server.domain.chat.dto.MessageResponse;
-import com.coope.server.domain.chat.entity.ChatParticipant;
 import com.coope.server.domain.chat.entity.ChatRoom;
 import com.coope.server.domain.chat.entity.Message;
 import com.coope.server.domain.chat.repository.ChatParticipantRepository;
@@ -17,6 +16,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,17 +43,17 @@ public class ChatService {
         ChatRoom room = participantRepository.find1on1RoomBetween(myId, friendId)
                 .orElseGet(() -> {
                     User me = userRepository.findById(myId)
-                            .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
+                            .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
                     User friend = userRepository.findById(friendId)
-                            .orElseThrow(() -> new RuntimeException("친구를 찾을 수 없습니다."));
+                            .orElseThrow(() -> new EntityNotFoundException("친구를 찾을 수 없습니다."));
 
-                    ChatRoom newRoom = ChatRoom.createIndividual(friend.getNickname() + ", " + me.getNickname() + "의 대화");
-                    chatRoomRepository.save(newRoom);
+                    ChatRoom newRoom = ChatRoom.createIndividual(
+                            friend.getNickname() + ", " + me.getNickname() + "의 대화",
+                            me,
+                            friend
+                    );
 
-                    participantRepository.save(ChatParticipant.builder().chatRoom(newRoom).user(me).build());
-                    participantRepository.save(ChatParticipant.builder().chatRoom(newRoom).user(friend).build());
-
-                    return newRoom;
+                    return chatRoomRepository.save(newRoom);
                 });
 
         return ChatRoomResponse.from(room);
@@ -63,61 +63,59 @@ public class ChatService {
     public ChatRoomResponse createGroupRoom(Long creatorId, List<Long> friendIds, String roomName) {
         Set<Long> participantIds = new HashSet<>(friendIds);
         participantIds.add(creatorId);
+        List<User> users = userRepository.findAllById(participantIds);
 
-        List<User> participants = userRepository.findAllById(participantIds);
+        String finalTitle = determineTitle(roomName, users);
 
-        String finalTitle = roomName;
-        if (roomName == null || roomName.trim().isEmpty()) {
-            finalTitle = participants.stream()
-                    .map(User::getNickname)
-                    .limit(3)
-                    .collect(Collectors.joining(", ")) + (participantIds.size() > 3 ? " 외 " + (participantIds.size() - 3) + "명" : "의 대화");
-        }
+        ChatRoom groupRoom = ChatRoom.createGroup(finalTitle, users);
 
-        ChatRoom groupRoom = ChatRoom.createGroup(finalTitle);
         chatRoomRepository.save(groupRoom);
-
-        List<ChatParticipant> chatParticipants = participants.stream()
-                .map(user -> ChatParticipant.of(groupRoom, user))
-                .toList();
-
-        participantRepository.saveAll(chatParticipants);
 
         return ChatRoomResponse.from(groupRoom);
     }
 
 
-    public List<MessageResponse> getChatMessages(Long roomId, Long userId) {
+    public Slice<MessageResponse> getChatMessages(Long roomId, Long userId, Pageable pageable) {
         if (!participantRepository.existsByChatRoomIdAndUserId(roomId, userId)) {
             throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
         }
 
-        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다"));
-
-        return messageRepository.findByChatRoomWithUser(chatRoom)
-                .stream()
-                .map(MessageResponse::of)
-                .collect(Collectors.toList());
+        return messageRepository.findByChatRoomId(roomId, pageable)
+                .map(MessageResponse::from);
     }
 
     @Transactional
-    public MessageResponse saveMessage(MessageRequest request) {
+    public MessageResponse saveMessage(MessageRequest request, Long authenticatedUserId) {
+        if (!participantRepository.existsByChatRoomIdAndUserId(request.getRoomId(), authenticatedUserId)) {
+            throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
+        }
         ChatRoom chatRoom = chatRoomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
 
-        User sender = userRepository.findById(request.getSenderId())
+        User sender = userRepository.findById(authenticatedUserId)
                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
         Message message = request.toEntity(chatRoom, sender);
         messageRepository.save(message);
 
-        return MessageResponse.of(message);
+        return MessageResponse.from(message);
     }
 
     public Page<ChatListResponse> getMyChatRooms(Long userId, Pageable pageable) {
         Page<ChatRoom> rooms = participantRepository.findAllRoomsByUserId(userId, pageable);
 
-        return rooms.map(ChatListResponse::of);
+        return rooms.map(ChatListResponse::from);
+    }
+
+    private String determineTitle(String roomName, List<User> participants) {
+        if (roomName != null && !roomName.trim().isEmpty()) {
+            return roomName;
+        }
+
+        return participants.stream()
+                .map(User::getNickname)
+                .limit(3)
+                .collect(Collectors.joining(", "))
+                + (participants.size() > 3 ? " 외 " + (participants.size() - 3) + "명" : "의 대화");
     }
 }
