@@ -8,6 +8,7 @@ import lombok.Getter;
 public class DocumentResponse {
     private final Long id;
     private final String title;
+    private final String content;
     private final String icon;
     private final String coverImage;
     private final Long parentId;
@@ -17,12 +18,13 @@ public class DocumentResponse {
     private final boolean hasChildren;
 
     @Builder
-    private DocumentResponse(Long id, String title, String icon, String coverImage,
+    private DocumentResponse(Long id, String title,String content, String icon, String coverImage,
                              Long parentId, boolean archived, boolean published,
                              String lastEditedBy, boolean hasChildren) {
         this.id = id;
         this.title = title;
         this.icon = icon;
+        this.content = content;
         this.coverImage = coverImage;
         this.parentId = parentId;
         this.archived = archived;
@@ -35,6 +37,7 @@ public class DocumentResponse {
         return DocumentResponse.builder()
                 .id(document.getId())
                 .title(document.getTitle())
+                .content(document.getContent())
                 .icon(document.getIcon())
                 .coverImage(document.getCoverImage())
                 .parentId(document.getParentDocument() != null ? document.getParentDocument().getId() : null)
