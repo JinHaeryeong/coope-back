@@ -17,9 +17,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +35,7 @@ public class ChatService {
     private final ChatParticipantRepository participantRepository;
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
+    private final org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
 
     @Transactional
     public ChatRoomResponse createOrGet1on1Room(Long myId, Long friendId) {
@@ -80,8 +83,25 @@ public class ChatService {
             throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
         }
 
-        return messageRepository.findByChatRoomId(roomId, pageable)
+        String cacheKey = "chat:room:" + roomId + ":page:" + pageable.getPageNumber();
+
+        //  DB 조회 전 Redis를 먼저
+        @SuppressWarnings("unchecked")
+        List<MessageResponse> cachedContent = (List<MessageResponse>) redisTemplate.opsForValue().get(cacheKey);
+
+        if (cachedContent != null) {
+            return new SliceImpl<>(cachedContent, pageable, true);
+        }
+
+        // 캐시가 없을 때만 DB를 조회
+        Slice<MessageResponse> messages = messageRepository.findByChatRoomId(roomId, pageable)
                 .map(MessageResponse::from);
+
+        if (!messages.isEmpty()) {
+            redisTemplate.opsForValue().set(cacheKey, messages.getContent(), Duration.ofMinutes(10));
+        }
+
+        return messages;
     }
 
     @Transactional

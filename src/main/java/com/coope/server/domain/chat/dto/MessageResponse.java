@@ -3,21 +3,23 @@ package com.coope.server.domain.chat.dto;
 import com.coope.server.domain.chat.entity.Message;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
+@NoArgsConstructor
 public class MessageResponse {
-    private final Long id;
-    private final Long roomId;
-    private final Long senderId;
-    private final String senderNickname;
-    private final String senderProfile;
-    private final String content;
-    private final String fileUrl;
-    private final String fileName;
-    private final String fileFormat;
-    private final LocalDateTime createdAt;
+    private Long id;
+    private Long roomId;
+    private Long senderId;
+    private String senderNickname;
+    private String senderProfile;
+    private String content;
+    private String fileUrl;
+    private String fileName;
+    private String fileFormat;
+    private LocalDateTime createdAt;
 
     @Builder
     private MessageResponse(Long id, Long roomId, Long senderId, String senderNickname, String senderProfile, String content, String fileUrl, String fileName, String fileFormat, LocalDateTime createdAt) {
