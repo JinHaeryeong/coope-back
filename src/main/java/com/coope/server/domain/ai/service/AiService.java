@@ -3,6 +3,7 @@ package com.coope.server.domain.ai.service;
 import com.coope.server.domain.ai.dto.VoiceProcessResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -18,21 +19,27 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AiService {
 
     @Value("${openai.api.key}")
     private String apiKey;
 
     private final WebClient.Builder webClientBuilder;
-
     private final ObjectMapper objectMapper;
 
+    private static final long MAX_FILE_SIZE = 25 * 1024 * 1024;
+    private static final List<String> SUPPORTED_EXTENSIONS = List.of("webm", "mp3", "wav", "m4a");
+
     public VoiceProcessResponse processVoice(MultipartFile file) {
+        validateFile(file);
         WebClient webClient = webClientBuilder.baseUrl("https://api.openai.com/v1").build();
+
+        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "audio.webm";
 
         // STT (Whisper API) 호출
         MultipartBodyBuilder builder = new MultipartBodyBuilder();
-        builder.part("file", file.getResource()).filename("audio.webm");
+        builder.part("file", file.getResource()).filename(filename);
         builder.part("model", "whisper-1");
         builder.part("language", "ko");
         builder.part("response_format", "text");
@@ -45,10 +52,10 @@ public class AiService {
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response ->
                         response.bodyToMono(String.class).flatMap(errorBody ->
-                                Mono.error(new RuntimeException("OpenAI API 에러: " + errorBody)))
+                                Mono.error(new com.coope.server.global.error.exception.BadRequestException("OpenAI API 에러: " + errorBody)))
                 )
                 .bodyToMono(String.class)
-                .block();
+                .block(java.time.Duration.ofSeconds(60));
 
         java.util.Objects.requireNonNull(rawTranscript, "STT 결과가 null입니다.");
 
@@ -72,38 +79,58 @@ public class AiService {
                 "temperature", 0.3
         );
 
-        Map result = webClient.post()
+        Map<String, Object> result = webClient.post()
                 .uri("/chat/completions")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + apiKey)
                 .bodyValue(requestBody)
                 .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
+                .block(java.time.Duration.ofSeconds(60));
 
         if (result == null || !result.containsKey("choices")) {
             return new VoiceProcessResponse(rawTranscript, "AI 요약 서비스 응답 오류");
         }
         // GPT 응답 파싱
-        List<?> choices = (List<?>) result.get("choices");
-        if (choices == null || choices.isEmpty()) {
-            return new VoiceProcessResponse(rawTranscript, "AI 요약 생성 실패");
+        Object choicesObj = result.get("choices");
+        if (!(choicesObj instanceof List<?> choices) || choices.isEmpty()) {
+            return new VoiceProcessResponse(rawTranscript, "AI 요약 생성 실패 (choices 누락)");
         }
-        Map<?, ?> choice = (Map<?, ?>) choices.getFirst();
-        Map<?, ?> message = (Map<?, ?>) choice.get("message");
-        String content = (String) message.get("content");
+        Object firstChoiceObj = choices.get(0); // 인텔리제이에선 getFirst 쓰라고하지만 java 21보다 낮을땐 안되니까 get(0)으로
+        if (!(firstChoiceObj instanceof Map<?, ?> choice)) {
+            return new VoiceProcessResponse(rawTranscript, "AI 응답 형식이 올바르지 않습니다.");
+        }
+        Object messageObj = choice.get("message");
+        if (!(messageObj instanceof Map<?, ?> message)) {
+            return new VoiceProcessResponse(rawTranscript, "AI 메시지 데이터가 누락되었습니다.");
+        }
+        Object contentObj = message.get("content");
+        if (!(contentObj instanceof String content)) {
+            return new VoiceProcessResponse(rawTranscript, "AI 요약 내용이 비어있습니다.");
+        }
 
         try {
             Map<String, String> resultMap = objectMapper.readValue(content, new com.fasterxml.jackson.core.type.TypeReference<>() {});
-
-            // 프론트엔드 형식에 맞춰 리턴
-            return new VoiceProcessResponse(
-                    resultMap.get("labeled_transcript"), // 화자가 표시된 버전
-                    resultMap.get("summary")              // 요약본
-            );
+            return new VoiceProcessResponse(resultMap.get("labeled_transcript"), resultMap.get("summary"));
         } catch (Exception e) {
-            // 파싱 실패 시 원본이라도 리턴
-            return new VoiceProcessResponse(rawTranscript, "요약 생성 실패");
+            log.error("AI 응답 파싱 중 오류 발생: {}", e.getMessage(), e);
+            return new VoiceProcessResponse(rawTranscript, "요약 파싱 실패");
+        }
+    }
+
+    private void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) throw new IllegalArgumentException("파일이 비어있습니다.");
+        if (file.getSize() > MAX_FILE_SIZE) throw new IllegalArgumentException("파일 크기 초과 (최대 25MB)");
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || !originalFilename.contains(".")) {
+            throw new IllegalArgumentException("유효하지 않은 파일 형식입니다.");
+        }
+
+        String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+
+        if (!SUPPORTED_EXTENSIONS.contains(extension)) {
+            throw new IllegalArgumentException("지원하지 않는 확장자입니다: " + extension +
+                    " (지원 목록: " + String.join(", ", SUPPORTED_EXTENSIONS) + ")");
         }
     }
 }

@@ -53,6 +53,13 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.fail(e.getMessage()));
     }
 
+    @ExceptionHandler(AiServiceException.class)
+    public ResponseEntity<ErrorResponse> handleAiService(AiServiceException e) {
+        log.error("AI 서비스 에러: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR) // 외부 API 장애는 500이 적절
+                .body(ErrorResponse.fail(e.getMessage()));
+    }
+
     @ExceptionHandler({
             FriendException.class,
             IllegalArgumentException.class,
