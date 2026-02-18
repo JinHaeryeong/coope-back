@@ -23,10 +23,13 @@ public class DocumentCreateRequest {
 
     private String icon;
 
+    private String content;
+
     public Document toEntity(User user, Workspace workspace, Document parentDocument) {
         return Document.builder()
                 .title(this.title)
                 .icon(this.icon)
+                .content(this.content)
                 .user(user)
                 .workspace(workspace)
                 .parentDocument(parentDocument)
