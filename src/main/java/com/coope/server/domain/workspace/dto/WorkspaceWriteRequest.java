@@ -12,7 +12,7 @@ import lombok.Getter;
 public class WorkspaceWriteRequest {
 
     @NotBlank(message = "워크스페이스 이름은 필수입니다.")
-    @Size(max = 20, message = "이름은 20자 이내로 입력해주세요.")
+    @Size(max = 50, message = "이름은 50자 이내로 입력해주세요.")
     private String name;
 
     public Workspace toEntity(User user, String inviteCode) {
