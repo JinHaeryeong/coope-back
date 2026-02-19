@@ -12,14 +12,18 @@ import com.coope.server.domain.chat.repository.MessageRepository;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.error.exception.AccessDeniedException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 
 import java.time.Duration;
 import java.util.HashSet;
@@ -35,7 +39,9 @@ public class ChatService {
     private final ChatParticipantRepository participantRepository;
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
-    private final org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
+    private final RedisTemplate<String, String> redisTemplate;
+
 
     @Transactional
     public ChatRoomResponse createOrGet1on1Room(Long myId, Long friendId) {
@@ -78,31 +84,68 @@ public class ChatService {
     }
 
 
-    public Slice<MessageResponse> getChatMessages(Long roomId, Long userId, Pageable pageable) {
-        if (!participantRepository.existsByChatRoomIdAndUserId(roomId, userId)) {
-            throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
+    public Slice<MessageResponse> getChatMessages(
+            Long roomId,
+            Long userId,
+            Pageable pageable) {
+
+        String authKey = "chat:auth:" + roomId + ":" + userId;
+
+        String cachedAuth = redisTemplate.opsForValue().get(authKey);
+
+        if (cachedAuth == null) {
+            boolean exists = participantRepository
+                    .existsByChatRoomIdAndUserId(roomId, userId);
+
+            if (!exists) {
+                throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
+            }
+
+            // 권한 30분 캐싱
+            redisTemplate.opsForValue()
+                    .set(authKey, "true", Duration.ofMinutes(30));
         }
 
         String cacheKey = "chat:room:" + roomId + ":page:" + pageable.getPageNumber();
 
-        //  DB 조회 전 Redis를 먼저
-        @SuppressWarnings("unchecked")
-        List<MessageResponse> cachedContent = (List<MessageResponse>) redisTemplate.opsForValue().get(cacheKey);
+        String cachedJson = redisTemplate.opsForValue().get(cacheKey);
 
-        if (cachedContent != null) {
-            return new SliceImpl<>(cachedContent, pageable, true);
+        if (cachedJson != null) {
+            try {
+                List<MessageResponse> cachedContent =
+                        objectMapper.readValue(
+                                cachedJson,
+                                new TypeReference<>() {}
+                        );
+
+                // 실제 서비스 환경에서는 Slice의 hasNext 값도 함께 캐싱해야
+                // 무한 스크롤에서 불필요한 추가 API 호출을 방지할 수 있음
+                return new SliceImpl<>(cachedContent, pageable, true);
+
+            } catch (Exception e) {
+                // 캐시 깨졌으면 그냥 삭제하고 DB 타게
+                redisTemplate.delete(cacheKey);
+            }
         }
 
-        // 캐시가 없을 때만 DB를 조회
-        Slice<MessageResponse> messages = messageRepository.findByChatRoomId(roomId, pageable)
-                .map(MessageResponse::from);
+        Slice<MessageResponse> messages =
+                messageRepository.findByChatRoomId(roomId, pageable)
+                        .map(MessageResponse::from);
 
         if (!messages.isEmpty()) {
-            redisTemplate.opsForValue().set(cacheKey, messages.getContent(), Duration.ofMinutes(10));
+            try {
+                String json = objectMapper.writeValueAsString(messages.getContent());
+                redisTemplate.opsForValue()
+                        .set(cacheKey, json, Duration.ofMinutes(10));
+            } catch (Exception ignored) {
+            }
         }
+
 
         return messages;
     }
+
+
 
     @Transactional
     public MessageResponse saveMessage(MessageRequest request, Long authenticatedUserId) {
@@ -117,6 +160,9 @@ public class ChatService {
 
         Message message = request.toEntity(chatRoom, sender);
         messageRepository.save(message);
+
+        String cacheKey = "chat:room:" + request.getRoomId() + ":page:0";
+        redisTemplate.delete(cacheKey);
 
         return MessageResponse.from(message);
     }
