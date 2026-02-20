@@ -40,4 +40,17 @@ public class NoticeDetailResponse {
                 .createdAt(notice.getCreatedAt())
                 .build();
     }
+
+    public static NoticeDetailResponse from(Notice notice, int redisViews) {
+        return NoticeDetailResponse.builder()
+                .id(notice.getId())
+                .title(notice.getTitle())
+                .content(notice.getContent())
+                .imageUrl(notice.getImageUrl())
+                .author("관리자")
+                // DB 조회수 + Redis 조회수 합산!
+                .views(notice.getViews() + redisViews)
+                .createdAt(notice.getCreatedAt())
+                .build();
+    }
 }

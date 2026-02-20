@@ -8,7 +8,8 @@ import org.springframework.data.repository.query.Param;
 
 
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
+
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE Notice n SET n.views = n.views + 1 WHERE n.id = :id")
-    int updateViews(@Param("id") Long id);
+    @Query("UPDATE Notice n SET n.views = n.views + :views WHERE n.id = :id")
+    int updateViews(@Param("id") Long id, @Param("views") int views);
 }
