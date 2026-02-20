@@ -20,6 +20,11 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     @Query("SELECT m FROM Message m " +
             "JOIN FETCH m.user " +
             "WHERE m.chatRoom.id = :roomId " +
+            "AND (:lastMessageId IS NULL OR m.id < :lastMessageId) " +
             "ORDER BY m.id DESC")
-    Slice<Message> findByChatRoomId(@Param("roomId") Long roomId, Pageable pageable);
+    Slice<Message> findByChatRoomIdCursor(
+            @Param("roomId") Long roomId,
+            @Param("lastMessageId") Long lastMessageId,
+            Pageable pageable
+    );
 }
