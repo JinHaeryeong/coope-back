@@ -87,6 +87,7 @@ public class ChatService {
     public Slice<MessageResponse> getChatMessages(
             Long roomId,
             Long userId,
+            Long lastMessageId,
             Pageable pageable) {
 
         boolean exists = participantRepository.existsByChatRoomIdAndUserId(roomId, userId);
@@ -94,7 +95,7 @@ public class ChatService {
             throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
         }
 
-        return messageRepository.findByChatRoomId(roomId, pageable)
+        return messageRepository.findByChatRoomIdCursor(roomId, lastMessageId, pageable)
                 .map(MessageResponse::from);
     }
 

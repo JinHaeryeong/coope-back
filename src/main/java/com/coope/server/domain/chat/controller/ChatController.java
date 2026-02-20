@@ -64,12 +64,13 @@ public class ChatController {
     @GetMapping("/room/{roomId}/messages")
     public ResponseEntity<Slice<MessageResponse>> getChatMessages(
             @PathVariable Long roomId,
+            @RequestParam(required = false) Long lastMessageId,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PageableDefault(size = 20) Pageable pageable
     ) {
         Long userId = userDetails.getUser().getId();
 
-        Slice<MessageResponse> messages = chatService.getChatMessages(roomId, userId, pageable);
+        Slice<MessageResponse> messages = chatService.getChatMessages(roomId, userId, lastMessageId, pageable);
 
         return ResponseEntity.ok(messages);
     }
