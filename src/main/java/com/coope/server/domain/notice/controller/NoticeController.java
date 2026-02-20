@@ -27,7 +27,7 @@ public class NoticeController {
 
     @GetMapping("/all")
     public ResponseEntity<Page<NoticeResponse>> getAllNotices(
-            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<NoticeResponse> noticePage = noticeService.getAllNotices(pageable);
         return ResponseEntity.ok(noticePage);
@@ -43,7 +43,7 @@ public class NoticeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<NoticeResponse> updateNotice(
             @PathVariable("id") Long id,
             @Valid @ModelAttribute NoticeWriteRequest request,
