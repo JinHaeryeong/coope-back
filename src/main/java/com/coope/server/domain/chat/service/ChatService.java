@@ -89,60 +89,13 @@ public class ChatService {
             Long userId,
             Pageable pageable) {
 
-        String authKey = "chat:auth:" + roomId + ":" + userId;
-
-        String cachedAuth = redisTemplate.opsForValue().get(authKey);
-
-        if (cachedAuth == null) {
-            boolean exists = participantRepository
-                    .existsByChatRoomIdAndUserId(roomId, userId);
-
-            if (!exists) {
-                throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
-            }
-
-            // 권한 30분 캐싱
-            redisTemplate.opsForValue()
-                    .set(authKey, "true", Duration.ofMinutes(30));
+        boolean exists = participantRepository.existsByChatRoomIdAndUserId(roomId, userId);
+        if (!exists) {
+            throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
         }
 
-        String cacheKey = "chat:room:" + roomId + ":page:" + pageable.getPageNumber();
-
-        String cachedJson = redisTemplate.opsForValue().get(cacheKey);
-
-        if (cachedJson != null) {
-            try {
-                List<MessageResponse> cachedContent =
-                        objectMapper.readValue(
-                                cachedJson,
-                                new TypeReference<>() {}
-                        );
-
-                // 실제 서비스 환경에서는 Slice의 hasNext 값도 함께 캐싱해야
-                // 무한 스크롤에서 불필요한 추가 API 호출을 방지할 수 있음
-                return new SliceImpl<>(cachedContent, pageable, true);
-
-            } catch (Exception e) {
-                // 캐시 깨졌으면 그냥 삭제하고 DB 타게
-                redisTemplate.delete(cacheKey);
-            }
-        }
-
-        Slice<MessageResponse> messages =
-                messageRepository.findByChatRoomId(roomId, pageable)
-                        .map(MessageResponse::from);
-
-        if (!messages.isEmpty()) {
-            try {
-                String json = objectMapper.writeValueAsString(messages.getContent());
-                redisTemplate.opsForValue()
-                        .set(cacheKey, json, Duration.ofMinutes(10));
-            } catch (Exception ignored) {
-            }
-        }
-
-
-        return messages;
+        return messageRepository.findByChatRoomId(roomId, pageable)
+                .map(MessageResponse::from);
     }
 
 

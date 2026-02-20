@@ -15,6 +15,7 @@ import com.coope.server.global.infra.ImageCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +28,8 @@ public class NoticeService {
 
     private final NoticeRepository noticeRepository;
     private final FileService fileService;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private static final String VIEW_COUNT_KEY = "notice:views:";
 
     public Page<NoticeResponse> getAllNotices(Pageable pageable) {
 
@@ -50,16 +53,18 @@ public class NoticeService {
     public NoticeDetailResponse getNoticeDetail(Long id) {
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new NoticeNotFoundException("해당 공지사항을 찾을 수 없습니다."));
-        return NoticeDetailResponse.from(notice);
+
+        String key = VIEW_COUNT_KEY + id;
+        Object redisValue = redisTemplate.opsForValue().get(key);
+        int redisViews = (redisValue != null) ? Integer.parseInt(redisValue.toString()) : 0;
+
+        return NoticeDetailResponse.from(notice, redisViews);
     }
 
-    @Transactional
     public void increaseViewCount(Long id) {
-        int updatedCount = noticeRepository.updateViews(id);
+        String key = VIEW_COUNT_KEY + id;
 
-        if (updatedCount == 0) {
-            throw new NoticeNotFoundException("해당 공지사항을 찾을 수 없습니다.");
-        }
+        redisTemplate.opsForValue().increment(key);
     }
 
     @Transactional
