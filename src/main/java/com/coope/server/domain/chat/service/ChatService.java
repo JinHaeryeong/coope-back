@@ -4,6 +4,7 @@ import com.coope.server.domain.chat.dto.ChatListResponse;
 import com.coope.server.domain.chat.dto.ChatRoomResponse;
 import com.coope.server.domain.chat.dto.MessageRequest;
 import com.coope.server.domain.chat.dto.MessageResponse;
+import com.coope.server.domain.chat.entity.ChatParticipant;
 import com.coope.server.domain.chat.entity.ChatRoom;
 import com.coope.server.domain.chat.entity.Message;
 import com.coope.server.domain.chat.repository.ChatParticipantRepository;
@@ -12,20 +13,15 @@ import com.coope.server.domain.chat.repository.MessageRepository;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.error.exception.AccessDeniedException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,7 +35,6 @@ public class ChatService {
     private final ChatParticipantRepository participantRepository;
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
-    private final ObjectMapper objectMapper;
     private final RedisTemplate<String, String> redisTemplate;
 
 
@@ -115,16 +110,29 @@ public class ChatService {
         Message message = request.toEntity(chatRoom, sender);
         messageRepository.save(message);
 
+        Message saved = messageRepository.save(message);
+
+        participantRepository.updateLastMessageInfoByRoom(
+                chatRoom.getId(),
+                saved.getCreatedAt(),
+                saved.getContent()
+        );
+
         String cacheKey = "chat:room:" + request.getRoomId() + ":page:0";
         redisTemplate.delete(cacheKey);
 
         return MessageResponse.from(message);
     }
 
-    public Page<ChatListResponse> getMyChatRooms(Long userId, Pageable pageable) {
-        Page<ChatRoom> rooms = participantRepository.findAllRoomsByUserId(userId, pageable);
+    public Slice<ChatListResponse> getMyChatRooms(Long userId, Pageable pageable) {
+        Slice<ChatParticipant> slice =
+                participantRepository.findAllByUserId(userId, pageable);
 
-        return rooms.map(ChatListResponse::from);
+        return slice.map(cp -> ChatListResponse.of(
+                cp.getChatRoom(),
+                cp.getLastMessageContent(),
+                cp.getLastMessageTime()
+        ));
     }
 
     private String determineTitle(String roomName, List<User> participants) {

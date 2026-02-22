@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal; //
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/workspaces")
@@ -76,5 +77,18 @@ public class WorkspaceController {
 
         workspaceService.deleteWorkspace(workspaceCode, userDetails.getUser());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<WorkspaceResponse> join(
+            @RequestBody Map<String, String> request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        String inviteCode = request.get("inviteCode");
+
+        // 서비스 로직 실행
+        WorkspaceResponse response = workspaceService.joinWorkspace(inviteCode, userDetails.getUser());
+
+        return ResponseEntity.ok(response);
     }
 }

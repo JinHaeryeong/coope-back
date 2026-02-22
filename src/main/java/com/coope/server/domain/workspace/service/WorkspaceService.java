@@ -52,6 +52,25 @@ public class WorkspaceService {
         return inviteCode;
     }
 
+
+    @Transactional
+    public WorkspaceResponse joinWorkspace(String inviteCode, User user) {
+        Workspace workspace = workspaceRepository.findByInviteCode(inviteCode)
+                .orElseThrow(() -> new WorkspaceNotFoundException("초대 코드가 잘못되었습니다."));
+
+        boolean isAlreadyMember = workspaceMemberRepository.existsByWorkspaceIdAndUserId(
+                workspace.getId(), user.getId());
+
+        if (isAlreadyMember) {
+            return WorkspaceResponse.from(workspace, WorkspaceRole.VIEWER, "already_member");
+        }
+
+        WorkspaceMember newMember = WorkspaceMember.createMember(user, workspace, WorkspaceRole.VIEWER);
+        workspaceMemberRepository.save(newMember);
+
+        return WorkspaceResponse.from(workspace, WorkspaceRole.VIEWER, "joined");
+    }
+
     public WorkspaceResponse getWorkspaceByCode(String workspaceCode, User user) {
         Workspace workspace = getByInviteCode(workspaceCode);
 
