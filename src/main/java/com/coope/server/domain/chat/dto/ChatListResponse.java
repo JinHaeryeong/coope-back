@@ -24,13 +24,13 @@ public class ChatListResponse {
         this.lastMessageTime = lastMessageTime;
     }
 
-    public static ChatListResponse from(ChatRoom room) {
+    public static ChatListResponse of(ChatRoom room, String lastMessage, LocalDateTime lastMessageTime) {
         return ChatListResponse.builder()
                 .roomId(room.getId())
                 .title(room.getTitle())
                 .type(room.getType())
-//                .lastMessage(lastMessage) // 나중에 해줄것
-//                .lastMessageTime(lastMessageTime) // 나중에 해줄것
+                .lastMessage(lastMessage != null ? lastMessage : "대화 내용이 없습니다.")
+                .lastMessageTime(lastMessageTime != null ? lastMessageTime : room.getCreatedAt())
                 .build();
     }
 }

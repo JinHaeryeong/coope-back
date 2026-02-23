@@ -4,6 +4,8 @@ import com.coope.server.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(
         name = "chat_participants",
@@ -11,6 +13,12 @@ import lombok.*;
                 @UniqueConstraint(
                         name = "uk_chat_room_user",
                         columnNames = {"chat_room_id", "user_id"}
+                )
+        },
+        indexes = {
+                @Index(
+                        name = "idx_cp_user_lastmsg",
+                        columnList = "user_id, last_message_time DESC"
                 )
         }
 )
@@ -30,6 +38,12 @@ public class ChatParticipant {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "last_message_time")
+    private LocalDateTime lastMessageTime;
+
+    @Column(length = 1000)
+    private String lastMessageContent;
+
     @Builder
     public ChatParticipant(ChatRoom chatRoom, User user) {
         this.chatRoom = chatRoom;
@@ -41,5 +55,10 @@ public class ChatParticipant {
                 .chatRoom(chatRoom)
                 .user(user)
                 .build();
+    }
+
+    public void updateLastMessage(LocalDateTime time, String content) {
+        this.lastMessageTime = time;
+        this.lastMessageContent = content;
     }
 }

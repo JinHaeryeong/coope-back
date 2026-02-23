@@ -18,6 +18,17 @@ public class WorkspaceResponse {
     private String name;
     private WorkspaceRole role;
     private String inviteCode;
+    private String status;
+
+    public static WorkspaceResponse from(Workspace workspace, WorkspaceRole role, String status) {
+        return WorkspaceResponse.builder()
+                .id(workspace.getId())
+                .name(workspace.getName())
+                .role(role)
+                .inviteCode(workspace.getInviteCode())
+                .status(status)
+                .build();
+    }
 
     public static WorkspaceResponse from(Workspace workspace, WorkspaceRole role) {
         return WorkspaceResponse.builder()

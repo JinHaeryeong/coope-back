@@ -1,5 +1,6 @@
 package com.coope.server.domain.workspace.controller;
 
+import com.coope.server.domain.workspace.dto.WorkspaceJoinRequest;
 import com.coope.server.domain.workspace.dto.WorkspaceResponse;
 import com.coope.server.domain.workspace.dto.WorkspaceWriteRequest;
 import com.coope.server.domain.workspace.service.WorkspaceService;
@@ -76,5 +77,18 @@ public class WorkspaceController {
 
         workspaceService.deleteWorkspace(workspaceCode, userDetails.getUser());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<WorkspaceResponse> join(
+            @Valid @RequestBody WorkspaceJoinRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        WorkspaceResponse response = workspaceService.joinWorkspace(request.getInviteCode(), userDetails.getUser());
+
+        log.info("워크스페이스 참여 성공 - 사용자: {}, 워크스페이스 이름: {}",
+                userDetails.getUser().getNickname(), response.getName());
+
+        return ResponseEntity.ok(response);
     }
 }

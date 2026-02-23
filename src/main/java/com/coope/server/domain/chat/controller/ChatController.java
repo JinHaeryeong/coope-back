@@ -7,7 +7,6 @@ import com.coope.server.global.infra.ImageCategory;
 import com.coope.server.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
@@ -41,12 +40,14 @@ public class ChatController {
     }
 
     @GetMapping("/rooms")
-    public ResponseEntity<Page<ChatListResponse>> getMyChatRooms(
+    public ResponseEntity<Slice<ChatListResponse>> getMyChatRooms(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PageableDefault Pageable pageable
     ) {
         Long userId = userDetails.getUser().getId();
-        Page<ChatListResponse> rooms = chatService.getMyChatRooms(userId, pageable);
+
+        Slice<ChatListResponse> rooms = chatService.getMyChatRooms(userId, pageable);
+
         return ResponseEntity.ok(rooms);
     }
 

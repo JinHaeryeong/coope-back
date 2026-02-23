@@ -44,6 +44,14 @@ public class WorkspaceMember {
         return this.role == WorkspaceRole.OWNER || this.role == WorkspaceRole.EDITOR;
     }
 
+    public static WorkspaceMember createMember(User user, Workspace workspace, WorkspaceRole role) {
+        return WorkspaceMember.builder()
+                .user(user)
+                .workspace(workspace)
+                .role(role)
+                .build();
+    }
+
     public static WorkspaceMember createOwner(User user, Workspace workspace) {
         return WorkspaceMember.builder()
                 .user(user)

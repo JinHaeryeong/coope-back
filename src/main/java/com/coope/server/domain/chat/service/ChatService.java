@@ -4,6 +4,7 @@ import com.coope.server.domain.chat.dto.ChatListResponse;
 import com.coope.server.domain.chat.dto.ChatRoomResponse;
 import com.coope.server.domain.chat.dto.MessageRequest;
 import com.coope.server.domain.chat.dto.MessageResponse;
+import com.coope.server.domain.chat.entity.ChatParticipant;
 import com.coope.server.domain.chat.entity.ChatRoom;
 import com.coope.server.domain.chat.entity.Message;
 import com.coope.server.domain.chat.repository.ChatParticipantRepository;
@@ -12,20 +13,15 @@ import com.coope.server.domain.chat.repository.MessageRepository;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.error.exception.AccessDeniedException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,8 +35,7 @@ public class ChatService {
     private final ChatParticipantRepository participantRepository;
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
-    private final ObjectMapper objectMapper;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
 
 
     @Transactional
@@ -103,28 +98,27 @@ public class ChatService {
 
     @Transactional
     public MessageResponse saveMessage(MessageRequest request, Long authenticatedUserId) {
-        if (!participantRepository.existsByChatRoomIdAndUserId(request.getRoomId(), authenticatedUserId)) {
-            throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
-        }
-        ChatRoom chatRoom = chatRoomRepository.findById(request.getRoomId())
-                .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
+        ChatRoom chatRoom = findChatRoom(request.getRoomId());
+        User sender = findUser(authenticatedUserId);
+        validateParticipant(chatRoom.getId(), sender.getId());
 
-        User sender = userRepository.findById(authenticatedUserId)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+        Message saved = messageRepository.save(request.toEntity(chatRoom, sender));
+        participantRepository.updateLastMessageInfoByRoom(chatRoom.getId(), saved.getCreatedAt(), saved.getContent());
 
-        Message message = request.toEntity(chatRoom, sender);
-        messageRepository.save(message);
+        sendChatUpdateNotifications(chatRoom, saved);
 
-        String cacheKey = "chat:room:" + request.getRoomId() + ":page:0";
-        redisTemplate.delete(cacheKey);
-
-        return MessageResponse.from(message);
+        return MessageResponse.from(saved);
     }
 
-    public Page<ChatListResponse> getMyChatRooms(Long userId, Pageable pageable) {
-        Page<ChatRoom> rooms = participantRepository.findAllRoomsByUserId(userId, pageable);
+    public Slice<ChatListResponse> getMyChatRooms(Long userId, Pageable pageable) {
+        Slice<ChatParticipant> slice =
+                participantRepository.findAllByUserId(userId, pageable);
 
-        return rooms.map(ChatListResponse::from);
+        return slice.map(cp -> ChatListResponse.of(
+                cp.getChatRoom(),
+                cp.getLastMessageContent(),
+                cp.getLastMessageTime()
+        ));
     }
 
     private String determineTitle(String roomName, List<User> participants) {
@@ -137,5 +131,33 @@ public class ChatService {
                 .limit(3)
                 .collect(Collectors.joining(", "))
                 + (participants.size() > 3 ? " 외 " + (participants.size() - 3) + "명" : "의 대화");
+    }
+
+    private void sendChatUpdateNotifications(ChatRoom room, Message msg) {
+        ChatListResponse updateDto = ChatListResponse.of(room, msg.getContent(), msg.getCreatedAt());
+
+        participantRepository.findByChatRoomId(room.getId()).forEach(participant ->
+                messagingTemplate.convertAndSendToUser(
+                        participant.getUser().getId().toString(),
+                        "/queue/chat/updates",
+                        updateDto
+                )
+        );
+    }
+
+    private ChatRoom findChatRoom(Long roomId) {
+        return chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
+    }
+
+    private User findUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+    }
+
+    private void validateParticipant(Long roomId, Long userId) {
+        if (!participantRepository.existsByChatRoomIdAndUserId(roomId, userId)) {
+            throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
+        }
     }
 }
