@@ -71,8 +71,6 @@ public class Document extends BaseTimeEntity {
     public void restore() {
         this.archived = false;
 
-        // 노션 로직 반영
-        // 부모가 없거나, 부모가 이미 휴지통(archived) 상태라면 최상위(null)로 이동
         if (this.parentDocument != null && this.parentDocument.isArchived()) {
             this.parentDocument = null;
         }
@@ -80,6 +78,18 @@ public class Document extends BaseTimeEntity {
 
     public void updateTitle(String title) {
         this.title = title;
+    }
+
+    public void updateCoverImage(String coverImage) {
+        this.coverImage = coverImage;
+    }
+
+    public void updateIcon(String icon) {
+        this.icon = icon;
+    }
+
+    public void updateContent(String content) {
+        this.content = content;
     }
 
     public void archiveWithChildren() {

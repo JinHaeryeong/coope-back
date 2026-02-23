@@ -86,28 +86,30 @@ public class LocalFileService implements FileService{
 
         try {
             String decodedUrl = java.net.URLDecoder.decode(imageUrl, StandardCharsets.UTF_8);
-            String fileName = Paths.get(decodedUrl).getFileName().toString();
+            String fileName = decodedUrl.substring(decodedUrl.lastIndexOf("/") + 1);
 
             if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
                 log.error("보안 위협 감지: 유효하지 않은 파일명 접근 시도 ({})", fileName);
                 return false;
             }
 
-            String subDir = category.dir();
-            String separator = uploadDir.endsWith("/") ? "" : "/";
-            String fullPath = uploadDir + separator + subDir + "/";
-            File file = new File(fullPath + fileName);
+            Path targetPath = Paths.get(uploadDir)
+                    .resolve(category.dir())
+                    .resolve(fileName)
+                    .normalize();
+
+            File file = targetPath.toFile();
 
             if (file.exists()) {
                 if (file.delete()) {
-                    log.info("파일 삭제 완료: {}/{}", subDir, fileName);
+                    log.info("로컬 파일 삭제 완료: {}", targetPath);
                     return true;
                 } else {
-                    log.warn("파일 삭제 실패 (권한 등): {}/{}", subDir, fileName);
+                    log.warn("파일 삭제 실패 (권한 등): {}", targetPath);
                     return false;
                 }
             } else {
-                log.warn("삭제할 파일이 존재하지 않습니다: {}", file.getPath());
+                log.warn("삭제할 파일이 존재하지 않습니다: {}", targetPath);
                 return true;
             }
 

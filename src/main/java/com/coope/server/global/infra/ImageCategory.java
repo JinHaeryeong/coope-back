@@ -4,7 +4,10 @@ public enum ImageCategory {
     NOTICE("notices"),
     COMMENT("comments"),
     PROFILE("profiles"),
-    CHAT("chats");
+    CHAT("chats"),
+    COVER("covers"),
+    DOCUMENT("documents");
+
 
     private final String dir;
 

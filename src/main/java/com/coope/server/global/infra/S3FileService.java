@@ -66,9 +66,8 @@ public class S3FileService implements FileService {
 
         try {
             String decodedUrl = java.net.URLDecoder.decode(imageUrl, StandardCharsets.UTF_8);
-            java.net.URI uri = new java.net.URI(decodedUrl);
-            String path = uri.getPath();
-            String s3Key = path.startsWith("/") ? path.substring(1) : path;
+            String fileName = decodedUrl.substring(decodedUrl.lastIndexOf("/") + 1);
+            String s3Key = category.dir() + "/" + fileName;
 
             s3Template.deleteObject(bucket, s3Key);
             log.info("S3 파일 삭제 완료: {}", s3Key);
