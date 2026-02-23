@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface ChatParticipantRepository extends JpaRepository<ChatParticipant, Long> {
@@ -35,16 +36,20 @@ ORDER BY COALESCE(cp.lastMessageTime, cp.chatRoom.createdAt) DESC
 
     boolean existsByChatRoomIdAndUserId(Long roomId, Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-UPDATE ChatParticipant cp
-SET cp.lastMessageTime = :time,
-    cp.lastMessageContent = :content
-WHERE cp.chatRoom.id = :roomId
-""")
+        UPDATE ChatParticipant cp
+        SET cp.lastMessageTime = :time,
+            cp.lastMessageContent = :content
+        WHERE cp.chatRoom.id = :roomId
+        AND (cp.lastMessageTime IS NULL OR cp.lastMessageTime < :time)
+    """)
     void updateLastMessageInfoByRoom(
             @Param("roomId") Long roomId,
             @Param("time") LocalDateTime time,
             @Param("content") String content
     );
+
+    @Query("SELECT cp FROM ChatParticipant cp JOIN FETCH cp.user WHERE cp.chatRoom.id = :roomId")
+    List<ChatParticipant> findByChatRoomId(@Param("roomId") Long roomId);
 }

@@ -1,5 +1,6 @@
 package com.coope.server.domain.workspace.controller;
 
+import com.coope.server.domain.workspace.dto.WorkspaceJoinRequest;
 import com.coope.server.domain.workspace.dto.WorkspaceResponse;
 import com.coope.server.domain.workspace.dto.WorkspaceWriteRequest;
 import com.coope.server.domain.workspace.service.WorkspaceService;
@@ -13,7 +14,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal; //
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/workspaces")
@@ -81,13 +81,13 @@ public class WorkspaceController {
 
     @PostMapping("/join")
     public ResponseEntity<WorkspaceResponse> join(
-            @RequestBody Map<String, String> request,
+            @Valid @RequestBody WorkspaceJoinRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        String inviteCode = request.get("inviteCode");
+        WorkspaceResponse response = workspaceService.joinWorkspace(request.getInviteCode(), userDetails.getUser());
 
-        // 서비스 로직 실행
-        WorkspaceResponse response = workspaceService.joinWorkspace(inviteCode, userDetails.getUser());
+        log.info("워크스페이스 참여 성공 - 사용자: {}, 워크스페이스 이름: {}",
+                userDetails.getUser().getNickname(), response.getName());
 
         return ResponseEntity.ok(response);
     }

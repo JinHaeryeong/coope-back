@@ -57,7 +57,8 @@ public class ChatParticipant {
                 .build();
     }
 
-    public void updateLastMessageTime(LocalDateTime time) {
+    public void updateLastMessage(LocalDateTime time, String content) {
         this.lastMessageTime = time;
+        this.lastMessageContent = content;
     }
 }
