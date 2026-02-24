@@ -10,13 +10,12 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember, Long> {
-    /**
-     * 유저 ID를 기반으로 가입된 모든 워크스페이스 멤버 정보를 조회
-     * fetch join을 사용하여 연관된 Workspace 엔티티까지 한 번에 가져옴
-     */
+
     @Query("select wm from WorkspaceMember wm " +
             "join fetch wm.workspace " +
-            "where wm.user.id = :userId")
+            "where wm.user.id = :userId " +
+            "order by case when wm.role = 'OWNER' then 0 else 1 end, " +
+            "wm.workspace.createdAt desc")
     List<WorkspaceMember> findAllByUserId(@Param("userId") Long userId);
 
     Optional<WorkspaceMember> findByWorkspaceIdAndUserId(Long workspaceId, Long userId);
