@@ -9,9 +9,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -66,7 +64,10 @@ public class LocalFileService implements FileService{
     public Resource loadAsResource(String fileUrl, ImageCategory category) {
         try {
             String decodedUrl = java.net.URLDecoder.decode(fileUrl, StandardCharsets.UTF_8);
-            String fileName = decodedUrl.substring(decodedUrl.lastIndexOf("/") + 1);
+            java.net.URI uri = new java.net.URI(decodedUrl);
+            String path = uri.getPath();
+            String fileName = path.substring(path.lastIndexOf("/") + 1);
+
             Path file = Paths.get(uploadDir).resolve(category.dir()).resolve(fileName);
             Resource resource = new UrlResource(file.toUri());
 
@@ -75,41 +76,38 @@ public class LocalFileService implements FileService{
             }
 
             throw new FileStorageException("파일을 찾을 수 없거나 읽기 권한이 없습니다: " + fileName);
-        } catch (MalformedURLException e) {
-            throw new FileStorageException("파일 경로 형식이 올바르지 않습니다.", e);
+        } catch (Exception e) {
+            throw new FileStorageException("파일 로드 중 오류 발생: " + fileUrl, e);
         }
     }
 
     @Override
     public boolean deleteFile(String imageUrl, ImageCategory category) {
-        if (imageUrl == null || imageUrl.isEmpty()) return false;
+        if (imageUrl == null || imageUrl.isEmpty()) return true;
 
         try {
             String decodedUrl = java.net.URLDecoder.decode(imageUrl, StandardCharsets.UTF_8);
-            String fileName = Paths.get(decodedUrl).getFileName().toString();
+            java.net.URI uri = new java.net.URI(decodedUrl);
+            String path = uri.getPath(); // /api/files/display/COVER/uuid.png 같은 순수 경로만 추출
 
-            if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
-                log.error("보안 위협 감지: 유효하지 않은 파일명 접근 시도 ({})", fileName);
+            String fileName = path.substring(path.lastIndexOf("/") + 1);
+
+            Path basePath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path targetPath = basePath.resolve(category.dir()).resolve(fileName).normalize();
+
+            if (!targetPath.startsWith(basePath)) {
+                log.error("보안 위협 감지: 허용되지 않은 경로 삭제 시도 -> {}", targetPath);
                 return false;
             }
 
-            String subDir = category.dir();
-            String separator = uploadDir.endsWith("/") ? "" : "/";
-            String fullPath = uploadDir + separator + subDir + "/";
-            File file = new File(fullPath + fileName);
-
-            if (file.exists()) {
-                if (file.delete()) {
-                    log.info("파일 삭제 완료: {}/{}", subDir, fileName);
-                    return true;
-                } else {
-                    log.warn("파일 삭제 실패 (권한 등): {}/{}", subDir, fileName);
-                    return false;
-                }
+            boolean deleted = Files.deleteIfExists(targetPath);
+            if (deleted) {
+                log.info("로컬 파일 삭제 완료: {}", targetPath);
             } else {
-                log.warn("삭제할 파일이 존재하지 않습니다: {}", file.getPath());
-                return true;
+                log.warn("삭제할 파일이 존재하지 않습니다: {}", targetPath);
             }
+
+            return true;
 
         } catch (Exception e) {
             log.error("파일 삭제 도중 예상치 못한 에러 발생: {}", e.getMessage());

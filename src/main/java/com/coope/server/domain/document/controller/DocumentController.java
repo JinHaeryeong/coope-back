@@ -2,6 +2,7 @@ package com.coope.server.domain.document.controller;
 
 import com.coope.server.domain.document.dto.DocumentCreateRequest;
 import com.coope.server.domain.document.dto.DocumentResponse;
+import com.coope.server.domain.document.dto.DocumentUpdateRequest;
 import com.coope.server.domain.document.service.DocumentService;
 import com.coope.server.global.security.UserDetailsImpl; // CommentController 스타일 반영
 import jakarta.validation.Valid;
@@ -58,6 +59,15 @@ public class DocumentController {
         DocumentResponse response = documentService.getDocumentDetail(documentId, workspaceCode, userDetails.getUser());
 
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{documentId}")
+    public ResponseEntity<DocumentResponse> update(
+            @PathVariable Long documentId,
+            @RequestBody DocumentUpdateRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        return ResponseEntity.ok(documentService.update(documentId, request, userDetails.getUser()));
     }
 
     // 휴지통 목록 조회
