@@ -12,6 +12,7 @@ import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.error.exception.BadRequestException;
 import com.coope.server.global.error.exception.WorkspaceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ public class WorkspaceService {
 
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public Workspace getByInviteCode(String inviteCode) {
         return workspaceRepository.findByInviteCode(inviteCode)
@@ -37,8 +39,9 @@ public class WorkspaceService {
         String inviteCode = generateUniqueInviteCode();
 
         Workspace workspace = workspaceRepository.save(request.toEntity(user, inviteCode));
-
         WorkspaceMember member = workspaceMemberRepository.save(WorkspaceMember.createOwner(user, workspace));
+
+        notifyUserWorkspaceUpdate(user.getId());
 
         return WorkspaceResponse.from(workspace, member.getRole());
     }
@@ -68,6 +71,8 @@ public class WorkspaceService {
         WorkspaceMember newMember = WorkspaceMember.createMember(user, workspace, WorkspaceRole.VIEWER);
         workspaceMemberRepository.save(newMember);
 
+        notifyUserWorkspaceUpdate(user.getId());
+
         return WorkspaceResponse.from(workspace, WorkspaceRole.VIEWER, "joined");
     }
 
@@ -90,6 +95,8 @@ public class WorkspaceService {
 
         workspace.updateName(newName);
 
+        notifyAllMembers(workspace.getId());
+
         // 현재 유저의 역할을 함께 반환
         return WorkspaceResponse.from(workspace, WorkspaceRole.OWNER);
     }
@@ -103,6 +110,8 @@ public class WorkspaceService {
         if (membershipCount <= 1) {
             throw new BadRequestException("최소 한 개의 워크스페이스는 유지해야 합니다.");
         }
+
+        notifyAllMembers(workspace.getId());
 
         workspaceRepository.delete(workspace);
     }
@@ -132,5 +141,17 @@ public class WorkspaceService {
         if (!isOwner) {
             throw new AccessDeniedException("워크스페이스 소유자만 이 작업을 수행할 수 있습니다.");
         }
+    }
+
+    private void notifyAllMembers(Long workspaceId) {
+        List<WorkspaceMember> members = workspaceMemberRepository.findAllByWorkspaceId(workspaceId);
+
+        for (WorkspaceMember member : members) {
+            notifyUserWorkspaceUpdate(member.getUser().getId());
+        }
+    }
+
+    private void notifyUserWorkspaceUpdate(Long userId) {
+        messagingTemplate.convertAndSend("/topic/user/" + userId + "/workspace", "REFRESH");
     }
 }
