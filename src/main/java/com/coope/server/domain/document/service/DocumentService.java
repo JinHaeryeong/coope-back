@@ -9,10 +9,13 @@ import com.coope.server.domain.document.repository.DocumentRepository;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.workspace.entity.Workspace;
 import com.coope.server.domain.workspace.service.WorkspaceService;
+import com.coope.server.global.error.exception.BadRequestException;
 import com.coope.server.global.error.exception.DocumentNotFoundException;
+import com.coope.server.global.error.exception.FileStorageException;
 import com.coope.server.global.infra.FileService;
 import com.coope.server.global.infra.ImageCategory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class DocumentService {
 
@@ -81,10 +85,19 @@ public class DocumentService {
 
         if (request.getCoverImage() != null) {
             String oldUrl = document.getCoverImage();
-            if (oldUrl != null && !oldUrl.equals(request.getCoverImage())) {
-                fileService.deleteFile(oldUrl, ImageCategory.COVER);
+            String newUrl = request.getCoverImage();
+
+            if (oldUrl != null && !oldUrl.equals(newUrl)) {
+                boolean deleted = fileService.deleteFile(oldUrl, ImageCategory.COVER);
+                if (!deleted) {
+                    log.warn("기존 커버 이미지 삭제에 실패했습니다. (URL: {})", oldUrl);
+                    throw new FileStorageException("기존 파일 삭제 실패로 인해 업데이트를 중단합니다.");
+                }
             }
-            document.updateCoverImage(request.getCoverImage());
+
+             if (!isValidImageUrl(newUrl)) throw new BadRequestException("유효하지 않은 이미지 경로입니다.");
+
+            document.updateCoverImage(newUrl);
         }
 
         boolean hasChildren = documentRepository.existsByParentDocumentAndArchivedFalse(document);
@@ -171,5 +184,15 @@ public class DocumentService {
                 .build();
 
         messagingTemplate.convertAndSend("/topic/workspace/" + workspaceCode, event);
+    }
+
+    private boolean isValidImageUrl(String url) {
+        if (url == null || url.isEmpty()) return true;
+
+        boolean isS3Url = url.contains(".s3.amazonaws.com");
+
+        boolean isLocalUrl = url.contains("localhost:8080");
+
+        return isS3Url || isLocalUrl;
     }
 }

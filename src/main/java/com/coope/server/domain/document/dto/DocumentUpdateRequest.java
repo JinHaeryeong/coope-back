@@ -11,5 +11,4 @@ public class DocumentUpdateRequest {
     private String content;
     private String icon;
     private String coverImage;
-    private Boolean archived;
 }
