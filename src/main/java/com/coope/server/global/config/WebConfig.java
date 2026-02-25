@@ -1,6 +1,7 @@
 package com.coope.server.global.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
@@ -16,17 +17,21 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${file.access-url}")
     private String accessUrl;
 
-    @Override
-    public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
+    @Bean(name = "aiTaskExecutor")
+    public ThreadPoolTaskExecutor aiTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);      // 기본 스레드 10개
-        executor.setMaxPoolSize(50);      // 최대 50개까지 확장
-        executor.setQueueCapacity(100);   // 대기 큐 100개
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(50);
+        executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("ai-async-");
         executor.initialize();
+        return executor;
+    }
 
-        configurer.setTaskExecutor(executor);
-        configurer.setDefaultTimeout(180000); // 3분 (AI 답변 길어질 때 대비)
+    @Override
+    public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
+        configurer.setTaskExecutor(aiTaskExecutor());
+        configurer.setDefaultTimeout(180000);
     }
 
     @Override

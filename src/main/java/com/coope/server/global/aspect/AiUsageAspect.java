@@ -4,7 +4,6 @@ import com.coope.server.global.annotation.AiLimit;
 import com.coope.server.global.error.exception.BadRequestException;
 import com.coope.server.global.usage.AiUsageService;
 import com.coope.server.global.util.SecurityUtil;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -18,52 +17,46 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.concurrent.TimeUnit;
 
+// AiUsageAspect.java
 @Aspect
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class AiUsageAspect {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final SecurityUtil securityUtil;
     private final AiUsageService aiUsageService;
 
     @Around("@annotation(aiLimit)")
     public Object checkUsage(ProceedingJoinPoint joinPoint, AiLimit aiLimit) throws Throwable {
         Long userId = securityUtil.getCurrentUserId();
+        String key = aiUsageService.getUsageKey(userId, aiLimit.type());
 
-        int remainingBefore = aiUsageService.getRemainingCount(userId, aiLimit.type(), aiLimit.maxCount());
+        Long currentCount = redisTemplate.opsForValue().increment(key);
 
-        if (remainingBefore <= 0) {
+        if (currentCount != null && currentCount > aiLimit.maxCount()) {
+            redisTemplate.opsForValue().decrement(key);
             throw new BadRequestException("오늘의 AI 사용 횟수(" + aiLimit.maxCount() + "회)를 모두 소모하셨습니다.");
+        }
+
+        // 첫 호출 시에만 만료 시간 설정
+        if (currentCount != null && currentCount == 1) {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime startOfTomorrow = LocalDate.now().plusDays(1).atStartOfDay();
+            long secondsUntilMidnight = Duration.between(now, startOfTomorrow).getSeconds();
+            redisTemplate.expire(key, secondsUntilMidnight, TimeUnit.SECONDS);
         }
 
         Object result = joinPoint.proceed();
 
-        String key = aiUsageService.getUsageKey(userId, aiLimit.type());
-        Long newCountLong = redisTemplate.opsForValue().increment(key);
-        int newCount = (newCountLong != null) ? newCountLong.intValue() : 0;
-        int remainingAfter = aiLimit.maxCount() - newCount;
-
-        if (newCount == 1) {
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime endOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
-            long secondsUntilMidnight = Duration.between(now, endOfToday).getSeconds();
-            redisTemplate.expire(key, secondsUntilMidnight, TimeUnit.SECONDS);
-            log.info("유저 {}의 {} AI 제한 설정 - 남은 시간: {}초", userId, aiLimit.type(), secondsUntilMidnight);
-        }
-
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-
-        if (attributes != null) {
-            HttpServletResponse response = attributes.getResponse();
-            if (response != null) {
-                response.setHeader("X-AI-Remaining", String.valueOf(remainingAfter));
-                response.setHeader("Access-Control-Expose-Headers", "X-AI-Remaining");
-            }
+        if (attributes != null && attributes.getResponse() != null) {
+            int remaining = aiLimit.maxCount() - (currentCount != null ? currentCount.intValue() : 0);
+            attributes.getResponse().setHeader("X-AI-Remaining", String.valueOf(remaining));
+            attributes.getResponse().setHeader("Access-Control-Expose-Headers", "X-AI-Remaining");
         }
 
         return result;
