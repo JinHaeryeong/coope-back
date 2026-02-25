@@ -1,4 +1,4 @@
-package com.coope.server.global.infra;
+package com.coope.server.global.infra.file;
 
 import com.coope.server.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
