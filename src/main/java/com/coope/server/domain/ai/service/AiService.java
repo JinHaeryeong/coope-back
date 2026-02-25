@@ -1,6 +1,7 @@
 package com.coope.server.domain.ai.service;
 
 import com.coope.server.domain.ai.dto.VoiceProcessResponse;
+import com.coope.server.global.annotation.AiLimit;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class AiService {
     private static final long MAX_FILE_SIZE = 25 * 1024 * 1024;
     private static final List<String> SUPPORTED_EXTENSIONS = List.of("webm", "mp3", "wav", "m4a");
 
+    @AiLimit(type = "STT", maxCount = 2)
     public VoiceProcessResponse processVoice(MultipartFile file) {
         validateFile(file);
         WebClient webClient = webClientBuilder.baseUrl("https://api.openai.com/v1").build();
