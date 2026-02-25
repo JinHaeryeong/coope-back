@@ -2,6 +2,7 @@ package com.coope.server.domain.aichat.service;
 
 import com.coope.server.domain.aichat.dto.AIChatMessage;
 import com.coope.server.domain.aichat.dto.AIChatRequest;
+import com.coope.server.global.annotation.AiLimit;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class AIChatService {
     private final ObjectMapper objectMapper;
     private final WebClient webClient = WebClient.builder().build();
 
+    @AiLimit(type = "CHAT", maxCount = 5)
     public Flux<String> getAIStreamResponse(String userPrompt, List<AIChatMessage> history) {
 
         AIChatMessage systemMsg = AIChatRequest.createSystemMessage();
