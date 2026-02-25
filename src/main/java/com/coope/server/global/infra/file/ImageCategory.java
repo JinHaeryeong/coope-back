@@ -1,4 +1,4 @@
-package com.coope.server.global.infra;
+package com.coope.server.global.infra.file;
 
 public enum ImageCategory {
     NOTICE("notices"),

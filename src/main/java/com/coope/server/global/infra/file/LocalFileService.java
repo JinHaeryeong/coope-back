@@ -1,4 +1,4 @@
-package com.coope.server.global.infra;
+package com.coope.server.global.infra.file;
 
 import com.coope.server.global.error.exception.FileStorageException;
 import lombok.extern.slf4j.Slf4j;

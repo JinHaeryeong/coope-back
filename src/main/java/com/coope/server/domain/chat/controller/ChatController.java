@@ -2,8 +2,8 @@ package com.coope.server.domain.chat.controller;
 
 import com.coope.server.domain.chat.dto.*;
 import com.coope.server.domain.chat.service.ChatService;
-import com.coope.server.global.infra.FileService;
-import com.coope.server.global.infra.ImageCategory;
+import com.coope.server.global.infra.file.FileService;
+import com.coope.server.global.infra.file.ImageCategory;
 import com.coope.server.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
