@@ -65,7 +65,7 @@ public class SecurityConfig {
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
-                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/user/signup", "/images/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/user/signup", "/api/auth/email/**", "/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/notices/all").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/notices/detail/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()

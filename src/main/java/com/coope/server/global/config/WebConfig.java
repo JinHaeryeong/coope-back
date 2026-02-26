@@ -8,6 +8,8 @@ import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.security.SecureRandom;
+
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -26,6 +28,11 @@ public class WebConfig implements WebMvcConfigurer {
         executor.setThreadNamePrefix("ai-async-");
         executor.initialize();
         return executor;
+    }
+
+    @Bean
+    public SecureRandom secureRandom() {
+        return new SecureRandom();
     }
 
     @Override

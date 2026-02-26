@@ -11,14 +11,13 @@ import lombok.NoArgsConstructor;
 @Getter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WorkspaceResponse {
 
-    private Long id;
-    private String name;
-    private WorkspaceRole role;
-    private String inviteCode;
-    private String status;
+    private final Long id;
+    private final String name;
+    private final WorkspaceRole role;
+    private final String inviteCode;
+    private final String status;
 
     public static WorkspaceResponse from(Workspace workspace, WorkspaceRole role, String status) {
         return WorkspaceResponse.builder()
