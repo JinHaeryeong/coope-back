@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
+import java.security.SecureRandom;
 import java.time.Duration;
 
 @Service
@@ -19,13 +20,14 @@ public class EmailAuthService {
 
     private final JavaMailSender mailSender;
     private final RedisTemplate<String, String> redisTemplate;
+    private final SecureRandom secureRandom;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
 
     @Async
     public void sendAuthCode(String email) {
-        String authCode = String.valueOf((int)(Math.random() * 899999) + 100000);
+        String authCode = String.valueOf(secureRandom.nextInt(900000) + 100000);
 
         redisTemplate.opsForValue().set(
                 "AUTH:" + email,
@@ -62,7 +64,7 @@ public class EmailAuthService {
         redisTemplate.opsForValue().set(
                 "AUTH_COMPLETE:" + email,
                 "true",
-                Duration.ofMinutes(5)
+                Duration.ofMinutes(10)
         );
     }
 
