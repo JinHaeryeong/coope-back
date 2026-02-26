@@ -1,8 +1,11 @@
 package com.coope.server.domain.auth.controller;
 
+import com.coope.server.domain.auth.dto.EmailRequest;
+import com.coope.server.domain.auth.dto.EmailVerifyRequest;
 import com.coope.server.domain.auth.dto.LoginRequest;
 import com.coope.server.domain.auth.dto.LoginResponse;
 import com.coope.server.domain.auth.service.AuthService;
+import com.coope.server.domain.auth.service.EmailAuthService;
 import com.coope.server.global.config.JwtProperties;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -22,7 +25,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-
+    private final EmailAuthService emailAuthService;
     private final JwtProperties jwtProperties;
 
     @PostMapping("/login")
@@ -75,5 +78,17 @@ public class AuthController {
         String newAccessToken = authService.refresh(refreshToken);
 
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+    }
+
+    @PostMapping("/email/send")
+    public ResponseEntity<Void> sendEmail(@Valid @RequestBody EmailRequest request) {
+        emailAuthService.sendAuthCode(request.getEmail());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/email/verify")
+    public ResponseEntity<String> verifyEmail(@Valid @RequestBody EmailVerifyRequest request) {
+        emailAuthService.verifyCode(request.getEmail(), request.getCode());
+        return ResponseEntity.ok("인증에 성공했습니다.");
     }
 }

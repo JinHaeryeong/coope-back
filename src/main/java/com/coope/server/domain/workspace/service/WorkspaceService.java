@@ -12,6 +12,8 @@ import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.error.exception.BadRequestException;
 import com.coope.server.global.error.exception.WorkspaceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +59,7 @@ public class WorkspaceService {
 
 
     @Transactional
+    @CacheEvict(value = "workspaceMember", key = "#result.id + ':' + #user.id")
     public WorkspaceResponse joinWorkspace(String inviteCode, User user) {
         Workspace workspace = workspaceRepository.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new WorkspaceNotFoundException("초대 코드가 잘못되었습니다."));
@@ -102,6 +105,7 @@ public class WorkspaceService {
     }
 
     @Transactional
+    @CacheEvict(value = "workspaceMember", allEntries = true)
     public void deleteWorkspace(String workspaceCode, User user) {
         Workspace workspace = getByInviteCode(workspaceCode);
 
@@ -124,12 +128,11 @@ public class WorkspaceService {
     }
 
     // 사용자가 워크스페이스 멤버인지 검증
-    public void validateMember(Long workspaceId, Long userId) {
+    @Cacheable(value = "workspaceMember", key = "#workspaceId + ':' + #userId")
+    public boolean validateMember(Long workspaceId, Long userId) {
         boolean isMember = workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId);
-
-        if (!isMember) {
-            throw new AccessDeniedException("해당 워크스페이스에 대한 접근 권한이 없습니다.");
-        }
+        if (!isMember) throw new AccessDeniedException("권한 없음");
+        return true;
     }
 
     // OWNER 권한 검증 헬퍼 메서드

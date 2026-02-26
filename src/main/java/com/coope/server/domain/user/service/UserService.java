@@ -1,6 +1,7 @@
 package com.coope.server.domain.user.service;
 
 import com.coope.server.domain.auth.dto.LoginRequest;
+import com.coope.server.domain.auth.service.EmailAuthService;
 import com.coope.server.domain.friend.service.FriendService;
 import com.coope.server.domain.user.dto.SignupRequest;
 import com.coope.server.domain.user.dto.UserResponse;
@@ -8,6 +9,7 @@ import com.coope.server.domain.user.dto.UserSearchResponse;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.error.exception.AuthenticationException;
+import com.coope.server.global.error.exception.BadRequestException;
 import com.coope.server.global.error.exception.UserNotFoundException;
 import com.coope.server.global.infra.file.FileService;
 import com.coope.server.global.infra.file.ImageCategory;
@@ -25,10 +27,15 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final FileService fileService;
     private final FriendService friendService;
+    private final EmailAuthService emailAuthService;
 
     // 쓰기 작업이므로 readOnly = true 설정을 덮어쓰기 위해 별도 선언
     @Transactional
     public Long signup(SignupRequest request) {
+
+        if (!emailAuthService.isVerified(request.getEmail())) {
+            throw new BadRequestException("이메일 인증이 완료되지 않았습니다.");
+        }
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
         }
@@ -38,10 +45,7 @@ public class UserService {
         }
 
         String userIconUrl = fileService.upload(request.getUserIcon(), ImageCategory.PROFILE);
-
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-
-        // Entity 변환 및 저장
         User user = request.toEntity(encodedPassword, userIconUrl);
         return userRepository.save(user).getId();
     }
