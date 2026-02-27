@@ -2,10 +2,12 @@ package com.coope.server.domain.document.repository;
 
 import com.coope.server.domain.document.entity.Document;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface DocumentRepository extends JpaRepository<Document, Long> {
 
@@ -49,4 +51,11 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     @Query("SELECT COUNT(d) > 0 FROM Document d WHERE d.parentDocument = :parentDocument AND d.archived = false")
     boolean existsByParentDocumentAndArchivedFalse(@Param("parentDocument") Document parentDocument);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Document d SET d.content = :content, d.updatedAt = CURRENT_TIMESTAMP WHERE d.id = :id")
+    void updateOnlyContent(@Param("id") Long id, @Param("content") String content);
+
+    @Query("SELECT d FROM Document d JOIN FETCH d.workspace WHERE d.id = :id")
+    Optional<Document> findByIdWithWorkspace(@Param("id") Long id);
 }

@@ -55,10 +55,23 @@ public class User extends BaseTimeEntity {
         this.role = role != null ? role : Role.ROLE_USER;
     }
 
-    public void updateProfile(String name, String userIcon) {
-        this.name = name;
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updateProfileImage(String userIcon) {
         this.userIcon = userIcon;
     }
+
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
+    public void updateInfo(String nickname, String userIcon) {
+        this.nickname = nickname;
+        this.userIcon = userIcon;
+    }
+
 
     public boolean matchesPassword(
             String rawPassword,

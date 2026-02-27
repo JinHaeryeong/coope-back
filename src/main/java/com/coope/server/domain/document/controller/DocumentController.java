@@ -61,6 +61,16 @@ public class DocumentController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{documentId}/content")
+    public ResponseEntity<Void> updateContent(
+            @PathVariable Long documentId,
+            @RequestBody String content,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        documentService.updateContentOptimized(documentId, content, userDetails.getUser());
+        return ResponseEntity.ok().build();
+    }
+
     @PatchMapping("/{documentId}")
     public ResponseEntity<DocumentResponse> update(
             @PathVariable Long documentId,

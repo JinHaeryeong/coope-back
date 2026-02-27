@@ -76,6 +76,18 @@ public class ChatController {
         return ResponseEntity.ok(messages);
     }
 
+    @DeleteMapping("/room/{roomId}/leave")
+    public ResponseEntity<Void> leaveChatRoom(
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        Long userId = userDetails.getUser().getId();
+
+        chatService.leaveRoom(roomId, userId);
+
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/upload")
     public ResponseEntity<ChatUploadResponse> uploadFile(@RequestParam("file") MultipartFile file) {
         String url = fileService.upload(file, ImageCategory.CHAT);

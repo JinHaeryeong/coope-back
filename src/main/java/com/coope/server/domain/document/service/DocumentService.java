@@ -11,7 +11,6 @@ import com.coope.server.domain.workspace.entity.Workspace;
 import com.coope.server.domain.workspace.service.WorkspaceService;
 import com.coope.server.global.error.exception.BadRequestException;
 import com.coope.server.global.error.exception.DocumentNotFoundException;
-import com.coope.server.global.error.exception.FileStorageException;
 import com.coope.server.global.infra.file.FileService;
 import com.coope.server.global.infra.file.ImageCategory;
 import lombok.RequiredArgsConstructor;
@@ -76,37 +75,48 @@ public class DocumentService {
     @Transactional
     public DocumentResponse update(Long documentId, DocumentUpdateRequest request, User user) {
         Document document = findDocumentById(documentId);
-
         workspaceService.validateMember(document.getWorkspace().getId(), user.getId());
 
         if (request.getTitle() != null) document.updateTitle(request.getTitle());
-        if (request.getContent() != null) document.updateContent(request.getContent());
         if (request.getIcon() != null) document.updateIcon(request.getIcon());
+
+        if (request.getContent() != null) document.updateContent(request.getContent());
 
         if (request.getCoverImage() != null) {
             String oldUrl = document.getCoverImage();
             String newUrl = request.getCoverImage();
 
+            if (!isValidImageUrl(newUrl)) {
+                throw new BadRequestException("유효하지 않은 이미지 경로입니다.");
+            }
+
+            document.updateCoverImage(newUrl);
+
             if (oldUrl != null && !oldUrl.equals(newUrl)) {
                 boolean deleted = fileService.deleteFile(oldUrl, ImageCategory.COVER);
                 if (!deleted) {
                     log.warn("기존 커버 이미지 삭제에 실패했습니다. (URL: {})", oldUrl);
-                    throw new FileStorageException("기존 파일 삭제 실패로 인해 업데이트를 중단합니다.");
                 }
             }
-
-             if (!isValidImageUrl(newUrl)) throw new BadRequestException("유효하지 않은 이미지 경로입니다.");
-
-            document.updateCoverImage(newUrl);
         }
 
         boolean hasChildren = documentRepository.existsByParentDocumentAndArchivedFalse(document);
-
         DocumentResponse response = DocumentResponse.of(document, hasChildren);
 
         broadcast(document.getWorkspace().getInviteCode(), "UPSERT", response);
 
         return response;
+    }
+
+    @Transactional
+    public void updateContentOptimized(Long documentId, String content, User user) {
+        Document document = documentRepository.findByIdWithWorkspace(documentId)
+                .orElseThrow(() -> new DocumentNotFoundException("문서 없음"));
+        workspaceService.validateMember(document.getWorkspace().getId(), user.getId());
+
+        documentRepository.updateOnlyContent(documentId, content);
+
+        broadcastContentUpdate(document.getWorkspace().getInviteCode(), documentId, content, user.getId());
     }
 
     @Transactional
@@ -175,6 +185,19 @@ public class DocumentService {
     private Document findDocumentById(Long documentId) {
         return documentRepository.findById(documentId)
                 .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
+    }
+
+    private void broadcastContentUpdate(String workspaceCode, Long documentId, String content, Long senderId) {
+        DocumentEvent event = DocumentEvent.builder()
+                .type("CONTENT_UPDATE")
+                .data(java.util.Map.of(
+                        "documentId", documentId,
+                        "content", content,
+                        "senderId", senderId
+                ))
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/workspace/" + workspaceCode, event);
     }
 
     private void broadcast(String workspaceCode, String type, Object data) {

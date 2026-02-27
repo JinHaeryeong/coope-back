@@ -15,6 +15,7 @@ import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.error.exception.AccessDeniedException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @Transactional(readOnly = true)
 public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
@@ -121,6 +123,27 @@ public class ChatService {
         ));
     }
 
+    @Transactional
+    public void leaveRoom(Long roomId, Long userId) {
+        ChatParticipant participant = participantRepository.findByChatRoomIdAndUserId(roomId, userId)
+                .orElseThrow(() -> new AccessDeniedException("채팅방 참여 정보가 없습니다."));
+
+        ChatRoom room = participant.getChatRoom();
+        User user = participant.getUser();
+
+        Message leaveMsg = messageRepository.save(Message.createLeaveMessage(room, user));
+
+        participantRepository.updateLastMessageInfoByRoom(roomId, leaveMsg.getCreatedAt(), leaveMsg.getContent());
+
+        broadcastLeaveInfo(room, leaveMsg, userId);
+
+        participantRepository.delete(participant);
+
+        if (participantRepository.countByChatRoomId(roomId) == 0) {
+            chatRoomRepository.delete(room);
+        }
+    }
+
     private String determineTitle(String roomName, List<User> participants) {
         if (roomName != null && !roomName.trim().isEmpty()) {
             return roomName;
@@ -159,5 +182,12 @@ public class ChatService {
         if (!participantRepository.existsByChatRoomIdAndUserId(roomId, userId)) {
             throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
         }
+    }
+
+    private void broadcastLeaveInfo(ChatRoom room, Message leaveMsg, Long userId) {
+        MessageResponse response = MessageResponse.from(leaveMsg);
+        messagingTemplate.convertAndSend("/topic/chat/" + room.getId(), response);
+        sendChatUpdateNotifications(room, leaveMsg);
+        messagingTemplate.convertAndSendToUser(userId.toString(), "/queue/chat/updates", response);
     }
 }

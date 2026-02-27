@@ -52,4 +52,15 @@ ORDER BY COALESCE(cp.lastMessageTime, cp.chatRoom.createdAt) DESC
 
     @Query("SELECT cp FROM ChatParticipant cp JOIN FETCH cp.user WHERE cp.chatRoom.id = :roomId")
     List<ChatParticipant> findByChatRoomId(@Param("roomId") Long roomId);
+
+    long countByChatRoomId(Long roomId);
+
+    @Query("SELECT cp FROM ChatParticipant cp " +
+            "JOIN FETCH cp.chatRoom " +
+            "JOIN FETCH cp.user " +
+            "WHERE cp.chatRoom.id = :roomId AND cp.user.id = :userId")
+    Optional<ChatParticipant> findByChatRoomIdAndUserId(
+            @Param("roomId") Long roomId,
+            @Param("userId") Long userId
+    );
 }
