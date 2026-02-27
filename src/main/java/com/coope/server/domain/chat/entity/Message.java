@@ -31,14 +31,19 @@ public class Message extends BaseTimeEntity {
     private String fileName;
     private String fileFormat;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'TALK'")
+    private MessageType type;
+
     @Builder
-    public Message(ChatRoom chatRoom, User user, String content, String fileUrl, String fileName, String fileFormat) {
+    public Message(ChatRoom chatRoom, User user, String content, String fileUrl, String fileName, String fileFormat, MessageType type) {
         this.chatRoom = chatRoom;
         this.user = user;
         this.content = content;
         this.fileUrl = fileUrl;
         this.fileName = fileName;
         this.fileFormat = fileFormat;
+        this.type = (type != null) ? type : MessageType.TALK;
     }
 
     public Long getSenderId() {

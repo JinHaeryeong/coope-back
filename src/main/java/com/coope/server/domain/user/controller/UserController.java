@@ -1,9 +1,6 @@
 package com.coope.server.domain.user.controller;
 
-import com.coope.server.domain.user.dto.SignupRequest;
-import com.coope.server.domain.user.dto.SignupResponse;
-import com.coope.server.domain.user.dto.UserResponse;
-import com.coope.server.domain.user.dto.UserSearchResponse;
+import com.coope.server.domain.user.dto.*;
 import com.coope.server.domain.user.service.UserService;
 import com.coope.server.global.security.UserDetailsImpl;
 import jakarta.validation.Valid;
@@ -35,6 +32,29 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMyInfo(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(userService.getMyInfo(userDetails.getUser().getId()));
+    }
+
+
+    @PostMapping("/verify-password")
+    public ResponseEntity<Void> verifyPassword(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @Valid @RequestBody PasswordCheckRequest request
+    ) {
+        userService.checkPassword(userDetails.getUser().getId(), request.getPassword());
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping(value = "/profile", consumes = "multipart/form-data")
+    public ResponseEntity<UserResponse> updateProfile(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @Valid @ModelAttribute ProfileUpdateFullRequest request
+    ) {
+        UserResponse response = userService.updateProfile(
+                userDetails.getUser().getId(),
+                request
+        );
+        log.info("유저 프로필 수정 완료 - 유저 ID: {}", userDetails.getUser().getId());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")
