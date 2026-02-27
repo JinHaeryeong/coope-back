@@ -85,11 +85,19 @@ public class DocumentService {
         if (request.getCoverImage() != null) {
             String oldUrl = document.getCoverImage();
             String newUrl = request.getCoverImage();
-            if (oldUrl != null && !oldUrl.equals(newUrl)) {
-                fileService.deleteFile(oldUrl, ImageCategory.COVER);
+
+            if (!isValidImageUrl(newUrl)) {
+                throw new BadRequestException("유효하지 않은 이미지 경로입니다.");
             }
-            if (!isValidImageUrl(newUrl)) throw new BadRequestException("유효하지 않은 이미지 경로입니다.");
+
             document.updateCoverImage(newUrl);
+
+            if (oldUrl != null && !oldUrl.equals(newUrl)) {
+                boolean deleted = fileService.deleteFile(oldUrl, ImageCategory.COVER);
+                if (!deleted) {
+                    log.warn("기존 커버 이미지 삭제에 실패했습니다. (URL: {})", oldUrl);
+                }
+            }
         }
 
         boolean hasChildren = documentRepository.existsByParentDocumentAndArchivedFalse(document);

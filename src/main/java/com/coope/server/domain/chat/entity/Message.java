@@ -33,7 +33,7 @@ public class Message extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'TALK'")
-    private MessageType type;
+    private MessageType type = MessageType.TALK;
 
     @Builder
     public Message(ChatRoom chatRoom, User user, String content, String fileUrl, String fileName, String fileFormat, MessageType type) {
@@ -48,5 +48,14 @@ public class Message extends BaseTimeEntity {
 
     public Long getSenderId() {
         return user != null ? user.getId() : null;
+    }
+
+    public static Message createLeaveMessage(ChatRoom room, User user) {
+        return Message.builder()
+                .chatRoom(room)
+                .user(user)
+                .content(user.getNickname() + "님이 퇴장하셨습니다.")
+                .type(MessageType.LEAVE)
+                .build();
     }
 }

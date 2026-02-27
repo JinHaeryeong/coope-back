@@ -1,12 +1,10 @@
 package com.coope.server.domain.user.service;
 
-import com.coope.server.domain.auth.service.EmailAuthService;
-import com.coope.server.domain.friend.service.FriendService;
 import com.coope.server.domain.user.dto.ProfileUpdateFullRequest;
 import com.coope.server.domain.user.dto.UserResponse;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
-import com.coope.server.global.error.exception.AuthenticationException; // 🚀 패키지 경로 확인!
+import com.coope.server.global.error.exception.AuthenticationException;
 import com.coope.server.global.infra.file.FileService;
 import com.coope.server.global.infra.file.ImageCategory;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +35,7 @@ class UserServiceTest {
 
     @Test
     @DisplayName("프로필 수정 성공 - 닉네임, 이미지, 비밀번호 모두 변경")
-    void updateProfile_success() throws Exception {
+    void updateProfile_success() {
         Long userId = 1L;
         User user = User.builder()
                 .email("test@coope.com")

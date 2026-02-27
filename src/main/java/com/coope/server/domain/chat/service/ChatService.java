@@ -7,7 +7,6 @@ import com.coope.server.domain.chat.dto.MessageResponse;
 import com.coope.server.domain.chat.entity.ChatParticipant;
 import com.coope.server.domain.chat.entity.ChatRoom;
 import com.coope.server.domain.chat.entity.Message;
-import com.coope.server.domain.chat.entity.MessageType;
 import com.coope.server.domain.chat.repository.ChatParticipantRepository;
 import com.coope.server.domain.chat.repository.ChatRoomRepository;
 import com.coope.server.domain.chat.repository.MessageRepository;
@@ -126,35 +125,23 @@ public class ChatService {
 
     @Transactional
     public void leaveRoom(Long roomId, Long userId) {
-        ChatRoom room = findChatRoom(roomId);
-        User user = findUser(userId);
+        ChatParticipant participant = participantRepository.findByChatRoomIdAndUserId(roomId, userId)
+                .orElseThrow(() -> new AccessDeniedException("채팅방 참여 정보가 없습니다."));
 
-        Message leaveMsg = Message.builder()
-                .chatRoom(room)
-                .user(user)
-                .content(user.getNickname() + "님이 퇴장하셨습니다.")
-                .type(MessageType.LEAVE)
-                .build();
-        messageRepository.save(leaveMsg);
+        ChatRoom room = participant.getChatRoom();
+        User user = participant.getUser();
+
+        Message leaveMsg = messageRepository.save(Message.createLeaveMessage(room, user));
 
         participantRepository.updateLastMessageInfoByRoom(roomId, leaveMsg.getCreatedAt(), leaveMsg.getContent());
 
-        ChatParticipant participant = participantRepository.findByChatRoomIdAndUserId(roomId, userId)
-                .orElseThrow(() -> new EntityNotFoundException("참여 정보가 없습니다."));
+        broadcastLeaveInfo(room, leaveMsg, userId);
+
         participantRepository.delete(participant);
 
-        long remainingCount = participantRepository.countByChatRoomId(roomId);
-        if (remainingCount == 0) {
+        if (participantRepository.countByChatRoomId(roomId) == 0) {
             chatRoomRepository.delete(room);
-            return;
         }
-
-        MessageResponse response = MessageResponse.from(leaveMsg);
-        messagingTemplate.convertAndSend("/topic/chat/" + roomId, response);
-
-        sendChatUpdateNotifications(room, leaveMsg);
-
-        messagingTemplate.convertAndSendToUser(userId.toString(), "/queue/chat/updates", response);
     }
 
     private String determineTitle(String roomName, List<User> participants) {
@@ -195,5 +182,12 @@ public class ChatService {
         if (!participantRepository.existsByChatRoomIdAndUserId(roomId, userId)) {
             throw new AccessDeniedException("채팅방 접근 권한이 없습니다.");
         }
+    }
+
+    private void broadcastLeaveInfo(ChatRoom room, Message leaveMsg, Long userId) {
+        MessageResponse response = MessageResponse.from(leaveMsg);
+        messagingTemplate.convertAndSend("/topic/chat/" + room.getId(), response);
+        sendChatUpdateNotifications(room, leaveMsg);
+        messagingTemplate.convertAndSendToUser(userId.toString(), "/queue/chat/updates", response);
     }
 }
