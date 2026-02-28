@@ -152,13 +152,17 @@ public class UserService {
     private void updatePassword(User user, String newPassword, String currentPassword) {
         if (!StringUtils.hasText(newPassword)) return;
 
-        if (!StringUtils.hasText(currentPassword)) {
-            throw new BadRequestException("비밀번호 변경을 위해 현재 비밀번호를 입력해주세요.");
+        if (StringUtils.hasText(user.getPassword())) {
+
+            if (!StringUtils.hasText(currentPassword)) {
+                throw new BadRequestException("비밀번호 변경을 위해 현재 비밀번호를 입력해주세요.");
+            }
+
+            if (!user.matchesPassword(currentPassword, passwordEncoder)) {
+                throw new AuthenticationException("현재 비밀번호가 일치하지 않아 수정을 완료할 수 없습니다.");
+            }
         }
 
-        if (!user.matchesPassword(currentPassword, passwordEncoder)) {
-            throw new AuthenticationException("현재 비밀번호가 일치하지 않아 수정을 완료할 수 없습니다.");
-        }
         user.updatePassword(passwordEncoder.encode(newPassword));
     }
 

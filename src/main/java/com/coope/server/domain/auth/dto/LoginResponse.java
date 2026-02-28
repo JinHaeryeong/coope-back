@@ -13,18 +13,20 @@ public class LoginResponse {
     private final String nickname;
     private final String userIcon;
     private final String role;
+    private final String provider;
 
     @JsonIgnore
     private final String refreshToken;
 
     @Builder
-    private LoginResponse(String accessToken, Long id, String email, String nickname, String userIcon, String role, String refreshToken) {
+    private LoginResponse(String accessToken, Long id, String email, String nickname, String userIcon, String role, String provider, String refreshToken) {
         this.accessToken = accessToken;
         this.id = id;
         this.email = email;
         this.nickname = nickname;
         this.userIcon = userIcon;
         this.role = role;
+        this.provider = provider;
         this.refreshToken = refreshToken;
     }
 
@@ -36,6 +38,7 @@ public class LoginResponse {
                 .nickname(user.getNickname())
                 .userIcon(user.getUserIcon())
                 .role(user.getRole().name())
+                .provider(user.getProvider().name())
                 .refreshToken(refreshToken)
                 .build();
     }

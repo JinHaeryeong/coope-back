@@ -11,14 +11,16 @@ public class UserResponse {
     private final String nickname;
     private final String userIcon;
     private final String role;
+    private final String provider;
 
     @Builder
-    private UserResponse(Long id, String email, String nickname, String userIcon, String role) {
+    private UserResponse(Long id, String email, String nickname, String userIcon, String role, String provider) {
         this.id = id;
         this.email = email;
         this.nickname = nickname;
         this.userIcon = userIcon;
         this.role = role;
+        this.provider = provider;
     }
 
     public static UserResponse from(User user) {
@@ -28,6 +30,7 @@ public class UserResponse {
                 .nickname(user.getNickname())
                 .userIcon(user.getUserIcon())
                 .role(user.getRole().name())
+                .provider(user.getProvider().name())
                 .build();
     }
 }
