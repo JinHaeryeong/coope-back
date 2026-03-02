@@ -26,6 +26,7 @@ public class Inquiry extends BaseTimeEntity {
     private User user;
 
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(EnumType.STRING)
@@ -63,17 +64,23 @@ public class Inquiry extends BaseTimeEntity {
     }
 
     public void addFile(String fileUrl, String originalName) {
-        InquiryFile inquiryFile = InquiryFile.builder()
-                .inquiry(this)
-                .fileUrl(fileUrl)
-                .originalName(originalName)
-                .build();
-        this.files.add(inquiryFile);
+        if (fileUrl != null && !fileUrl.isBlank()) {
+            InquiryFile inquiryFile = InquiryFile.builder()
+                    .inquiry(this)
+                    .fileUrl(fileUrl)
+                    .originalName(originalName)
+                    .build();
+            this.files.add(inquiryFile);
+        }
     }
 
     public void setAnswer(InquiryAnswer answer) {
         this.answer = answer;
         this.status = InquiryStatus.ANSWERED;
+
+        if (answer != null) {
+            answer.initInquiry(this);
+        }
     }
 
     public boolean isEditable() {

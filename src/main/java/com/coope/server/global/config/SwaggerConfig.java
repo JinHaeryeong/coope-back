@@ -3,7 +3,6 @@ package com.coope.server.global.config;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,8 +14,6 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         String securitySchemeName = "BearerAuth";
 
-        SecurityRequirement securityRequirement = new SecurityRequirement()
-                .addList(securitySchemeName);
 
         Components components = new Components()
                 .addSecuritySchemes(securitySchemeName, new SecurityScheme()
@@ -30,7 +27,6 @@ public class SwaggerConfig {
                         .title("COOPE API Document")
                         .description("COOPE 서비스 백엔드 API 명세서")
                         .version("v1.0.0"))
-                .addSecurityItem(securityRequirement)
                 .components(components);
     }
 }

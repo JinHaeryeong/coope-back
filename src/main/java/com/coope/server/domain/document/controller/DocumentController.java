@@ -19,6 +19,7 @@ import java.util.List;
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor
 @Slf4j
+@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "BearerAuth")
 public class DocumentController {
 
     private final DocumentService documentService;

@@ -81,6 +81,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/notices/write").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/notices/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/notices/detail/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/inquiries/all").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/inquiries/*/answer").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/comments/**").authenticated()
                         .requestMatchers("/api/workspaces/**").authenticated()
                         .requestMatchers("/api/documents/**").authenticated()

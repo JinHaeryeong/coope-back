@@ -32,4 +32,16 @@ public class InquiryAnswer extends BaseTimeEntity {
         this.admin = admin;
         this.content = content;
     }
+
+    public void initInquiry(Inquiry inquiry) {
+        this.inquiry = inquiry;
+    }
+
+    public static InquiryAnswer createInquiryAnswer(Inquiry inquiry, User admin, String content) {
+        return InquiryAnswer.builder()
+                .inquiry(inquiry)
+                .admin(admin)
+                .content(content)
+                .build();
+    }
 }
