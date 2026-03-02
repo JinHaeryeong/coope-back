@@ -6,7 +6,8 @@ public enum ImageCategory {
     PROFILE("profiles"),
     CHAT("chats"),
     COVER("covers"),
-    DOCUMENT("documents");
+    DOCUMENT("documents"),
+    INQUIRY("inquiries");
 
 
     private final String dir;
