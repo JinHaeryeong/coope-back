@@ -27,6 +27,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @ExtendWith(MockitoExtension.class)
 class InquiryServiceTest {
 
@@ -83,10 +85,9 @@ class InquiryServiceTest {
         Long userId = 100L;
 
         User user = User.builder().email("test@coope.com").name("테스터").build();
-        ReflectionTestUtils.setField(user, "id", userId); // ID 강제 주입
+        ReflectionTestUtils.setField(user, "id", userId);
 
         Inquiry inquiry = Inquiry.createInquiry(user, "제목", "내용", InquiryCategory.ERROR, "PC");
-        inquiry.addFile("old-file.jpg", "test.jpg");
 
         given(inquiryRepository.findById(inquiryId)).willReturn(Optional.of(inquiry));
 
@@ -94,8 +95,11 @@ class InquiryServiceTest {
         inquiryService.deleteInquiry(inquiryId, userId, Role.ROLE_USER);
 
         // then
-        verify(fileService).deleteFile(eq("old-file.jpg"), eq(ImageCategory.INQUIRY));
+        assertThat(inquiry.getDeletedAt()).isNotNull();
+
         verify(inquiryRepository).delete(inquiry);
+
+        verify(fileService, never()).deleteFile(anyString(), any());
     }
 
     @Test

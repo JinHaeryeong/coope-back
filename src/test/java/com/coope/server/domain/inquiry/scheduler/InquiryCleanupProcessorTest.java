@@ -1,0 +1,59 @@
+package com.coope.server.domain.inquiry.scheduler;
+
+import com.coope.server.domain.inquiry.entity.Inquiry;
+import com.coope.server.domain.inquiry.entity.InquiryFile;
+import com.coope.server.domain.inquiry.repository.InquiryRepository;
+import com.coope.server.global.infra.file.FileService;
+import com.coope.server.global.infra.file.ImageCategory;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class InquiryCleanupProcessorTest {
+
+    @Mock private InquiryRepository inquiryRepository;
+    @Mock private FileService fileService;
+
+    @InjectMocks
+    private InquiryCleanupProcessor cleanupProcessor;
+
+    @Test
+    @DisplayName("영구 삭제 시 DB 데이터가 먼저 삭제된 후 S3 파일이 삭제되어야 한다")
+    void processCleanup_SuccessOrder() {
+        // given
+        Long inquiryId = 1L;
+        String fileUrl = "http://s3.com/test.jpg";
+
+        Inquiry inquiry = Inquiry.builder().build();
+        ReflectionTestUtils.setField(inquiry, "id", inquiryId);
+
+        // 첨부파일 가짜 객체 생성 및 연결
+        InquiryFile file = InquiryFile.builder().fileUrl(fileUrl).build();
+        ReflectionTestUtils.setField(inquiry, "files", List.of(file));
+
+        // fileService.deleteFile이 항상 true를 반환하도록 설정
+        when(fileService.deleteFile(anyString(), eq(ImageCategory.INQUIRY))).thenReturn(true);
+
+        // when
+        cleanupProcessor.processCleanup(inquiry);
+
+        // then
+        InOrder inOrder = inOrder(inquiryRepository, fileService);
+
+        inOrder.verify(inquiryRepository).hardDeleteById(inquiryId);
+
+        inOrder.verify(fileService).deleteFile(fileUrl, ImageCategory.INQUIRY);
+    }
+}

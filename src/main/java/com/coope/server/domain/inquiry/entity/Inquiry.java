@@ -9,13 +9,17 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SoftDelete;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Getter
+@SoftDelete(columnName = "deleted")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "inquiry")
 public class Inquiry extends BaseTimeEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,6 +46,8 @@ public class Inquiry extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InquiryFile> files = new ArrayList<>();
+
+    private LocalDateTime deletedAt;
 
     @Builder
     public Inquiry(User user, String title, String content, InquiryCategory category, String environment) {
@@ -85,5 +91,10 @@ public class Inquiry extends BaseTimeEntity {
 
     public boolean isEditable() {
         return this.status == InquiryStatus.PENDING;
+    }
+
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }

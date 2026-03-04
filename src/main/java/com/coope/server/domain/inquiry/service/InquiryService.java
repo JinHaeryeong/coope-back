@@ -74,15 +74,7 @@ public class InquiryService {
             throw new AccessDeniedException("해당 문의를 삭제할 권한이 없습니다.");
         }
 
-        if (inquiry.getFiles() != null && !inquiry.getFiles().isEmpty()) {
-            boolean allDeleted = inquiry.getFiles().stream()
-                    .allMatch(file -> fileService.deleteFile(file.getFileUrl(), ImageCategory.INQUIRY));
-
-            if (!allDeleted) {
-                throw new IllegalStateException("일부 첨부파일 삭제에 실패하여 문의 삭제를 중단합니다.");
-            }
-        }
-
+        inquiry.softDelete();
         inquiryRepository.delete(inquiry);
     }
 
