@@ -23,10 +23,10 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     @EntityGraph(attributePaths = {"user"})
     Page<Inquiry> findAll(@NonNull Pageable pageable);
 
-    @Query(value = "SELECT * FROM inquiry WHERE deleted = true AND deleted_at <= :threshold", nativeQuery = true)
+    @Query(value = "SELECT * FROM inquiry WHERE deleted = true AND deleted_at <= :threshold LIMIT 100", nativeQuery = true)
     List<Inquiry> findAllExpiredInquiries(@Param("threshold") LocalDateTime threshold);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying
     @Query(value = "DELETE FROM inquiry WHERE id = :id", nativeQuery = true)
     void hardDeleteById(@Param("id") Long id);
 }
