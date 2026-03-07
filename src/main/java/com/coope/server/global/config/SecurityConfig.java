@@ -92,11 +92,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/chat/**").authenticated()
                         .requestMatchers("/api/ai/**").authenticated()
                         .requestMatchers("/api/inquiries/**").authenticated()
+                        .requestMatchers("/api/liveblocks-auth").authenticated()
                         .anyRequest().authenticated()                // 그 외 요청은 인증 필요
                 )
                 .oauth2Login(oauth2 -> oauth2
                                 .userInfoEndpoint(userInfo -> userInfo
-                                        .userService(customOAuth2UserService) // 우리가 만든 서비스 연결
+                                        .userService(customOAuth2UserService)
                                 )
                          .successHandler(oAuth2AuthenticationSuccessHandler)
                 )

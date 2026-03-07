@@ -52,4 +52,20 @@ public class DocumentResponse {
                 .createdAt(document.getCreatedAt())
                 .build();
     }
+
+    public static DocumentResponse of(Document document, String content, boolean hasChildren) {
+        return DocumentResponse.builder()
+                .id(document.getId())
+                .title(document.getTitle())
+                .content(content)
+                .icon(document.getIcon())
+                .coverImage(document.getCoverImage())
+                .parentId(document.getParentDocument() != null ? document.getParentDocument().getId() : null)
+                .archived(document.isArchived())
+                .published(document.isPublished())
+                .lastEditedBy(document.getUser().getNickname())
+                .hasChildren(hasChildren)
+                .createdAt(document.getCreatedAt())
+                .build();
+    }
 }

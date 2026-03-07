@@ -27,4 +27,10 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     boolean existsByWorkspaceIdAndUserIdAndRole(Long workspaceId, Long userId, WorkspaceRole role);
 
     List<WorkspaceMember> findAllByWorkspaceId(Long workspaceId);
+
+    @Query("SELECT wm FROM WorkspaceMember wm " +
+            "JOIN wm.workspace w " +
+            "WHERE w.inviteCode = :inviteCode AND wm.user.id = :userId")
+    Optional<WorkspaceMember> findByWorkspaceInviteCodeAndUserId(@Param("inviteCode") String inviteCode,
+                                                                 @Param("userId") Long userId);
 }

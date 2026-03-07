@@ -124,4 +124,23 @@ public class DocumentController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{documentId}/redis-snapshot")
+    public ResponseEntity<Void> saveRedisSnapshot(
+            @PathVariable Long documentId,
+            @RequestBody String content,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        if (userDetails == null || userDetails.getUser() == null) {
+            log.warn("Redis 스냅샷 요청 - 인증되지 않은 사용자");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        documentService.saveToRedisSnapshot(documentId, content, userDetails.getUser());
+
+        log.info("Redis 스냅샷 저장 성공 - 문서 ID: {}, 저장자: {}",
+                documentId, userDetails.getUser().getEmail());
+
+        return ResponseEntity.ok().build();
+    }
+
 }

@@ -15,11 +15,13 @@ import com.coope.server.global.infra.file.FileService;
 import com.coope.server.global.infra.file.ImageCategory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +34,7 @@ public class DocumentService {
     private final WorkspaceService workspaceService;
     private final FileService fileService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     public List<DocumentResponse> getSidebarDocuments(String workspaceCode, Long parentId, User user) {
         Workspace workspace = workspaceService.getByInviteCode(workspaceCode);
@@ -64,8 +67,11 @@ public class DocumentService {
         Document document = request.toEntity(user, workspace, parentDocument);
         Document savedDocument = documentRepository.save(document);
 
-        DocumentResponse response = DocumentResponse.of(savedDocument, false);
+        String redisKey = "document-snapshot:" + savedDocument.getId();
+        String initialContent = "[]";
+        redisTemplate.opsForValue().set(redisKey, initialContent, 1, TimeUnit.HOURS);
 
+        DocumentResponse response = DocumentResponse.of(savedDocument, false);
         broadcast(request.getWorkspaceCode(), "UPSERT", response);
 
         return response;
@@ -117,6 +123,12 @@ public class DocumentService {
         documentRepository.updateOnlyContent(documentId, content);
 
         broadcastContentUpdate(document.getWorkspace().getInviteCode(), documentId, content, user.getId());
+    }
+
+    public void saveToRedisSnapshot(Long documentId, String content, User user) {
+        String key = "document-snapshot:" + documentId;
+        redisTemplate.opsForValue().set(key, content, 24, TimeUnit.HOURS);
+        log.debug("Redis 스냅샷 저장 - 문서 ID: {}, 편집자: {}", documentId, user.getEmail());
     }
 
     @Transactional
@@ -177,9 +189,20 @@ public class DocumentService {
 
         workspaceService.validateMember(document.getWorkspace().getId(), user.getId());
 
+        String redisKey = "document-snapshot:" + documentId;
+        String latestContent = (String) redisTemplate.opsForValue().get(redisKey);
+
+        if (latestContent == null) {
+            latestContent = document.getContent();
+            if (latestContent != null) {
+                redisTemplate.opsForValue().set(redisKey, latestContent, 24, TimeUnit.HOURS);
+                log.info("[Redis Cache] 문서 ID {} 데이터를 DB에서 캐싱했습니다.", documentId);
+            }
+        }
+
         boolean hasChildren = documentRepository.existsByParentDocumentAndArchivedFalse(document);
 
-        return DocumentResponse.of(document, hasChildren);
+        return DocumentResponse.of(document, latestContent, hasChildren);
     }
 
     private Document findDocumentById(Long documentId) {
