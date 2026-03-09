@@ -52,7 +52,7 @@ public class DocumentService {
     public DocumentResponse createDocument(DocumentCreateRequest request, User user) {
         Workspace workspace = workspaceService.getByInviteCode(request.getWorkspaceCode());
 
-        workspaceService.validateMember(workspace.getId(), user.getId());
+        workspaceService.validateEditor(workspace.getId(), user.getId());
 
         Document parentDocument = null;
         if (request.getParentId() != null) {
@@ -81,12 +81,10 @@ public class DocumentService {
     @Transactional
     public DocumentResponse update(Long documentId, DocumentUpdateRequest request, User user) {
         Document document = findDocumentById(documentId);
-        workspaceService.validateMember(document.getWorkspace().getId(), user.getId());
+        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
 
         if (request.getTitle() != null) document.updateTitle(request.getTitle());
         if (request.getIcon() != null) document.updateIcon(request.getIcon());
-
-        if (request.getContent() != null) document.updateContent(request.getContent());
 
         if (request.getCoverImage() != null) {
             String oldUrl = document.getCoverImage();
@@ -118,7 +116,8 @@ public class DocumentService {
     public void updateContentOptimized(Long documentId, String content, User user) {
         Document document = documentRepository.findByIdWithWorkspace(documentId)
                 .orElseThrow(() -> new DocumentNotFoundException("문서 없음"));
-        workspaceService.validateMember(document.getWorkspace().getId(), user.getId());
+
+        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
 
         documentRepository.updateOnlyContent(documentId, content);
 
@@ -127,7 +126,9 @@ public class DocumentService {
 
     public void saveToRedisSnapshot(Long documentId, String content, User user) {
         String key = "document-snapshot:" + documentId;
-        redisTemplate.opsForValue().set(key, content, 24, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set(key, content, 1, TimeUnit.HOURS);
+
+        redisTemplate.opsForSet().add("modified-documents", documentId.toString());
         log.debug("Redis 스냅샷 저장 - 문서 ID: {}, 편집자: {}", documentId, user.getEmail());
     }
 
@@ -135,7 +136,7 @@ public class DocumentService {
     public void archiveDocument(Long documentId, User user) {
         Document document = findDocumentById(documentId);
 
-        workspaceService.validateMember(document.getWorkspace().getId(), user.getId());
+        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
 
         document.archiveWithChildren();
 
@@ -146,7 +147,7 @@ public class DocumentService {
     public DocumentResponse restoreDocument(Long documentId, User user) {
         Document document = findDocumentById(documentId);
 
-        workspaceService.validateMember(document.getWorkspace().getId(), user.getId());
+        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
 
         document.restore();
         DocumentResponse response = DocumentResponse.of(document, false);
@@ -161,7 +162,7 @@ public class DocumentService {
         Document document = findDocumentById(documentId);
         String inviteCode = document.getWorkspace().getInviteCode();
 
-        workspaceService.validateMember(document.getWorkspace().getId(), user.getId());
+        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
 
         documentRepository.delete(document);
 

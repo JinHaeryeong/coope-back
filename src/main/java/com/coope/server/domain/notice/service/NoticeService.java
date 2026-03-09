@@ -6,8 +6,6 @@ import com.coope.server.domain.notice.dto.NoticeWriteRequest;
 import com.coope.server.domain.notice.entity.Notice;
 import com.coope.server.domain.notice.repository.NoticeRepository;
 import com.coope.server.domain.user.entity.User;
-import com.coope.server.domain.user.enums.Role;
-import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.error.exception.FileStorageException;
 import com.coope.server.global.error.exception.NoticeNotFoundException;
 import com.coope.server.global.infra.file.FileService;
@@ -67,14 +65,11 @@ public class NoticeService {
         redisTemplate.opsForValue().increment(key);
     }
 
+
     @Transactional
     public NoticeResponse updateNotice(Long noticeId, NoticeWriteRequest requestDto, User user) {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new NoticeNotFoundException("해당 공지사항이 존재하지 않습니다."));
-
-        if (!user.getRole().equals(Role.ROLE_ADMIN)) {
-            throw new AccessDeniedException("공지사항 수정 권한이 없습니다.");
-        }
 
         String currentImageUrl = notice.getImageUrl();
 

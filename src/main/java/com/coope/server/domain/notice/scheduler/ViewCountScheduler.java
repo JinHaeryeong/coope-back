@@ -1,4 +1,4 @@
-package com.coope.server.global.scheduler;
+package com.coope.server.domain.notice.scheduler;
 
 import com.coope.server.domain.notice.repository.NoticeRepository;
 import lombok.RequiredArgsConstructor;

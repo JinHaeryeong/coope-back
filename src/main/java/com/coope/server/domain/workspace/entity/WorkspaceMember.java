@@ -36,6 +36,13 @@ public class WorkspaceMember {
         this.role = role;
     }
 
+    public void updateRole(WorkspaceRole newRole) {
+        if (newRole == null) {
+            throw new IllegalArgumentException("변경할 권한이 유효하지 않습니다.");
+        }
+        this.role = newRole;
+    }
+
     public boolean isOwner() {
         return this.role == WorkspaceRole.OWNER;
     }

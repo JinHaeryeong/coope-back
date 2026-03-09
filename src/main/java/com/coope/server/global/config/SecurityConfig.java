@@ -79,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers("/ws-stomp/**").permitAll()
                         .requestMatchers("/api/user/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/notices/write").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/notices/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/notices/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/notices/detail/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/inquiries/all").hasAuthority("ROLE_ADMIN")

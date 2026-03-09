@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,9 +24,9 @@ public class AIChatService {
     private String apiKey;
 
     private final ObjectMapper objectMapper;
-    private final WebClient webClient = WebClient.builder().build();
+    private final WebClient webClient;
 
-    @AiLimit(type = "CHAT", maxCount = 5)
+    @AiLimit(maxCount = 5)
     public Flux<String> getAIStreamResponse(String userPrompt, List<AIChatMessage> history) {
 
         AIChatMessage systemMsg = AIChatRequest.createSystemMessage();
@@ -47,6 +48,7 @@ public class AIChatService {
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToFlux(String.class) // 조각(chunk) 단위로 받음
+                .timeout(Duration.ofSeconds(30))
                 .filter(data -> !data.equals("[DONE]")) // 끝 신호 제외
                 .map(this::parseDeltaContent) // 텍스트만 추출
                 .filter(content -> !content.isEmpty())

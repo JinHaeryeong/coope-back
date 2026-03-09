@@ -1,16 +1,17 @@
 package com.coope.server.domain.workspace.controller;
 
 import com.coope.server.domain.workspace.dto.WorkspaceJoinRequest;
+import com.coope.server.domain.workspace.dto.WorkspaceMemberResponse;
 import com.coope.server.domain.workspace.dto.WorkspaceResponse;
 import com.coope.server.domain.workspace.dto.WorkspaceWriteRequest;
 import com.coope.server.domain.workspace.service.WorkspaceService;
-import com.coope.server.global.security.UserDetailsImpl; //
+import com.coope.server.global.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal; //
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public class WorkspaceController {
 
     @GetMapping
     public ResponseEntity<List<WorkspaceResponse>> getMyWorkspaces(
-            @AuthenticationPrincipal UserDetailsImpl userDetails) { //
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
         List<WorkspaceResponse> responses = workspaceService.getMyWorkspaces(userDetails.getUser().getId());
 
@@ -68,6 +69,33 @@ public class WorkspaceController {
 
         WorkspaceResponse response = workspaceService.updateWorkspaceName(workspaceCode, request.getName(), userDetails.getUser());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{workspaceCode}/members")
+    public ResponseEntity<List<WorkspaceMemberResponse>> getWorkspaceMembers(
+            @PathVariable("workspaceCode") String workspaceCode,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        // 모든 처리는 서비스에게 맡긴다!
+        List<WorkspaceMemberResponse> responses =
+                workspaceService.getWorkspaceMembers(workspaceCode, userDetails.getUser().getId());
+
+        return ResponseEntity.ok(responses);
+    }
+
+    @PatchMapping("/{workspaceId}/members/{targetUserId}/role")
+    public ResponseEntity<Void> updateMemberRole(
+            @PathVariable("workspaceId") Long workspaceId,
+            @PathVariable("targetUserId") Long targetUserId,
+            @RequestBody java.util.Map<String, com.coope.server.domain.workspace.enums.WorkspaceRole> request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        workspaceService.updateMemberRole(workspaceId, targetUserId, request.get("role"), userDetails.getUser());
+
+        log.info("워크스페이스 멤버 권한 변경 성공 - 관리자: {}, 대상: {}, 변경된 권한: {}",
+                userDetails.getUser().getNickname(), targetUserId, request.get("role"));
+
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{workspaceCode}")
