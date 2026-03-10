@@ -17,10 +17,6 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
             "wm.workspace.createdAt desc")
     List<WorkspaceMember> findAllByUserId(@Param("userId") Long userId);
 
-    @org.springframework.cache.annotation.Cacheable(value = "workspaceRole", key = "#workspaceId + ':' + #userId")
-    @Query("SELECT wm.role FROM WorkspaceMember wm WHERE wm.workspace.id = :workspaceId AND wm.user.id = :userId")
-    Optional<String> findRoleByWorkspaceIdAndUserId(@Param("workspaceId") Long workspaceId, @Param("userId") Long userId);
-
     Optional<WorkspaceMember> findByWorkspaceIdAndUserId(Long workspaceId, Long userId);
 
     boolean existsByWorkspaceIdAndUserId(Long workspaceId, Long userId);

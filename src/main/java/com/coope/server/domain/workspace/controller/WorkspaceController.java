@@ -1,9 +1,6 @@
 package com.coope.server.domain.workspace.controller;
 
-import com.coope.server.domain.workspace.dto.WorkspaceJoinRequest;
-import com.coope.server.domain.workspace.dto.WorkspaceMemberResponse;
-import com.coope.server.domain.workspace.dto.WorkspaceResponse;
-import com.coope.server.domain.workspace.dto.WorkspaceWriteRequest;
+import com.coope.server.domain.workspace.dto.*;
 import com.coope.server.domain.workspace.service.WorkspaceService;
 import com.coope.server.global.security.UserDetailsImpl;
 import jakarta.validation.Valid;
@@ -87,13 +84,10 @@ public class WorkspaceController {
     public ResponseEntity<Void> updateMemberRole(
             @PathVariable("workspaceId") Long workspaceId,
             @PathVariable("targetUserId") Long targetUserId,
-            @RequestBody java.util.Map<String, com.coope.server.domain.workspace.enums.WorkspaceRole> request,
+            @Valid @RequestBody MemberRoleUpdateRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        workspaceService.updateMemberRole(workspaceId, targetUserId, request.get("role"), userDetails.getUser());
-
-        log.info("워크스페이스 멤버 권한 변경 성공 - 관리자: {}, 대상: {}, 변경된 권한: {}",
-                userDetails.getUser().getNickname(), targetUserId, request.get("role"));
+        workspaceService.updateMemberRole(workspaceId, targetUserId, request.getRole(), userDetails.getUser());
 
         return ResponseEntity.ok().build();
     }

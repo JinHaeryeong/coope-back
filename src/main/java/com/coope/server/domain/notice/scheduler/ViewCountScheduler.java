@@ -18,14 +18,13 @@ public class ViewCountScheduler {
     private final RedisTemplate<String, Object> redisTemplate;
     private final NoticeRepository noticeRepository;
 
-    // 1분마다 실행 (테스트를 위해 짧게 설정, 나중에 10분 정도로 늘려도 됨)
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 300000)
     @Transactional
     public void syncViewCountToDb() {
         // "notice:views:"로 시작하는 모든 키를 가져옴
         Set<String> keys = redisTemplate.keys("notice:views:*");
 
-        if (keys == null || keys.isEmpty()) {
+        if (keys.isEmpty()) {
             return;
         }
 

@@ -115,7 +115,7 @@ public class DocumentService {
     @Transactional
     public void updateContentOptimized(Long documentId, String content, User user) {
         Document document = documentRepository.findByIdWithWorkspace(documentId)
-                .orElseThrow(() -> new DocumentNotFoundException("문서 없음"));
+                .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
 
         workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
 
@@ -125,6 +125,11 @@ public class DocumentService {
     }
 
     public void saveToRedisSnapshot(Long documentId, String content, User user) {
+        Document document = documentRepository.findByIdWithWorkspace(documentId)
+                .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
+
+        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
+
         String key = "document-snapshot:" + documentId;
         redisTemplate.opsForValue().set(key, content, 1, TimeUnit.HOURS);
 

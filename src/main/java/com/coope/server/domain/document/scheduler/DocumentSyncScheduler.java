@@ -23,11 +23,7 @@ public class DocumentSyncScheduler {
     public void syncRedisToDb() {
         Set<Object> modifiedIds = redisTemplate.opsForSet().members("modified-documents");
 
-        if (modifiedIds == null || modifiedIds.isEmpty()) {
-            return;
-        }
-
-        log.info("[Scheduler] Redis -> DB 동기화 시작 (수정 대상: {}건)", modifiedIds.size());
+        if (modifiedIds == null || modifiedIds.isEmpty()) return;
 
         for (Object idObj : modifiedIds) {
             String documentIdStr = (String) idObj;
@@ -40,19 +36,21 @@ public class DocumentSyncScheduler {
                 if (content != null) {
                     if (content.length() < 180 || content.contains("\"content\":[]")) {
                         redisTemplate.opsForSet().remove("modified-documents", documentIdStr);
-                        log.info("[Scheduler] 문서 ID {} - 내용 부족으로 DB 저장 건너뜀 (명단 제거)", documentId);
+                        log.debug("[Scheduler] 문서 ID {} - 내용 부족으로 명단 제거", documentId);
                         continue;
                     }
 
                     documentRepository.updateOnlyContent(documentId, content);
-
                     redisTemplate.opsForSet().remove("modified-documents", documentIdStr);
                     log.info("[Scheduler] 문서 ID {} DB 동기화 완료", documentId);
+
+                } else {
+                    redisTemplate.opsForSet().remove("modified-documents", documentIdStr);
+                    log.warn("[Scheduler] 문서 ID {} - Redis 스냅샷 유실(content=null), 명단에서 제거", documentId);
                 }
             } catch (Exception e) {
-                log.error("[Scheduler] 문서 ID {} 동기화 중 오류: {}", documentIdStr, e.getMessage());
+                log.error("[Scheduler] 문서 ID {} 동기화 실패: {}", documentIdStr, e.getMessage());
             }
         }
-        log.info("[Scheduler] Redis -> DB 동기화 사이클 종료");
     }
 }

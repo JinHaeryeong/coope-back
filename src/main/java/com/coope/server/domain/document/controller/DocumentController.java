@@ -137,7 +137,7 @@ public class DocumentController {
 
         documentService.saveToRedisSnapshot(documentId, content, userDetails.getUser());
 
-        log.info("Redis 스냅샷 저장 성공 - 문서 ID: {}, 저장자: {}",
+        log.debug("Redis 스냅샷 저장 성공 - 문서 ID: {}, 저장자: {}",
                 documentId, userDetails.getUser().getEmail());
 
         return ResponseEntity.ok().build();
