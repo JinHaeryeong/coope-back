@@ -79,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers("/ws-stomp/**").permitAll()
                         .requestMatchers("/api/user/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/notices/write").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/notices/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/notices/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/notices/detail/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/inquiries/all").hasAuthority("ROLE_ADMIN")
@@ -92,11 +93,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/chat/**").authenticated()
                         .requestMatchers("/api/ai/**").authenticated()
                         .requestMatchers("/api/inquiries/**").authenticated()
+                        .requestMatchers("/api/liveblocks-auth").authenticated()
                         .anyRequest().authenticated()                // 그 외 요청은 인증 필요
                 )
                 .oauth2Login(oauth2 -> oauth2
                                 .userInfoEndpoint(userInfo -> userInfo
-                                        .userService(customOAuth2UserService) // 우리가 만든 서비스 연결
+                                        .userService(customOAuth2UserService)
                                 )
                          .successHandler(oAuth2AuthenticationSuccessHandler)
                 )

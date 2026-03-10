@@ -39,7 +39,6 @@ public class AiService {
 
         String filename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "audio.webm";
 
-        // STT (Whisper API) 호출
         MultipartBodyBuilder builder = new MultipartBodyBuilder();
         builder.part("file", file.getResource()).filename(filename);
         builder.part("model", "whisper-1");
@@ -93,7 +92,7 @@ public class AiService {
         if (result == null || !result.containsKey("choices")) {
             return new VoiceProcessResponse(rawTranscript, "AI 요약 서비스 응답 오류");
         }
-        // GPT 응답 파싱
+
         Object choicesObj = result.get("choices");
         if (!(choicesObj instanceof List<?> choices) || choices.isEmpty()) {
             return new VoiceProcessResponse(rawTranscript, "AI 요약 생성 실패 (choices 누락)");

@@ -1,7 +1,6 @@
 package com.coope.server.domain.workspace.repository;
 
 import com.coope.server.domain.workspace.entity.WorkspaceMember;
-import com.coope.server.domain.workspace.enums.WorkspaceRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,7 +23,11 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
 
     long countByUserId(Long userId);
 
-    boolean existsByWorkspaceIdAndUserIdAndRole(Long workspaceId, Long userId, WorkspaceRole role);
-
     List<WorkspaceMember> findAllByWorkspaceId(Long workspaceId);
+
+    @Query("SELECT wm FROM WorkspaceMember wm " +
+            "JOIN wm.workspace w " +
+            "WHERE w.inviteCode = :inviteCode AND wm.user.id = :userId")
+    Optional<WorkspaceMember> findByWorkspaceInviteCodeAndUserId(@Param("inviteCode") String inviteCode,
+                                                                 @Param("userId") Long userId);
 }

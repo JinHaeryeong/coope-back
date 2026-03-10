@@ -73,7 +73,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<Map<String, String>> refresh(
-            @CookieValue(value = "refreshToken") String refreshToken) {
+            @CookieValue(value = "refreshToken", required = false) String refreshToken) {
 
         String newAccessToken = authService.refresh(refreshToken);
 
