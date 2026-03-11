@@ -22,22 +22,22 @@ public class InquiryCleanupProcessor {
 
     @Transactional
     public void processCleanup(Inquiry inquiry) {
-        try {
-            List<String> urlsToDelete = inquiry.getFiles().stream()
-                    .map(InquiryFile::getFileUrl)
-                    .toList();
+        List<String> urlsToDelete = inquiry.getFiles().stream()
+                .map(InquiryFile::getFileUrl)
+                .toList();
 
-            inquiryRepository.hardDeleteById(inquiry.getId());
+        inquiryRepository.hardDeleteById(inquiry.getId());
 
-            urlsToDelete.forEach(url -> {
-                boolean isDeleted = fileService.deleteFile(url, ImageCategory.INQUIRY);
-                if (!isDeleted) {
-                    log.warn("[Cleanup] S3 파일 삭제 실패 (inquiryId: {}, url: {})", inquiry.getId(), url);
-                }
-            });
-        } catch (Exception e) {
-            log.error("[Cleanup] inquiryId {} 처리 중 장애 발생", inquiry.getId(), e);
-            throw e;
+        deleteFilesSilently(inquiry.getId(), urlsToDelete);
+    }
+
+    private void deleteFilesSilently(Long inquiryId, List<String> urls) {
+        for (String url : urls) {
+            try {
+                fileService.deleteFile(url, ImageCategory.INQUIRY);
+            } catch (Exception e) {
+                log.error("[Cleanup] S3 파일 삭제 도중 예외 발생 (inquiryId: {}, url: {})", inquiryId, url, e);
+            }
         }
     }
 }

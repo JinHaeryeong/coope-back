@@ -30,7 +30,6 @@ public class NoticeService {
     private static final String VIEW_COUNT_KEY = "notice:views:";
 
     public Page<NoticeResponse> getAllNotices(Pageable pageable) {
-
         return noticeRepository.findAll(pageable)
                 .map(NoticeResponse::from);
     }
@@ -42,7 +41,7 @@ public class NoticeService {
             savedImageUrl = fileService.upload(file, ImageCategory.NOTICE);
         }
 
-        Notice notice = request.toEntity(user, savedImageUrl);
+        Notice notice = Notice.createNotice(request, user, savedImageUrl);
         Notice savedNotice = noticeRepository.save(notice);
 
         return NoticeResponse.from(savedNotice);
@@ -71,26 +70,29 @@ public class NoticeService {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new NoticeNotFoundException("해당 공지사항이 존재하지 않습니다."));
 
-        String currentImageUrl = notice.getImageUrl();
-
-        if (Boolean.TRUE.equals(requestDto.getDeleteImage()) || (requestDto.getFile() != null && !requestDto.getFile().isEmpty())) {
-            if (currentImageUrl != null) {
-                boolean isDeleted = fileService.deleteFile(currentImageUrl, ImageCategory.NOTICE);
-                if (!isDeleted) {
-                    throw new FileStorageException("기존 이미지 삭제에 실패하여 수정을 완료할 수 없습니다: " + currentImageUrl);
-                }
-                notice.updateImageUrl(null);
-            }
-        }
-
-        if (requestDto.getFile() != null && !requestDto.getFile().isEmpty()) {
-            String newImageUrl = fileService.upload(requestDto.getFile(), ImageCategory.NOTICE);
-            notice.updateImageUrl(newImageUrl);
-        }
-
+        processImageUpdate(notice, requestDto);
         notice.update(requestDto.getTitle(), requestDto.getContent());
 
         return NoticeResponse.from(notice);
+    }
+
+    private void processImageUpdate(Notice notice, NoticeWriteRequest dto) {
+        boolean hasNewFile = dto.getFile() != null && !dto.getFile().isEmpty();
+        boolean shouldDeleteExisting = Boolean.TRUE.equals(dto.getDeleteImage()) || hasNewFile;
+
+        if (!shouldDeleteExisting) return;
+
+        if (notice.getImageUrl() != null) {
+            if (!fileService.deleteFile(notice.getImageUrl(), ImageCategory.NOTICE)) {
+                throw new FileStorageException("파일 삭제 실패: " + notice.getImageUrl());
+            }
+            notice.removeImage();
+        }
+
+        if (hasNewFile) {
+            String newUrl = fileService.upload(dto.getFile(), ImageCategory.NOTICE);
+            notice.changeImage(newUrl);
+        }
     }
 
     @Transactional
@@ -98,16 +100,21 @@ public class NoticeService {
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new NoticeNotFoundException("해당 공지사항을 찾을 수 없습니다."));
 
-        String currentImageUrl = notice.getImageUrl();
-        if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
-            boolean isDeleted = fileService.deleteFile(currentImageUrl, ImageCategory.NOTICE);
-
-            if (!isDeleted) {
-                throw new FileStorageException("파일 삭제에 실패하여 삭제를 완료할 수 없습니다." + currentImageUrl);
-            }
-        }
+        deleteNoticeImage(notice);
 
         noticeRepository.delete(notice);
     }
 
+    private void deleteNoticeImage(Notice notice) {
+        String currentImageUrl = notice.getImageUrl();
+
+        if (currentImageUrl == null || currentImageUrl.isEmpty()) {
+            return;
+        }
+        if (!fileService.deleteFile(currentImageUrl, ImageCategory.NOTICE)) {
+            throw new FileStorageException("파일 삭제에 실패하여 삭제를 완료할 수 없습니다." + currentImageUrl);
+        }
+
+        notice.removeImage();
+    }
 }

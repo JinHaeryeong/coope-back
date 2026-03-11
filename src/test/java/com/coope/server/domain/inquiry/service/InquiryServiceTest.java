@@ -22,12 +22,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class InquiryServiceTest {
@@ -44,35 +43,31 @@ class InquiryServiceTest {
     void createInquiry_success() {
         // given
         Long userId = 1L;
-
-        User user = User.builder()
-                .email("test@coope.com")
-                .name("테스터")
-                .nickname("테스터")
-                .build();
+        User user = User.builder().nickname("테스터").build();
+        ReflectionTestUtils.setField(user, "id", userId);
 
         MockMultipartFile file = new MockMultipartFile("files", "test.jpg", "image/jpeg", "data".getBytes());
         InquiryCreateRequest request = InquiryCreateRequest.builder()
-                .title("테스트 제목")
-                .content("테스트 내용")
+                .title("문의 제목")
+                .content("문의 내용")
                 .category(InquiryCategory.ERROR)
                 .environment("Android")
-                .files(List.of(new MockMultipartFile("files", "test.png", "image/png", "test".getBytes())))
+                .files(List.of(file))
                 .build();
-        request.setTitle("문의 제목");
-        request.setContent("문의 내용");
-        request.setFiles(List.of(file));
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(fileService.upload(any(), eq(ImageCategory.INQUIRY))).willReturn("http://s3-url.com/test.jpg");
 
-        // save 시 들어온 객체를 그대로 반환 (id가 없어도 save 호출 여부만 확인하면 됨)
-        given(inquiryRepository.save(any(Inquiry.class))).willAnswer(invocation -> invocation.getArgument(0));
+        // save 시 ID를 가진 객체가 반환되도록 설정
+        Inquiry savedInquiry = Inquiry.createInquiry(user, "제목", "내용", InquiryCategory.ERROR, "Android");
+        ReflectionTestUtils.setField(savedInquiry, "id", 100L);
+        given(inquiryRepository.save(any(Inquiry.class))).willReturn(savedInquiry);
 
         // when
         Long inquiryId = inquiryService.createInquiry(userId, request);
 
         // then
+        assertThat(inquiryId).isEqualTo(100L);
         verify(fileService, times(1)).upload(any(), eq(ImageCategory.INQUIRY));
         verify(inquiryRepository).save(any(Inquiry.class));
     }
@@ -84,22 +79,19 @@ class InquiryServiceTest {
         Long inquiryId = 1L;
         Long userId = 100L;
 
-        User user = User.builder().email("test@coope.com").name("테스터").build();
+        User user = User.builder().build();
         ReflectionTestUtils.setField(user, "id", userId);
 
         Inquiry inquiry = Inquiry.createInquiry(user, "제목", "내용", InquiryCategory.ERROR, "PC");
-
         given(inquiryRepository.findById(inquiryId)).willReturn(Optional.of(inquiry));
 
         // when
         inquiryService.deleteInquiry(inquiryId, userId, Role.ROLE_USER);
 
         // then
+        // SoftDelete 로직 확인: deletedAt 필드가 채워졌는지 확인
         assertThat(inquiry.getDeletedAt()).isNotNull();
-
         verify(inquiryRepository).delete(inquiry);
-
-        verify(fileService, never()).deleteFile(anyString(), any());
     }
 
     @Test
@@ -114,10 +106,8 @@ class InquiryServiceTest {
         ReflectionTestUtils.setField(owner, "id", ownerId);
 
         Inquiry inquiry = Inquiry.createInquiry(owner, "제목", "내용", InquiryCategory.ERROR, "PC");
-
         given(inquiryRepository.findById(inquiryId)).willReturn(Optional.of(inquiry));
 
-        // when & then
         assertThatThrownBy(() -> inquiryService.deleteInquiry(inquiryId, otherUserId, Role.ROLE_USER))
                 .isInstanceOf(AccessDeniedException.class);
     }

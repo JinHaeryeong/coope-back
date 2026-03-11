@@ -4,7 +4,9 @@ import com.coope.server.domain.document.dto.DocumentCreateRequest;
 import com.coope.server.domain.document.dto.DocumentResponse;
 import com.coope.server.domain.document.dto.DocumentUpdateRequest;
 import com.coope.server.domain.document.service.DocumentService;
-import com.coope.server.global.security.UserDetailsImpl; // CommentController 스타일 반영
+import com.coope.server.global.security.UserDetailsImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Document", description = "문서 관리 API")
 @RestController
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor
@@ -24,123 +27,93 @@ public class DocumentController {
 
     private final DocumentService documentService;
 
+    @Operation(summary = "문서 생성", description = "새로운 문서를 생성합니다. 부모 문서 ID가 있으면 하위 문서로 생성됩니다.")
     @PostMapping
     public ResponseEntity<DocumentResponse> create(
             @Valid @RequestBody DocumentCreateRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
         DocumentResponse response = documentService.createDocument(request, userDetails.getUser());
-
-        log.info("문서 생성 성공 - 제목: {}, 작성자: {}, 워크스페이스: {}",
-                response.getTitle(), userDetails.getUser().getNickname(), request.getWorkspaceCode());
-
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // 사이드바 문서 목록 조회 (계층형)
-
+    @Operation(summary = "사이드바 문서 목록 조회", description = "워크스페이스 내의 문서 목록을 계층형으로 조회합니다.")
     @GetMapping("/sidebar")
     public ResponseEntity<List<DocumentResponse>> getSidebar(
-            @RequestParam("workspaceCode") String workspaceCode,
-            @RequestParam(value = "parentId", required = false) Long parentId,
+            @RequestParam String workspaceCode,
+            @RequestParam(required = false) Long parentId,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
-        List<DocumentResponse> responses = documentService.getSidebarDocuments(workspaceCode, parentId, userDetails.getUser());
-
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(documentService.getSidebarDocuments(workspaceCode, parentId, userDetails.getUser()));
     }
 
+    @Operation(summary = "문서 상세 조회", description = "특정 문서의 상세 내용(Redis 스냅샷 포함)을 조회합니다.")
     @GetMapping("/{documentId}")
     public ResponseEntity<DocumentResponse> getDocument(
-            @PathVariable("documentId") Long documentId,
-            @RequestParam("workspaceCode") String workspaceCode,
+            @PathVariable Long documentId,
+            @RequestParam String workspaceCode,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
-        // 문서 상세 정보를 가져오는 서비스 로직 호출
-        DocumentResponse response = documentService.getDocumentDetail(documentId, workspaceCode, userDetails.getUser());
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(documentService.getDocumentDetail(documentId, workspaceCode, userDetails.getUser()));
     }
 
+    @Operation(summary = "문서 내용 업데이트 (최적화)", description = "문서의 내용(Content)만 별도로 빠르게 업데이트합니다.")
     @PatchMapping("/{documentId}/content")
     public ResponseEntity<Void> updateContent(
             @PathVariable Long documentId,
             @RequestBody String content,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
         documentService.updateContentOptimized(documentId, content, userDetails.getUser());
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "문서 기본 정보 수정", description = "문서의 제목, 아이콘, 커버 이미지 등을 수정합니다.")
     @PatchMapping("/{documentId}")
     public ResponseEntity<DocumentResponse> update(
             @PathVariable Long documentId,
             @RequestBody DocumentUpdateRequest request,
-            @AuthenticationPrincipal UserDetailsImpl userDetails
-    ) {
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(documentService.update(documentId, request, userDetails.getUser()));
     }
 
-    // 휴지통 목록 조회
+    @Operation(summary = "휴지통 목록 조회", description = "워크스페이스 내 삭제(아카이브)된 문서 목록을 조회합니다.")
     @GetMapping("/trash")
     public ResponseEntity<List<DocumentResponse>> getTrash(
-            @RequestParam("workspaceCode") String workspaceCode,
+            @RequestParam String workspaceCode,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
-        List<DocumentResponse> responses = documentService.getTrashDocuments(workspaceCode, userDetails.getUser());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(documentService.getTrashDocuments(workspaceCode, userDetails.getUser()));
     }
 
-    // 문서 아카이브
-    @PatchMapping("/{documentId}/archive")
+    @Operation(summary = "문서 아카이브 (휴지통 이동)", description = "문서를 휴지통으로 이동시킵니다. 하위 문서도 함께 처리됩니다.")
+    @PutMapping("/{documentId}/archive")
     public ResponseEntity<Void> archive(
-            @PathVariable("documentId") Long documentId,
+            @PathVariable Long documentId,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
         documentService.archiveDocument(documentId, userDetails.getUser());
-        log.info("문서 휴지통 이동 성공 - ID: {}", documentId);
         return ResponseEntity.noContent().build();
     }
 
-    // 문서 복구
-    @PatchMapping("/{documentId}/restore")
+    @Operation(summary = "문서 복구", description = "휴지통에 있는 문서를 다시 활성화합니다.")
+    @PutMapping("/{documentId}/restore")
     public ResponseEntity<DocumentResponse> restore(
-            @PathVariable("documentId") Long documentId,
+            @PathVariable Long documentId,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
-        DocumentResponse response = documentService.restoreDocument(documentId, userDetails.getUser());
-        log.info("문서 복구 성공 - ID: {}, 제목: {}", documentId, response.getTitle());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(documentService.restoreDocument(documentId, userDetails.getUser()));
     }
 
-    // 문서 영구 삭제
+    @Operation(summary = "문서 영구 삭제", description = "문서를 DB에서 완전히 삭제합니다.")
     @DeleteMapping("/{documentId}")
     public ResponseEntity<Void> hardDelete(
-            @PathVariable("documentId") Long documentId,
+            @PathVariable Long documentId,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
         documentService.hardDeleteDocument(documentId, userDetails.getUser());
-        log.info("문서 영구 삭제 성공 - ID: {}", documentId);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{documentId}/redis-snapshot")
+    @Operation(summary = "Redis 스냅샷 수동 저장", description = "실시간 편집 중인 내용을 Redis에 임시 저장합니다.")
+    @PostMapping("/{documentId}/snapshots")
     public ResponseEntity<Void> saveRedisSnapshot(
             @PathVariable Long documentId,
             @RequestBody String content,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-
-        if (userDetails == null || userDetails.getUser() == null) {
-            log.warn("Redis 스냅샷 요청 - 인증되지 않은 사용자");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         documentService.saveToRedisSnapshot(documentId, content, userDetails.getUser());
-
-        log.debug("Redis 스냅샷 저장 성공 - 문서 ID: {}, 저장자: {}",
-                documentId, userDetails.getUser().getEmail());
-
         return ResponseEntity.ok().build();
     }
-
 }

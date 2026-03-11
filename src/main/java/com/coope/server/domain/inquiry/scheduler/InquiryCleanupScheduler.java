@@ -18,18 +18,26 @@ public class InquiryCleanupScheduler {
     private final InquiryRepository inquiryRepository;
     private final InquiryCleanupProcessor cleanupProcessor;
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "0 0 3 * * *") // 매일 새벽 3시
     public void cleanupOldInquiries() {
         LocalDateTime threshold = LocalDateTime.now().minusDays(3);
         int totalDeleted = 0;
+        int maxRetries = 100;
 
-        while (true) {
-            List<Inquiry> expiredInquiries = inquiryRepository.findAllExpiredInquiries(threshold);
+        log.info("[Cleanup] 스케줄러 시작 - 기준 시간: {}", threshold);
+
+        for (int i = 0; i < maxRetries; i++) {
+            List<Inquiry> expiredInquiries = inquiryRepository.findExpiredInquiriesWithLimit(threshold, 100);
+
             if (expiredInquiries.isEmpty()) break;
 
             for (Inquiry inquiry : expiredInquiries) {
-                cleanupProcessor.processCleanup(inquiry);
-                totalDeleted++;
+                try {
+                    cleanupProcessor.processCleanup(inquiry);
+                    totalDeleted++;
+                } catch (Exception e) {
+                    log.error("[Cleanup] 개별 건 처리 실패 (inquiryId: {})", inquiry.getId(), e);
+                }
             }
         }
         log.info("[Cleanup] 총 {}건 처리 완료.", totalDeleted);

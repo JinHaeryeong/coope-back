@@ -1,6 +1,7 @@
 package com.coope.server.domain.document.entity;
 
 import com.coope.server.domain.common.entity.BaseTimeEntity;
+import com.coope.server.domain.document.dto.DocumentCreateRequest;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.workspace.entity.Workspace;
 import jakarta.persistence.*;
@@ -68,12 +69,15 @@ public class Document extends BaseTimeEntity {
         this.published = false;
     }
 
-    public void restore() {
-        this.archived = false;
-
-        if (this.parentDocument != null && this.parentDocument.isArchived()) {
-            this.parentDocument = null;
-        }
+    public static Document createDocument(DocumentCreateRequest request, User user, Workspace workspace, Document parentDocument) {
+        return Document.builder()
+                .title(request.getTitle())
+                .icon(request.getIcon())
+                .content(request.getContent())
+                .user(user)
+                .workspace(workspace)
+                .parentDocument(parentDocument)
+                .build();
     }
 
     public void updateTitle(String title) {
@@ -94,8 +98,19 @@ public class Document extends BaseTimeEntity {
 
     public void archiveWithChildren() {
         this.archived = true;
-        if (this.childDocuments != null) {
-            this.childDocuments.forEach(Document::archiveWithChildren);
+        if (this.childDocuments != null && !this.childDocuments.isEmpty()) {
+            this.childDocuments.forEach(child -> {
+                if (!child.isArchived()) {
+                    child.archiveWithChildren();
+                }
+            });
+        }
+    }
+
+    public void restore() {
+        this.archived = false;
+        if (this.parentDocument != null && this.parentDocument.isArchived()) {
+            this.parentDocument = null;
         }
     }
 }

@@ -2,6 +2,7 @@ package com.coope.server.domain.notice.entity;
 
 import com.coope.server.domain.comment.entity.Comment;
 import com.coope.server.domain.common.entity.BaseTimeEntity;
+import com.coope.server.domain.notice.dto.NoticeWriteRequest;
 import com.coope.server.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -48,13 +49,26 @@ public class Notice extends BaseTimeEntity {
         this.user = user;
     }
 
+    public static Notice createNotice(NoticeWriteRequest request, User user, String savedImageUrl) {
+        return Notice.builder()
+                .title(request.getTitle())
+                .content(request.getContent())
+                .imageUrl(savedImageUrl)
+                .user(user)
+                .views(0) // 초기 조회수는 0
+                .build();
+    }
+
     public void update(String title, String content) {
         this.title = title;
         this.content = content;
     }
 
-    public void updateImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void changeImage(String newImageUrl) {
+        this.imageUrl = newImageUrl;
     }
 
+    public void removeImage() {
+        this.imageUrl = null;
+    }
 }

@@ -19,7 +19,6 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.fail(e.getMessage()));
     }
 
-
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<ErrorResponse> handleToken(InvalidTokenException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -29,6 +28,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException e) {
+        log.warn("데이터 충돌 에러: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.fail(e.getMessage()));
     }
 

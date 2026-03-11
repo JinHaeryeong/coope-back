@@ -1,8 +1,5 @@
 package com.coope.server.domain.chat.dto;
 
-import com.coope.server.domain.chat.entity.ChatRoom;
-import com.coope.server.domain.chat.entity.Message;
-import com.coope.server.domain.user.entity.User;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,15 +20,4 @@ public class MessageRequest {
     private String fileUrl;
     private String fileName;
     private String fileFormat;
-
-    public Message toEntity(ChatRoom chatRoom, User sender) {
-        return Message.builder()
-                .chatRoom(chatRoom)
-                .user(sender)
-                .content(this.content)
-                .fileUrl(this.fileUrl)
-                .fileName(this.fileName)
-                .fileFormat(this.fileFormat)
-                .build();
-    }
 }

@@ -64,7 +64,7 @@ public class DocumentService {
             }
         }
 
-        Document document = request.toEntity(user, workspace, parentDocument);
+        Document document = Document.createDocument(request, user, workspace, parentDocument);
         Document savedDocument = documentRepository.save(document);
 
         String redisKey = "document-snapshot:" + savedDocument.getId();
@@ -114,27 +114,20 @@ public class DocumentService {
 
     @Transactional
     public void updateContentOptimized(Long documentId, String content, User user) {
-        Document document = documentRepository.findByIdWithWorkspace(documentId)
-                .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
-
-        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
-
-        documentRepository.updateOnlyContent(documentId, content);
-
-        broadcastContentUpdate(document.getWorkspace().getInviteCode(), documentId, content, user.getId());
+        saveToRedisSnapshot(documentId, content, user);
     }
 
     public void saveToRedisSnapshot(Long documentId, String content, User user) {
         Document document = documentRepository.findByIdWithWorkspace(documentId)
-                .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
+                .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다."));
 
         workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
 
         String key = "document-snapshot:" + documentId;
         redisTemplate.opsForValue().set(key, content, 1, TimeUnit.HOURS);
-
         redisTemplate.opsForSet().add("modified-documents", documentId.toString());
-        log.debug("Redis 스냅샷 저장 - 문서 ID: {}, 편집자: {}", documentId, user.getEmail());
+
+        log.debug("[Redis AutoSave] 문서 ID: {}, 편집자: {}", documentId, user.getEmail());
     }
 
     @Transactional
@@ -201,7 +194,7 @@ public class DocumentService {
         if (latestContent == null) {
             latestContent = document.getContent();
             if (latestContent != null) {
-                redisTemplate.opsForValue().set(redisKey, latestContent, 24, TimeUnit.HOURS);
+                redisTemplate.opsForValue().set(redisKey, latestContent, 1, TimeUnit.HOURS);
                 log.info("[Redis Cache] 문서 ID {} 데이터를 DB에서 캐싱했습니다.", documentId);
             }
         }
@@ -214,19 +207,6 @@ public class DocumentService {
     private Document findDocumentById(Long documentId) {
         return documentRepository.findById(documentId)
                 .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
-    }
-
-    private void broadcastContentUpdate(String workspaceCode, Long documentId, String content, Long senderId) {
-        DocumentEvent event = DocumentEvent.builder()
-                .type("CONTENT_UPDATE")
-                .data(java.util.Map.of(
-                        "documentId", documentId,
-                        "content", content,
-                        "senderId", senderId
-                ))
-                .build();
-
-        messagingTemplate.convertAndSend("/topic/workspace/" + workspaceCode, event);
     }
 
     private void broadcast(String workspaceCode, String type, Object data) {
@@ -242,7 +222,6 @@ public class DocumentService {
         if (url == null || url.isEmpty()) return true;
 
         boolean isS3Url = url.contains(".s3.amazonaws.com");
-
         boolean isLocalUrl = url.contains("localhost:8080");
 
         return isS3Url || isLocalUrl;

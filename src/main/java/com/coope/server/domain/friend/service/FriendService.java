@@ -26,9 +26,7 @@ public class FriendService {
 
     @Transactional
     public void sendFriendRequest(Long currentUserId, Long friendId) {
-        if (currentUserId.equals(friendId)) {
-            throw new FriendException("본인에게는 친구 신청을 할 수 없습니다.");
-        }
+        validateNotSelf(currentUserId, friendId);
 
         User me = findUserById(currentUserId);
         User targetFriend = findUserById(friendId);
@@ -40,37 +38,21 @@ public class FriendService {
         Friend request = Friend.sendRequest(me, targetFriend);
         friendRepository.save(request);
 
-        messagingTemplate.convertAndSendToUser(
-                friendId.toString(),
-                "/queue/friend-update",
-                "REFRESH"
-        );
+        notifyFriendUpdate(friendId);
     }
 
-    // 친구 수락 (양방향 데이터 생성)
     @Transactional
     public void acceptFriendRequest(Long currentUserId, Long friendId) {
         User me = findUserById(currentUserId);
         User friend = findUserById(friendId);
 
-        // 상대방이 나에게 보낸 PENDING 요청 찾기
         Friend request = friendRepository.findByUserAndFriend(friend, me)
                 .orElseThrow(() -> new FriendException("받은 친구 신청 내역이 없습니다."));
 
-        if (request.getStatus() != FriendStatus.PENDING) {
-            throw new FriendException("이미 처리된 요청입니다.");
-        }
-
         request.accept();
 
-        // 반대 방향 데이터 생성 (나 -> 상대방)
         createInverseFriendshipIfAbsent(me, friend);
-
-        messagingTemplate.convertAndSendToUser(
-                friendId.toString(),
-                "/queue/friend-update",
-                "REFRESH"
-        );
+        notifyFriendUpdate(friendId);
     }
 
     public List<FriendResponse> getReceivedRequests(Long currentUserId) {
@@ -80,18 +62,17 @@ public class FriendService {
                 .collect(Collectors.toList());
     }
 
-    // 친구 삭제 또는 거절
     @Transactional
     public void deleteFriend(Long currentUserId, Long friendId) {
         User me = findUserById(currentUserId);
         User friend = findUserById(friendId);
 
-        // 양방향 모두 삭제
         int deletedCount = friendRepository.deleteFriendship(me, friend);
-
         if (deletedCount == 0) {
             throw new FriendException("삭제할 친구 관계가 존재하지 않습니다.");
         }
+
+        notifyFriendUpdate(friendId);
     }
 
     private User findUserById(Long userId) {
@@ -113,9 +94,22 @@ public class FriendService {
     }
 
     public String getRelationStatus(Long userId, Long targetId) {
-        // 양방향 중 하나라도 있으면 해당 상태 반환, 없으면 "NONE"
         return friendRepository.findStatusBetweenUsers(userId, targetId)
                 .map(Enum::name)
                 .orElse("NONE");
+    }
+
+    private void validateNotSelf(Long currentUserId, Long friendId) {
+        if (currentUserId.equals(friendId)) {
+            throw new FriendException("본인에게는 친구 신청을 할 수 없습니다.");
+        }
+    }
+
+    private void notifyFriendUpdate(Long targetUserId) {
+        messagingTemplate.convertAndSendToUser(
+                targetUserId.toString(),
+                "/queue/friend-update",
+                "REFRESH"
+        );
     }
 }

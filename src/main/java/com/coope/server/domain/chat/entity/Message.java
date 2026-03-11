@@ -1,5 +1,6 @@
 package com.coope.server.domain.chat.entity;
 
+import com.coope.server.domain.chat.dto.MessageRequest;
 import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -48,6 +49,18 @@ public class Message extends BaseTimeEntity {
 
     public Long getSenderId() {
         return user != null ? user.getId() : null;
+    }
+
+    public static Message createTalkMessage(ChatRoom chatRoom, User sender, MessageRequest request) {
+        return Message.builder()
+                .chatRoom(chatRoom)
+                .user(sender)
+                .content(request.getContent())
+                .fileUrl(request.getFileUrl())
+                .fileName(request.getFileName())
+                .fileFormat(request.getFileFormat())
+                .type(MessageType.TALK)
+                .build();
     }
 
     public static Message createLeaveMessage(ChatRoom room, User user) {

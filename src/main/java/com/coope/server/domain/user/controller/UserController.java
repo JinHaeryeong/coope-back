@@ -21,11 +21,10 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping(value = "/signup", consumes = "multipart/form-data")
+    @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<SignupResponse> signup(@Valid @ModelAttribute SignupRequest request) {
         Long userId = userService.signup(request);
         log.info("회원가입 성공 - 유저 ID: {}, 이메일: {}", userId, request.getEmail());
-        // 성공 응답 반환
         return ResponseEntity.ok(SignupResponse.success(request.getEmail()));
     }
 
@@ -34,8 +33,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getMyInfo(userDetails.getUser().getId()));
     }
 
-
-    @PostMapping("/verify-password")
+    @PostMapping("/me/verify-password")
     public ResponseEntity<Void> verifyPassword(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @Valid @RequestBody PasswordCheckRequest request
@@ -44,7 +42,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping(value = "/profile", consumes = "multipart/form-data")
+    @PatchMapping(value = "/me", consumes = "multipart/form-data")
     public ResponseEntity<UserResponse> updateProfile(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @Valid @ModelAttribute ProfileUpdateFullRequest request
@@ -57,7 +55,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/search")
+    @GetMapping
     public ResponseEntity<UserSearchResponse> searchUser(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @Pattern(

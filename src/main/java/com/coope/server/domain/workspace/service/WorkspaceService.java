@@ -34,72 +34,7 @@ public class WorkspaceService {
 
     public Workspace getByInviteCode(String inviteCode) {
         return workspaceRepository.findByInviteCode(inviteCode)
-                .orElseThrow(() -> new WorkspaceNotFoundException("워크스페이스를 찾을 수 없습니다. InviteCode: " + inviteCode));
-    }
-
-    @Transactional
-    public WorkspaceResponse createWorkspace(WorkspaceWriteRequest request, User user) {
-        String inviteCode = generateUniqueInviteCode();
-
-        Workspace workspace = workspaceRepository.save(request.toEntity(user, inviteCode));
-        WorkspaceMember member = workspaceMemberRepository.save(WorkspaceMember.createOwner(user, workspace));
-        notifyUserWorkspaceUpdate(user.getId());
-
-        return WorkspaceResponse.from(workspace, member.getRole());
-    }
-
-    private String generateUniqueInviteCode() {
-        String inviteCode;
-
-        do {
-            inviteCode = UUID.randomUUID().toString().substring(0, 8);
-        } while (workspaceRepository.existsByInviteCode(inviteCode)); // 중복되면 다시 생성
-
-        return inviteCode;
-    }
-
-    @Transactional
-    @CacheEvict(value = "workspaceMember", key = "#result.id + ':' + #user.id")
-    public WorkspaceResponse joinWorkspace(String inviteCode, User user) {
-        Workspace workspace = workspaceRepository.findByInviteCode(inviteCode)
-                .orElseThrow(() -> new WorkspaceNotFoundException("초대 코드가 잘못되었습니다."));
-
-        boolean isAlreadyMember = workspaceMemberRepository.existsByWorkspaceIdAndUserId(
-                workspace.getId(), user.getId());
-
-        if (isAlreadyMember) {
-            return WorkspaceResponse.from(workspace, WorkspaceRole.VIEWER, "already_member");
-        }
-
-        WorkspaceMember newMember = WorkspaceMember.createMember(user, workspace, WorkspaceRole.VIEWER);
-        workspaceMemberRepository.save(newMember);
-
-        notifyUserWorkspaceUpdate(user.getId());
-
-        return WorkspaceResponse.from(workspace, WorkspaceRole.VIEWER, "joined");
-    }
-
-    public WorkspaceResponse getWorkspaceByCode(String workspaceCode, User user) {
-        Workspace workspace = getByInviteCode(workspaceCode);
-
-        WorkspaceMember member = workspaceMemberRepository
-                .findByWorkspaceIdAndUserId(workspace.getId(), user.getId())
-                .orElseThrow(() -> new AccessDeniedException("해당 워크스페이스의 멤버가 아닙니다."));
-
-        return WorkspaceResponse.from(workspace, member.getRole());
-    }
-
-    @Transactional
-    public WorkspaceResponse updateWorkspaceName(String workspaceCode, String newName, User user) {
-        Workspace workspace = getByInviteCode(workspaceCode);
-
-        validateOwner(workspace.getId(), user.getId());
-
-        workspace.updateName(newName);
-
-        notifyAllMembers(workspace.getId());
-
-        return WorkspaceResponse.from(workspace, WorkspaceRole.OWNER);
+                .orElseThrow(() -> new WorkspaceNotFoundException("워크스페이스를 찾을 수 없습니다."));
     }
 
     public List<WorkspaceMemberResponse> getWorkspaceMembers(String workspaceCode, Long userId) {
@@ -117,16 +52,60 @@ public class WorkspaceService {
     }
 
     @Transactional
-    @CacheEvict(value = "workspaceRole", key = "#workspaceId + ':' + #targetUserId") // 바뀐 사람의 캐시를 즉시 삭제!
+    public WorkspaceResponse createWorkspace(WorkspaceWriteRequest request, User user) {
+        String inviteCode = generateUniqueInviteCode();
+
+        Workspace workspace = Workspace.createWorkspace(request.getName(), user, inviteCode);
+
+        Workspace savedWorkspace = workspaceRepository.save(workspace);
+
+        notifyUserWorkspaceUpdate(user.getId());
+        return WorkspaceResponse.from(savedWorkspace, WorkspaceRole.OWNER);
+    }
+
+    @Transactional
+    @CacheEvict(value = "workspaceRole", key = "#workspaceId + ':' + #user.id")
+    public WorkspaceResponse joinWorkspace(String inviteCode, User user) {
+        Workspace workspace = getByInviteCode(inviteCode);
+
+        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspace.getId(), user.getId())) {
+            return WorkspaceResponse.from(workspace, WorkspaceRole.VIEWER, "already_member");
+        }
+
+        workspace.addMember(user, WorkspaceRole.VIEWER);
+        workspaceRepository.save(workspace);
+
+        notifyUserWorkspaceUpdate(user.getId());
+        return WorkspaceResponse.from(workspace, WorkspaceRole.VIEWER, "joined");
+    }
+
+    @Transactional
+    public WorkspaceResponse updateWorkspaceName(String workspaceCode, String newName, User user) {
+        Workspace workspace = getByInviteCode(workspaceCode);
+        validateOwner(workspace.getId(), user.getId());
+
+        workspace.updateName(newName);
+
+        notifyAllMembers(workspace.getId());
+        return WorkspaceResponse.from(workspace, WorkspaceRole.OWNER);
+    }
+
+    @Transactional
+    public void updateMemberRoleByCode(String workspaceCode, Long targetUserId, WorkspaceRole newRole, User user) {
+        Workspace workspace = getByInviteCode(workspaceCode);
+        updateMemberRole(workspace.getId(), targetUserId, newRole, user);
+    }
+
+    @Transactional
+    @CacheEvict(value = "workspaceRole", key = "#workspaceId + ':' + #targetUserId")
     public void updateMemberRole(Long workspaceId, Long targetUserId, WorkspaceRole newRole, User user) {
-        validateOwner(workspaceId, user.getId());
-
-        WorkspaceMember targetMember = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, targetUserId)
-                .orElseThrow(() -> new AccessDeniedException("해당 멤버를 찾을 수 없습니다."));
-
         if (targetUserId.equals(user.getId())) {
             throw new BadRequestException("소유자 본인의 권한은 변경할 수 없습니다.");
         }
+
+        validateOwner(workspaceId, user.getId());
+        WorkspaceMember targetMember = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, targetUserId)
+                .orElseThrow(() -> new AccessDeniedException("해당 멤버를 찾을 수 없습니다."));
 
         targetMember.updateRole(newRole);
 
@@ -134,18 +113,16 @@ public class WorkspaceService {
     }
 
     @Transactional
-    @CacheEvict(value = "workspaceMember", allEntries = true)
+    @CacheEvict(value = "workspaceRole", allEntries = true)
     public void deleteWorkspace(String workspaceCode, User user) {
         Workspace workspace = getByInviteCode(workspaceCode);
-
         validateOwner(workspace.getId(), user.getId());
-        long membershipCount = workspaceMemberRepository.countByUserId(user.getId());
-        if (membershipCount <= 1) {
+
+        if (workspaceMemberRepository.countByUserId(user.getId()) <= 1) {
             throw new BadRequestException("최소 한 개의 워크스페이스는 유지해야 합니다.");
         }
 
         notifyAllMembers(workspace.getId());
-
         workspaceRepository.delete(workspace);
     }
 
@@ -155,34 +132,42 @@ public class WorkspaceService {
                 .collect(Collectors.toList());
     }
 
+    public WorkspaceResponse getWorkspaceByCode(String workspaceCode, User user) {
+        Workspace workspace = getByInviteCode(workspaceCode);
+        WorkspaceMember member = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspace.getId(), user.getId())
+                .orElseThrow(() -> new AccessDeniedException("멤버가 아닙니다."));
+        return WorkspaceResponse.from(workspace, member.getRole());
+    }
+
     public void validateMember(Long workspaceId, Long userId) {
         workspaceRoleService.getUserRole(workspaceId, userId);
     }
 
     public void validateEditor(Long workspaceId, Long userId) {
-        WorkspaceRole role =
-                WorkspaceRole.valueOf(workspaceRoleService.getUserRole(workspaceId, userId));
-
+        WorkspaceRole role = WorkspaceRole.valueOf(workspaceRoleService.getUserRole(workspaceId, userId));
         if (role == WorkspaceRole.VIEWER) {
             throw new AccessDeniedException("편집 권한이 없습니다.");
         }
     }
 
     public void validateOwner(Long workspaceId, Long userId) {
-        WorkspaceRole role =
-                WorkspaceRole.valueOf(workspaceRoleService.getUserRole(workspaceId, userId));
-
+        WorkspaceRole role = WorkspaceRole.valueOf(workspaceRoleService.getUserRole(workspaceId, userId));
         if (role != WorkspaceRole.OWNER) {
             throw new AccessDeniedException("소유자 권한이 없습니다.");
         }
     }
 
-    private void notifyAllMembers(Long workspaceId) {
-        List<WorkspaceMember> members = workspaceMemberRepository.findAllByWorkspaceId(workspaceId);
+    private String generateUniqueInviteCode() {
+        String code;
+        do {
+            code = UUID.randomUUID().toString().substring(0, 8);
+        } while (workspaceRepository.existsByInviteCode(code));
+        return code;
+    }
 
-        for (WorkspaceMember member : members) {
-            notifyUserWorkspaceUpdate(member.getUser().getId());
-        }
+    private void notifyAllMembers(Long workspaceId) {
+        workspaceMemberRepository.findAllByWorkspaceId(workspaceId)
+                .forEach(member -> notifyUserWorkspaceUpdate(member.getUser().getId()));
     }
 
     private void notifyUserWorkspaceUpdate(Long userId) {

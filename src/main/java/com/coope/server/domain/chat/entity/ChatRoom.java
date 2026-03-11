@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "chat_rooms")
@@ -37,7 +38,6 @@ public class ChatRoom extends BaseTimeEntity {
         this.type = type != null ? type : RoomType.INDIVIDUAL;
     }
 
-    // 1:1 방 생성 편의 메서드
     public static ChatRoom createIndividual(String title, User me, User friend) {
         ChatRoom room = ChatRoom.builder()
                 .title(title)
@@ -48,15 +48,45 @@ public class ChatRoom extends BaseTimeEntity {
         return room;
     }
 
-    // 그룹 방 생성 편의 메서드
-    public static ChatRoom createGroup(String title, List<User> users) {
+    public void updateTitleByParticipants(List<User> participants) {
+        if (this.type != RoomType.GROUP) {
+            return;
+        }
+
+        if (participants == null || participants.isEmpty()) {
+            return;
+        }
+
+        String calculatedTitle = participants.stream()
+                .map(User::getNickname)
+                .limit(3)
+                .collect(Collectors.joining(", "));
+
+        if (participants.size() > 3) {
+            calculatedTitle += " 외 " + (participants.size() - 3) + "명";
+        } else {
+            calculatedTitle += "의 대화";
+        }
+
+        this.title = calculatedTitle;
+    }
+
+    public static ChatRoom createGroup(String roomName, List<User> users) {
         ChatRoom room = ChatRoom.builder()
-                .title(title)
+                .title(roomName)
                 .type(RoomType.GROUP)
                 .build();
+
         users.forEach(room::addParticipant);
+
+        if (roomName == null || roomName.trim().isEmpty()) {
+            room.updateTitleByParticipants(users);
+        }
+
         return room;
     }
+
+
 
     public void addParticipant(User user) {
         this.participants.add(ChatParticipant.of(this, user));

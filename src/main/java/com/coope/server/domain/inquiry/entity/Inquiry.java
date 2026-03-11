@@ -4,6 +4,8 @@ import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.inquiry.enums.InquiryCategory;
 import com.coope.server.domain.inquiry.enums.InquiryStatus;
 import com.coope.server.domain.user.entity.User;
+import com.coope.server.domain.user.enums.Role;
+import com.coope.server.global.error.exception.AccessDeniedException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,7 +24,8 @@ import java.util.List;
 @Table(name = "inquiry")
 public class Inquiry extends BaseTimeEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -30,6 +33,7 @@ public class Inquiry extends BaseTimeEntity {
     private User user;
 
     private String title;
+
     @Column(columnDefinition = "TEXT")
     private String content;
 
@@ -69,32 +73,37 @@ public class Inquiry extends BaseTimeEntity {
                 .build();
     }
 
-    public void addFile(String fileUrl, String originalName) {
-        if (fileUrl != null && !fileUrl.isBlank()) {
+    public void reply(InquiryAnswer answer) {
+        if (answer == null) return;
+        this.answer = answer;
+        this.status = InquiryStatus.ANSWERED;
+        answer.initInquiry(this);
+    }
+
+    public void addFiles(List<String> fileUrls) {
+        if (fileUrls == null || fileUrls.isEmpty()) return;
+
+        fileUrls.forEach(url -> {
             InquiryFile inquiryFile = InquiryFile.builder()
                     .inquiry(this)
-                    .fileUrl(fileUrl)
-                    .originalName(originalName)
+                    .fileUrl(url)
                     .build();
             this.files.add(inquiryFile);
+        });
+    }
+
+    public void validateAccess(Long accessorId, Role userRole) {
+        if (userRole == Role.ROLE_ADMIN) return;
+        if (!this.user.getId().equals(accessorId)) {
+            throw new AccessDeniedException("해당 문의사항에 접근할 권한이 없습니다.");
         }
     }
 
-    public void setAnswer(InquiryAnswer answer) {
-        this.answer = answer;
-        this.status = InquiryStatus.ANSWERED;
-
-        if (answer != null) {
-            answer.initInquiry(this);
-        }
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
     }
 
     public boolean isEditable() {
         return this.status == InquiryStatus.PENDING;
-    }
-
-
-    public void softDelete() {
-        this.deletedAt = LocalDateTime.now();
     }
 }

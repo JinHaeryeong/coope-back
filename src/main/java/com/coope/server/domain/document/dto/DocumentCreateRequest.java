@@ -1,9 +1,5 @@
 package com.coope.server.domain.document.dto;
 
-
-import com.coope.server.domain.document.entity.Document;
-import com.coope.server.domain.user.entity.User;
-import com.coope.server.domain.workspace.entity.Workspace;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,15 +20,4 @@ public class DocumentCreateRequest {
     private String icon;
 
     private String content;
-
-    public Document toEntity(User user, Workspace workspace, Document parentDocument) {
-        return Document.builder()
-                .title(this.title)
-                .icon(this.icon)
-                .content(this.content)
-                .user(user)
-                .workspace(workspace)
-                .parentDocument(parentDocument)
-                .build();
-    }
 }

@@ -42,6 +42,15 @@ public class Comment extends BaseTimeEntity {
         this.user = user;
     }
 
+    public static Comment createComment(Notice notice, User user, String content, String imageUrl) {
+        return Comment.builder()
+                .notice(notice)
+                .user(user)
+                .content(content)
+                .imageUrl(imageUrl)
+                .build();
+    }
+
     public void update(String content) {
         if (content != null && !content.isBlank()) {
             this.content = content;
