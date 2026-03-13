@@ -3,6 +3,8 @@ package com.coope.server.domain.comment.entity;
 import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.notice.entity.Notice;
 import com.coope.server.domain.user.entity.User;
+import com.coope.server.domain.user.enums.Role;
+import com.coope.server.global.error.exception.AccessDeniedException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -42,14 +44,41 @@ public class Comment extends BaseTimeEntity {
         this.user = user;
     }
 
+    public static Comment createComment(Notice notice, User user, String content, String imageUrl) {
+        return Comment.builder()
+                .notice(notice)
+                .user(user)
+                .content(content)
+                .imageUrl(imageUrl)
+                .build();
+    }
+
     public void update(String content) {
         if (content != null && !content.isBlank()) {
             this.content = content;
         }
     }
 
-    // Comment.java 엔티티 내부
     public void updateImage(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public void validateOwner(User user) {
+        if (!this.user.getId().equals(user.getId())) {
+            throw new AccessDeniedException("댓글에 대한 권한이 없습니다.");
+        }
+    }
+
+    public void validateDeletionAuthority(User user) {
+        if (this.user.getId().equals(user.getId()) || user.getRole() == Role.ROLE_ADMIN) {
+            return;
+        }
+        throw new AccessDeniedException("댓글 삭제 권한이 없습니다.");
+    }
+
+    public void validateNoticeOwnership(Long noticeId) {
+        if (!this.notice.getId().equals(noticeId)) {
+            throw new AccessDeniedException("해당 공지사항의 댓글이 아닙니다.");
+        }
     }
 }

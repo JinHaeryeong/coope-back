@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/workspaces")
 @RequiredArgsConstructor
-@Slf4j //
+@Slf4j
 public class WorkspaceController {
 
     private final WorkspaceService workspaceService;
@@ -27,13 +27,6 @@ public class WorkspaceController {
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
         WorkspaceResponse response = workspaceService.createWorkspace(request, userDetails.getUser());
-
-        log.info("워크스페이스 생성 성공 - 생성자: {}, 이름: {}",
-                userDetails.getUser().getNickname(), response.getName());
-
-        log.debug("워크스페이스 초대코드 상세 - ID: {}, 초대코드: {}",
-                response.getId(), response.getInviteCode());
-
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -42,10 +35,6 @@ public class WorkspaceController {
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
         List<WorkspaceResponse> responses = workspaceService.getMyWorkspaces(userDetails.getUser().getId());
-
-        log.info("워크스페이스 목록 조회 - 사용자: {}, 조회된 개수: {}",
-                userDetails.getUser().getNickname(), responses.size());
-
         return ResponseEntity.ok(responses);
     }
 
@@ -73,21 +62,20 @@ public class WorkspaceController {
             @PathVariable("workspaceCode") String workspaceCode,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        // 모든 처리는 서비스에게 맡긴다!
         List<WorkspaceMemberResponse> responses =
                 workspaceService.getWorkspaceMembers(workspaceCode, userDetails.getUser().getId());
 
         return ResponseEntity.ok(responses);
     }
 
-    @PatchMapping("/{workspaceId}/members/{targetUserId}/role")
+    @PatchMapping("/{workspaceCode}/members/{targetUserId}/role")
     public ResponseEntity<Void> updateMemberRole(
-            @PathVariable("workspaceId") Long workspaceId,
+            @PathVariable("workspaceCode") String workspaceCode,
             @PathVariable("targetUserId") Long targetUserId,
             @Valid @RequestBody MemberRoleUpdateRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        workspaceService.updateMemberRole(workspaceId, targetUserId, request.getRole(), userDetails.getUser());
+        workspaceService.updateMemberRoleByCode(workspaceCode, targetUserId, request.getRole(), userDetails.getUser());
 
         return ResponseEntity.ok().build();
     }
@@ -107,10 +95,6 @@ public class WorkspaceController {
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
         WorkspaceResponse response = workspaceService.joinWorkspace(request.getInviteCode(), userDetails.getUser());
-
-        log.info("워크스페이스 참여 성공 - 사용자: {}, 워크스페이스 이름: {}",
-                userDetails.getUser().getNickname(), response.getName());
-
         return ResponseEntity.ok(response);
     }
 }

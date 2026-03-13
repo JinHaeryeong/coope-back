@@ -1,9 +1,6 @@
 package com.coope.server.domain.user.dto;
 
-import com.coope.server.domain.user.entity.User;
-import com.coope.server.domain.user.enums.Provider;
-import com.coope.server.domain.user.enums.Role;
-import lombok.*; // NoArgsConstructor, AllArgsConstructor 추가를 위해
+import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.validation.constraints.*;
 
@@ -34,17 +31,4 @@ public class SignupRequest {
     private final String nickname;
 
     private final MultipartFile userIcon;
-
-    // 서비스에서 호출할 엔티티 변환 메서드
-    public User toEntity(String encodedPassword, String profileImageUrl) {
-        return User.builder()
-                .email(this.email)
-                .password(encodedPassword)
-                .name(this.name)
-                .nickname(this.nickname)
-                .userIcon(profileImageUrl)
-                .provider(Provider.LOCAL)
-                .role(Role.ROLE_USER)
-                .build();
-    }
 }

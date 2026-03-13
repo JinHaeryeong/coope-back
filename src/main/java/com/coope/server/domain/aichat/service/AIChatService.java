@@ -13,7 +13,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -28,19 +27,8 @@ public class AIChatService {
 
     @AiLimit(maxCount = 5)
     public Flux<String> getAIStreamResponse(String userPrompt, List<AIChatMessage> history) {
+        AIChatRequest requestBody = AIChatRequest.of(userPrompt, history);
 
-        AIChatMessage systemMsg = AIChatRequest.createSystemMessage();
-
-        // 전체 메시지 조립 (System -> History -> Current User Prompt)
-        List<AIChatMessage> allMessages = new ArrayList<>();
-        allMessages.add(systemMsg);
-        allMessages.addAll(history);
-        allMessages.add(new AIChatMessage("user", userPrompt));
-
-        // 요청 객체 생성
-        AIChatRequest requestBody = AIChatRequest.createDefault(allMessages);
-
-        // OpenAI 스트리밍 호출
         return webClient.post()
                 .uri("https://api.openai.com/v1/chat/completions")
                 .header("Authorization", "Bearer " + apiKey)
@@ -58,12 +46,10 @@ public class AIChatService {
 
     private String parseDeltaContent(String json) {
         try {
-            // OpenAI의 스트리밍 데이터는 "data: {" 로 시작함
             if (json.startsWith("data: ")) {
                 json = json.substring(6);
             }
             JsonNode root = objectMapper.readTree(json);
-            // choices[0].delta.content 경로의 텍스트 추출
             return root.path("choices").get(0)
                     .path("delta").path("content").asText("");
         } catch (Exception e) {

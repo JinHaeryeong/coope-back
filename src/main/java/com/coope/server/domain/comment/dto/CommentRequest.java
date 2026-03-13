@@ -1,9 +1,5 @@
 package com.coope.server.domain.comment.dto;
 
-
-import com.coope.server.domain.comment.entity.Comment;
-import com.coope.server.domain.notice.entity.Notice;
-import com.coope.server.domain.user.entity.User;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,13 +15,4 @@ public class CommentRequest {
     private final MultipartFile file;
 
     private final Boolean deleteImage;
-
-    public Comment toEntity(Notice notice, User user, String savedImageUrl) {
-        return Comment.builder()
-                .content(this.content)
-                .imageUrl(savedImageUrl)
-                .notice(notice)
-                .user(user)
-                .build();
-    }
 }

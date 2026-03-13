@@ -29,4 +29,7 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     @Modifying
     @Query(value = "DELETE FROM inquiry WHERE id = :id", nativeQuery = true)
     void hardDeleteById(@Param("id") Long id);
+
+    @Query(value = "SELECT * FROM inquiry WHERE deleted = true AND deleted_at <= :threshold LIMIT :limit", nativeQuery = true)
+    List<Inquiry> findExpiredInquiriesWithLimit(@Param("threshold") LocalDateTime threshold, @Param("limit") int limit);
 }

@@ -1,5 +1,6 @@
 package com.coope.server.domain.chat.entity;
 
+import com.coope.server.domain.chat.dto.MessageRequest;
 import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -50,6 +51,18 @@ public class Message extends BaseTimeEntity {
         return user != null ? user.getId() : null;
     }
 
+    public static Message createTalkMessage(ChatRoom chatRoom, User sender, MessageRequest request) {
+        return Message.builder()
+                .chatRoom(chatRoom)
+                .user(sender)
+                .content(request.getContent())
+                .fileUrl(request.getFileUrl())
+                .fileName(request.getFileName())
+                .fileFormat(request.getFileFormat())
+                .type(MessageType.TALK)
+                .build();
+    }
+
     public static Message createLeaveMessage(ChatRoom room, User user) {
         return Message.builder()
                 .chatRoom(room)
@@ -57,5 +70,12 @@ public class Message extends BaseTimeEntity {
                 .content(user.getNickname() + "님이 퇴장하셨습니다.")
                 .type(MessageType.LEAVE)
                 .build();
+    }
+
+    public String getSummaryContent() {
+        if (this.type == MessageType.TALK) {
+            return (this.content != null && !this.content.isEmpty()) ? this.content : "사진을 보냈습니다.";
+        }
+        return this.content;
     }
 }

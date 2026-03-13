@@ -30,7 +30,7 @@ class InquiryCleanupProcessorTest {
     private InquiryCleanupProcessor cleanupProcessor;
 
     @Test
-    @DisplayName("영구 삭제 시 DB 데이터가 먼저 삭제된 후 S3 파일이 삭제되어야 한다")
+    @DisplayName("영구 삭제 시 S3 파일이 먼저 삭제된 후 DB 데이터가 삭제되어야 한다") // 제목도 맞춰주기!
     void processCleanup_SuccessOrder() {
         // given
         Long inquiryId = 1L;
@@ -39,11 +39,9 @@ class InquiryCleanupProcessorTest {
         Inquiry inquiry = Inquiry.builder().build();
         ReflectionTestUtils.setField(inquiry, "id", inquiryId);
 
-        // 첨부파일 가짜 객체 생성 및 연결
         InquiryFile file = InquiryFile.builder().fileUrl(fileUrl).build();
         ReflectionTestUtils.setField(inquiry, "files", List.of(file));
 
-        // fileService.deleteFile이 항상 true를 반환하도록 설정
         when(fileService.deleteFile(anyString(), eq(ImageCategory.INQUIRY))).thenReturn(true);
 
         // when
@@ -52,8 +50,7 @@ class InquiryCleanupProcessorTest {
         // then
         InOrder inOrder = inOrder(inquiryRepository, fileService);
 
-        inOrder.verify(inquiryRepository).hardDeleteById(inquiryId);
-
         inOrder.verify(fileService).deleteFile(fileUrl, ImageCategory.INQUIRY);
+        inOrder.verify(inquiryRepository).hardDeleteById(inquiryId);
     }
 }

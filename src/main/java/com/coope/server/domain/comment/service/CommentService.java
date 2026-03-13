@@ -7,14 +7,13 @@ import com.coope.server.domain.comment.repository.CommentRepository;
 import com.coope.server.domain.notice.entity.Notice;
 import com.coope.server.domain.notice.repository.NoticeRepository;
 import com.coope.server.domain.user.entity.User;
-import com.coope.server.domain.user.enums.Role;
-import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.error.exception.CommentNotFoundException;
-import com.coope.server.global.error.exception.FileStorageException;
 import com.coope.server.global.error.exception.NoticeNotFoundException;
+import com.coope.server.global.infra.file.FileDeleteEvent;
 import com.coope.server.global.infra.file.FileService;
 import com.coope.server.global.infra.file.ImageCategory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,78 +28,72 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final NoticeRepository noticeRepository;
     private final FileService fileService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public CommentResponse createComment(Long noticeId, CommentRequest requestDto, User user) {
+    public CommentResponse createComment(Long noticeId, CommentRequest request, User user) {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new NoticeNotFoundException("해당 공지사항이 존재하지 않습니다."));
 
-        String savedImageUrl = fileService.upload(requestDto.getFile(), ImageCategory.COMMENT);
+        String savedImageUrl = fileService.upload(request.getFile(), ImageCategory.COMMENT);
 
-        Comment comment = requestDto.toEntity(notice, user, savedImageUrl);
+        Comment comment = Comment.createComment(notice, user, request.getContent(), savedImageUrl);
         Comment savedComment = commentRepository.save(comment);
 
         return CommentResponse.from(savedComment);
     }
 
     public List<CommentResponse> getComments(Long noticeId) {
-        return commentRepository.findAllByNoticeIdOrderByCreatedAtDesc(noticeId)
+        return commentRepository.findAllByNoticeIdWithUser(noticeId)
                 .stream()
                 .map(CommentResponse::from)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public void deleteComment(Long commentId, User user) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new CommentNotFoundException("해당 댓글이 존재하지 않습니다."));
+    public void deleteComment(Long noticeId, Long commentId, User user) {
+        Comment comment = findCommentOrThrow(commentId);
 
-        if (!comment.getUser().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
-            throw new AccessDeniedException("댓글 삭제 권한이 없습니다.");
-        }
+        comment.validateNoticeOwnership(noticeId);
+        comment.validateDeletionAuthority(user);
 
         String currentImageUrl = comment.getImageUrl();
-        if (currentImageUrl != null) {
-            boolean isFileDeleted = fileService.deleteFile(currentImageUrl, ImageCategory.COMMENT);
-
-            if (!isFileDeleted) {
-                throw new FileStorageException("파일 삭제에 실패하여 댓글을 삭제할 수 없습니다." + currentImageUrl);
-            }
-        }
-
         commentRepository.delete(comment);
+
+        if (currentImageUrl != null) {
+            eventPublisher.publishEvent(new FileDeleteEvent(currentImageUrl, ImageCategory.COMMENT));
+        }
     }
 
     @Transactional
-    public CommentResponse updateComment(Long commentId, CommentRequest requestDto, User user) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new CommentNotFoundException("해당 댓글이 존재하지 않습니다."));
+    public CommentResponse updateComment(Long noticeId, Long commentId, CommentRequest request, User user) {
+        Comment comment = findCommentOrThrow(commentId);
 
-        if (!comment.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("댓글 수정 권한이 없습니다.");
-        }
+        comment.validateNoticeOwnership(noticeId);
+        comment.validateOwner(user);
 
+        handleImageUpdate(comment, request);
+        comment.update(request.getContent());
+
+        return CommentResponse.from(comment);
+    }
+
+    private void handleImageUpdate(Comment comment, CommentRequest requestDto) {
         String currentImageUrl = comment.getImageUrl();
-
-
         if (Boolean.TRUE.equals(requestDto.getDeleteImage()) || (requestDto.getFile() != null && !requestDto.getFile().isEmpty())) {
             if (currentImageUrl != null) {
-                boolean isDeleted = fileService.deleteFile(currentImageUrl, ImageCategory.COMMENT);
-
-                if (!isDeleted) {
-                    throw new FileStorageException("파일 삭제에 실패하여 수정을 완료할 수 없습니다." + comment.getImageUrl());
-                }
+                eventPublisher.publishEvent(new FileDeleteEvent(currentImageUrl, ImageCategory.COMMENT));
                 comment.updateImage(null);
             }
         }
-
         if (requestDto.getFile() != null && !requestDto.getFile().isEmpty()) {
             String newImageUrl = fileService.upload(requestDto.getFile(), ImageCategory.COMMENT);
             comment.updateImage(newImageUrl);
         }
+    }
 
-        comment.update(requestDto.getContent());
-
-        return CommentResponse.from(comment);
+    private Comment findCommentOrThrow(Long commentId) {
+        return commentRepository.findById(commentId)
+                .orElseThrow(() -> new CommentNotFoundException("해당 댓글이 존재하지 않습니다."));
     }
 }

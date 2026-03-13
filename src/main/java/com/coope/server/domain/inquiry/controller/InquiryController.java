@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,18 +35,18 @@ public class InquiryController {
             @Valid @ModelAttribute InquiryCreateRequest request
     ) {
         Long inquiryId = inquiryService.createInquiry(userDetails.getUser().getId(), request);
-        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(inquiryId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(inquiryId);
     }
 
     @Operation(summary = "문의사항 답변 등록", description = "관리자가 특정 문의사항에 대한 답변을 등록합니다.")
-    @PostMapping("/{id}/answer")
+    @PostMapping("/{id}/answers")
     public ResponseEntity<Void> createAnswer(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @Valid @RequestBody InquiryAnswerRequest request
     ) {
         inquiryService.createAnswer(id, userDetails.getUser().getId(), request);
-        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(summary = "내 문의 내역 조회", description = "본인이 작성한 문의 내역을 최신순으로 페이징 조회합니다.")
@@ -59,7 +60,7 @@ public class InquiryController {
     }
 
     @Operation(summary = "전체 문의 내역 조회 (관리자 전용)", description = "모든 사용자의 문의 내역을 최신순으로 페이징 조회합니다.")
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<Page<InquiryResponse>> getAllInquiries(
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {

@@ -9,8 +9,8 @@ import com.coope.server.domain.user.dto.UserResponse;
 import com.coope.server.domain.user.dto.UserSearchResponse;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
-import com.coope.server.global.error.exception.AuthenticationException;
 import com.coope.server.global.error.exception.BadRequestException;
+import com.coope.server.global.error.exception.ConflictException;
 import com.coope.server.global.error.exception.UserNotFoundException;
 import com.coope.server.global.infra.file.FileService;
 import com.coope.server.global.infra.file.ImageCategory;
@@ -36,100 +36,89 @@ public class UserService {
 
     @Transactional
     public Long signup(SignupRequest request) {
+        validateSignup(request);
 
+        String userIconUrl = fileService.upload(request.getUserIcon(), ImageCategory.PROFILE);
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        User user = User.createLocalUser(request, encodedPassword, userIconUrl);
+        return userRepository.save(user).getId();
+    }
+
+    private void validateSignup(SignupRequest request) {
         if (!emailAuthService.isVerified(request.getEmail())) {
             throw new BadRequestException("이메일 인증이 완료되지 않았습니다.");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+            throw new ConflictException("이미 존재하는 이메일입니다.");
         }
-
         if (userRepository.existsByNickname(request.getNickname())) {
-            throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
+            throw new ConflictException("이미 존재하는 닉네임입니다.");
         }
-
-        String userIconUrl = fileService.upload(request.getUserIcon(), ImageCategory.PROFILE);
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
-        User user = request.toEntity(encodedPassword, userIconUrl);
-        return userRepository.save(user).getId();
     }
-
 
     public void checkPassword(Long userId, String password) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 계정입니다."));
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new AuthenticationException("비밀번호가 일치하지 않습니다.");
-        }
-    }
-
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 계정입니다.")
-                );
+        User user = findUserOrThrow(userId);
+        user.authenticate(password, passwordEncoder);
     }
 
     public User validateUser(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 계정입니다.")
-                );
-
-        if (!user.matchesPassword(request.getPassword(), passwordEncoder)) {
-            throw new AuthenticationException("비밀번호가 일치하지 않습니다.");
-        }
+        User user = findByEmail(request.getEmail());
+        user.authenticate(request.getPassword(), passwordEncoder);
         return user;
     }
 
     public UserResponse getMyInfo(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 계정입니다."));
-        return UserResponse.from(user);
+        return UserResponse.from(findUserOrThrow(userId));
     }
 
     @Transactional
     public UserResponse updateProfile(Long userId, ProfileUpdateFullRequest request) {
         User user = findUserOrThrow(userId);
 
-        updateNickname(user, request.getNickname());
+        handleNicknameUpdate(user, request.getNickname());
 
-        updateProfileImage(user, request);
+        handleProfileImageUpdate(user, request);
 
-        updatePassword(user, request.getNewPassword(), request.getCurrentPassword());
+        if (StringUtils.hasText(request.getNewPassword())) {
+            user.changePassword(
+                    passwordEncoder.encode(request.getNewPassword()),
+                    request.getCurrentPassword(),
+                    passwordEncoder
+            );
+        }
 
         return UserResponse.from(user);
     }
-
 
     public UserSearchResponse searchUserByNickname(Long currentUserId, String nickname) {
         User targetUser = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new UserNotFoundException("유저를 찾을 수 없습니다."));
 
         String status = friendService.getRelationStatus(currentUserId, targetUser.getId());
-
         return UserSearchResponse.of(targetUser, status);
     }
 
-
-    private void updateNickname(User user, String newNickname) {
-        if (!StringUtils.hasText(newNickname)) return;
-
-        if (!newNickname.equals(user.getNickname()) && userRepository.existsByNickname(newNickname)) {
-            throw new BadRequestException("이미 사용 중인 닉네임입니다.");
+    private void handleNicknameUpdate(User user, String newNickname) {
+        if (!StringUtils.hasText(newNickname) || user.isSameNickname(newNickname)) {
+            return;
         }
-        user.updateNickname(newNickname);
+        if (userRepository.existsByNickname(newNickname)) {
+            throw new ConflictException("이미 사용 중인 닉네임입니다.");
+        }
+        user.changeNickname(newNickname);
     }
 
-    private void updateProfileImage(User user, ProfileUpdateFullRequest request) {
-        String oldIcon = user.getUserIcon();
+    private void handleProfileImageUpdate(User user, ProfileUpdateFullRequest request) {
         boolean hasNewImage = request.getProfileImage() != null && !request.getProfileImage().isEmpty();
 
-        if (hasNewImage || request.isDeleteProfileImage()) {
-            String newUrl = hasNewImage ? uploadNewImage(request.getProfileImage()) : null;
-            user.updateProfileImage(newUrl);
+        if (!hasNewImage && !request.isDeleteProfileImage()) return;
 
-            deleteOldImageIfExists(oldIcon);
-        }
+        String oldIcon = user.getUserIcon();
+        String newUrl = hasNewImage ? uploadNewImage(request.getProfileImage()) : null;
+
+        user.updateProfileImage(newUrl);
+        deleteOldImageIfExists(oldIcon);
     }
 
     private String uploadNewImage(MultipartFile image) {
@@ -140,30 +129,17 @@ public class UserService {
     }
 
     private void deleteOldImageIfExists(String oldIcon) {
-        if (StringUtils.hasText(oldIcon)) {
-            boolean deleted = fileService.deleteFile(oldIcon, ImageCategory.PROFILE);
-            if (!deleted) {
-                log.warn("기존 프로필 이미지 삭제 실패: {}", oldIcon);
-                throw new BadRequestException("기존 이미지 삭제 실패로 인해 업데이트를 중단합니다.");
-            }
+        if (!StringUtils.hasText(oldIcon)) return;
+
+        if (!fileService.deleteFile(oldIcon, ImageCategory.PROFILE)) {
+            log.warn("기존 프로필 이미지 삭제 실패: {}", oldIcon);
+            throw new BadRequestException("기존 이미지 삭제 실패로 인해 업데이트를 중단합니다.");
         }
     }
 
-    private void updatePassword(User user, String newPassword, String currentPassword) {
-        if (!StringUtils.hasText(newPassword)) return;
-
-        if (StringUtils.hasText(user.getPassword())) {
-
-            if (!StringUtils.hasText(currentPassword)) {
-                throw new BadRequestException("비밀번호 변경을 위해 현재 비밀번호를 입력해주세요.");
-            }
-
-            if (!user.matchesPassword(currentPassword, passwordEncoder)) {
-                throw new AuthenticationException("현재 비밀번호가 일치하지 않아 수정을 완료할 수 없습니다.");
-            }
-        }
-
-        user.updatePassword(passwordEncoder.encode(newPassword));
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 계정입니다."));
     }
 
     private User findUserOrThrow(Long userId) {

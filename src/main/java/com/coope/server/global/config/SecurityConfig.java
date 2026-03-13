@@ -62,39 +62,52 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                 )
-                // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
-                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/user/signup", "/api/auth/email/**", "/images/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/notices/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/notices/detail/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
-                        .requestMatchers(HttpMethod.PATCH, "/api/notices/detail/views/**").permitAll()
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
-                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                        .requestMatchers("/ws-stomp/**").permitAll()
-                        .requestMatchers("/api/user/me").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/notices/write").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/notices/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/notices/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/notices/detail/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/inquiries/all").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/inquiries/*/answer").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/api/comments/**").authenticated()
+                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/email/**", "/images/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**", "/ws-stomp/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/notices").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/notices/{id}").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/notices/{id}").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/inquiries").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/inquiries/*/answers").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/notices", "/api/notices/{id}").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/notices/{id}/views").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/user").permitAll()
+                        .requestMatchers("/api/inquiries/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/inquiries/{id}").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/inquiries/{id}").authenticated()
+
+                        .requestMatchers(HttpMethod.GET, "/api/friends").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/friends/received").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/friends/{friendId}").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/friends/{friendId}/accept").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/friends/{friendId}").authenticated()
+
+                        .requestMatchers(HttpMethod.GET, "/api/documents/sidebar").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/documents/trash").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/documents/{documentId}").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/documents").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/documents/{documentId}/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/documents/{documentId}/archive").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/documents/{documentId}/restore").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/documents/{documentId}/snapshots").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/documents/{documentId}").authenticated()
+
+                        // 워크스페이스 및 기타
                         .requestMatchers("/api/workspaces/**").authenticated()
-                        .requestMatchers("/api/documents/**").authenticated()
-                        .requestMatchers("/api/ai-chat/**").authenticated()
-                        .requestMatchers("/api/user/search").authenticated()
-                        .requestMatchers("/api/friends/**").authenticated()
-                        .requestMatchers("/api/chat/**").authenticated()
-                        .requestMatchers("/api/ai/**").authenticated()
-                        .requestMatchers("/api/inquiries/**").authenticated()
                         .requestMatchers("/api/liveblocks-auth").authenticated()
-                        .anyRequest().authenticated()                // 그 외 요청은 인증 필요
+                        .requestMatchers("/api/chat/rooms/**").authenticated()
+                        .requestMatchers("/api/chat/**").authenticated()
+                        .requestMatchers("/api/ai-chat/**").authenticated()
+                        .requestMatchers("/api/ai/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/notices/*/comments").permitAll()
+                        .requestMatchers("/api/notices/*/comments/**").authenticated()
+                        .requestMatchers("/api/user/me/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/user").authenticated()
+
+                        .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                                 .userInfoEndpoint(userInfo -> userInfo

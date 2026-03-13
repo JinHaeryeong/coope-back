@@ -39,7 +39,7 @@ public class DocumentService {
     public List<DocumentResponse> getSidebarDocuments(String workspaceCode, Long parentId, User user) {
         Workspace workspace = workspaceService.getByInviteCode(workspaceCode);
 
-        workspaceService.validateMember(workspace.getId(), user.getId());
+        workspace.validateMember(user.getId());
 
         List<Object[]> results = documentRepository.findAllByWorkspaceAndParentWithChildCheck(workspace.getId(), parentId);
 
@@ -52,7 +52,7 @@ public class DocumentService {
     public DocumentResponse createDocument(DocumentCreateRequest request, User user) {
         Workspace workspace = workspaceService.getByInviteCode(request.getWorkspaceCode());
 
-        workspaceService.validateEditor(workspace.getId(), user.getId());
+        workspace.validateEditor(user.getId());
 
         Document parentDocument = null;
         if (request.getParentId() != null) {
@@ -64,7 +64,7 @@ public class DocumentService {
             }
         }
 
-        Document document = request.toEntity(user, workspace, parentDocument);
+        Document document = Document.createDocument(request, user, workspace, parentDocument);
         Document savedDocument = documentRepository.save(document);
 
         String redisKey = "document-snapshot:" + savedDocument.getId();
@@ -81,7 +81,7 @@ public class DocumentService {
     @Transactional
     public DocumentResponse update(Long documentId, DocumentUpdateRequest request, User user) {
         Document document = findDocumentById(documentId);
-        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
+        document.getWorkspace().validateEditor(user.getId());
 
         if (request.getTitle() != null) document.updateTitle(request.getTitle());
         if (request.getIcon() != null) document.updateIcon(request.getIcon());
@@ -114,34 +114,27 @@ public class DocumentService {
 
     @Transactional
     public void updateContentOptimized(Long documentId, String content, User user) {
-        Document document = documentRepository.findByIdWithWorkspace(documentId)
-                .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
-
-        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
-
-        documentRepository.updateOnlyContent(documentId, content);
-
-        broadcastContentUpdate(document.getWorkspace().getInviteCode(), documentId, content, user.getId());
+        saveToRedisSnapshot(documentId, content, user);
     }
 
     public void saveToRedisSnapshot(Long documentId, String content, User user) {
         Document document = documentRepository.findByIdWithWorkspace(documentId)
-                .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
+                .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다."));
 
-        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
+        document.getWorkspace().validateEditor(user.getId());
 
         String key = "document-snapshot:" + documentId;
         redisTemplate.opsForValue().set(key, content, 1, TimeUnit.HOURS);
-
         redisTemplate.opsForSet().add("modified-documents", documentId.toString());
-        log.debug("Redis 스냅샷 저장 - 문서 ID: {}, 편집자: {}", documentId, user.getEmail());
+
+        log.debug("[Redis AutoSave] 문서 ID: {}, 편집자: {}", documentId, user.getEmail());
     }
 
     @Transactional
     public void archiveDocument(Long documentId, User user) {
         Document document = findDocumentById(documentId);
 
-        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
+        document.getWorkspace().validateEditor(user.getId());
 
         document.archiveWithChildren();
 
@@ -152,7 +145,7 @@ public class DocumentService {
     public DocumentResponse restoreDocument(Long documentId, User user) {
         Document document = findDocumentById(documentId);
 
-        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
+        document.getWorkspace().validateEditor(user.getId());
 
         document.restore();
         DocumentResponse response = DocumentResponse.of(document, false);
@@ -165,19 +158,18 @@ public class DocumentService {
     @Transactional
     public void hardDeleteDocument(Long documentId, User user) {
         Document document = findDocumentById(documentId);
-        String inviteCode = document.getWorkspace().getInviteCode();
 
-        workspaceService.validateEditor(document.getWorkspace().getId(), user.getId());
+        document.getWorkspace().validateEditor(user.getId());
 
         documentRepository.delete(document);
 
-        broadcast(inviteCode, "DELETE", documentId);
+        broadcast(document.getWorkspace().getInviteCode(), "DELETE", documentId);
     }
 
     public List<DocumentResponse> getTrashDocuments(String workspaceCode, User user) {
         Workspace workspace = workspaceService.getByInviteCode(workspaceCode);
 
-        workspaceService.validateMember(workspace.getId(), user.getId());
+        workspace.validateMember(user.getId());
 
         return documentRepository.findAllTrashDocuments(workspace.getId())
                 .stream()
@@ -193,7 +185,7 @@ public class DocumentService {
             throw new DocumentNotFoundException("해당 워크스페이스에 존재하지 않는 문서입니다.");
         }
 
-        workspaceService.validateMember(document.getWorkspace().getId(), user.getId());
+        document.getWorkspace().validateMember(user.getId());
 
         String redisKey = "document-snapshot:" + documentId;
         String latestContent = (String) redisTemplate.opsForValue().get(redisKey);
@@ -201,7 +193,7 @@ public class DocumentService {
         if (latestContent == null) {
             latestContent = document.getContent();
             if (latestContent != null) {
-                redisTemplate.opsForValue().set(redisKey, latestContent, 24, TimeUnit.HOURS);
+                redisTemplate.opsForValue().set(redisKey, latestContent, 1, TimeUnit.HOURS);
                 log.info("[Redis Cache] 문서 ID {} 데이터를 DB에서 캐싱했습니다.", documentId);
             }
         }
@@ -214,19 +206,6 @@ public class DocumentService {
     private Document findDocumentById(Long documentId) {
         return documentRepository.findById(documentId)
                 .orElseThrow(() -> new DocumentNotFoundException("문서를 찾을 수 없습니다. ID: " + documentId));
-    }
-
-    private void broadcastContentUpdate(String workspaceCode, Long documentId, String content, Long senderId) {
-        DocumentEvent event = DocumentEvent.builder()
-                .type("CONTENT_UPDATE")
-                .data(java.util.Map.of(
-                        "documentId", documentId,
-                        "content", content,
-                        "senderId", senderId
-                ))
-                .build();
-
-        messagingTemplate.convertAndSend("/topic/workspace/" + workspaceCode, event);
     }
 
     private void broadcast(String workspaceCode, String type, Object data) {
@@ -242,7 +221,6 @@ public class DocumentService {
         if (url == null || url.isEmpty()) return true;
 
         boolean isS3Url = url.contains(".s3.amazonaws.com");
-
         boolean isLocalUrl = url.contains("localhost:8080");
 
         return isS3Url || isLocalUrl;

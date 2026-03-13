@@ -2,6 +2,7 @@ package com.coope.server.domain.friend.entity;
 
 import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.user.entity.User;
+import com.coope.server.global.error.exception.FriendException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -47,6 +48,16 @@ public class Friend extends BaseTimeEntity {
                 .build();
     }
 
+    public Friend createInverse() {
+        if (this.status != FriendStatus.ACCEPTED) {
+            throw new FriendException("승인된 관계에서만 역방향 관계를 생성할 수 있습니다.");
+        }
+        return Friend.builder()
+                .user(this.friend)
+                .friend(this.user)
+                .status(FriendStatus.ACCEPTED)
+                .build();
+    }
 
     public static Friend sendRequest(User me, User targetFriend) {
         return Friend.builder()
@@ -57,7 +68,7 @@ public class Friend extends BaseTimeEntity {
     }
     public void accept() {
         if (this.status != FriendStatus.PENDING) {
-            throw new IllegalStateException("대기 중인 요청만 수락할 수 있습니다.");
+            throw new FriendException("이미 처리되었거나 대기 중이 아닌 요청입니다.");
         }
         this.status = FriendStatus.ACCEPTED;
     }

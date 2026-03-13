@@ -7,11 +7,12 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Set;
 
 @Slf4j
-@Component // 스캔 대상이 되어 자동으로 주기적 실행됨
+@Component
 @RequiredArgsConstructor
 public class ViewCountScheduler {
 
@@ -21,37 +22,35 @@ public class ViewCountScheduler {
     @Scheduled(fixedDelay = 300000)
     @Transactional
     public void syncViewCountToDb() {
-        // "notice:views:"로 시작하는 모든 키를 가져옴
         Set<String> keys = redisTemplate.keys("notice:views:*");
 
-        if (keys.isEmpty()) {
-            return;
-        }
+        if (CollectionUtils.isEmpty(keys)) return;
 
         log.info("조회수 동기화 시작: {} 개의 키 발견", keys.size());
 
         for (String key : keys) {
-            try {
-                // 키에서 ID 추출 (notice:views:5 -> 5)
-                Long noticeId = Long.parseLong(key.split(":")[2]);
-
-                // Redis에서 해당 공지사항의 누적 조회수 가져오기
-                Object value = redisTemplate.opsForValue().get(key);
-
-                if (value != null) {
-                    int views = Integer.parseInt(value.toString());
-
-                    // DB에 누적된 조회수만큼 더해주는 벌크 연산 수행
-                    int updatedCount = noticeRepository.updateViews(noticeId, views);
-                    log.info("공지사항 ID {}의 조회수 {}건이 DB에 반영되었습니다. (Rows: {})", noticeId, views, updatedCount);
-
-                    // DB 반영이 성공하면 Redis에서 해당 키 삭제 (중복 방지)
-                    redisTemplate.delete(key);
-                }
-            } catch (Exception e) {
-                log.error("조회수 동기화 중 오류 발생 (Key: {}): {}", key, e.getMessage());
-            }
+            processSingleViewCountSync(key);
         }
+
         log.info("조회수 동기화 완료");
+    }
+
+    private void processSingleViewCountSync(String key) {
+        try {
+            Object value = redisTemplate.opsForValue().get(key);
+            if (value == null) return;
+
+            Long noticeId = Long.parseLong(key.split(":")[2]);
+            int views = Integer.parseInt(value.toString());
+
+            int updatedCount = noticeRepository.updateViews(noticeId, views);
+
+            if (updatedCount > 0) {
+                log.info("ID {} 조회수 {}건 DB 반영 완료", noticeId, views);
+                redisTemplate.delete(key);
+            }
+        } catch (Exception e) {
+            log.error("조회수 동기화 중 오류 (Key: {}): {}", key, e.getMessage());
+        }
     }
 }

@@ -25,7 +25,7 @@ public class NoticeController {
     private final NoticeService noticeService;
 
 
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<Page<NoticeResponse>> getAllNotices(
             @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
@@ -33,7 +33,7 @@ public class NoticeController {
         return ResponseEntity.ok(noticePage);
     }
 
-    @PostMapping(value = "/write", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<NoticeResponse> createNotice(
             @Valid @ModelAttribute NoticeWriteRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -53,19 +53,19 @@ public class NoticeController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/detail/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<NoticeDetailResponse> getNoticeDetail(@PathVariable("id") Long id) {
         NoticeDetailResponse response = noticeService.getNoticeDetail(id);
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/detail/views/{id}")
+    @PatchMapping("/{id}/views")
     public ResponseEntity<Void> increaseViewCount(@PathVariable("id") Long id) {
         noticeService.increaseViewCount(id);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/detail/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNotice(@PathVariable("id")Long id) {
         noticeService.deleteNotice(id);
         return ResponseEntity.noContent().build();
