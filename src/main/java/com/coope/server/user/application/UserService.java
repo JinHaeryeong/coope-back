@@ -2,7 +2,7 @@ package com.coope.server.user.application;
 
 
 import com.coope.server.auth.application.EmailAuthService;
-import com.coope.server.domain.friend.service.FriendService;
+import com.coope.server.friend.application.FriendService;
 import com.coope.server.user.presentation.dto.ProfileUpdateFullRequest;
 import com.coope.server.user.presentation.dto.SignupRequest;
 import com.coope.server.user.presentation.dto.UserResponse;
