@@ -1,12 +1,13 @@
 package com.coope.server.domain.inquiry.service;
 
-import com.coope.server.domain.inquiry.dto.InquiryCreateRequest;
-import com.coope.server.domain.inquiry.entity.Inquiry;
-import com.coope.server.domain.inquiry.enums.InquiryCategory;
-import com.coope.server.domain.inquiry.repository.InquiryRepository;
-import com.coope.server.domain.user.entity.User;
-import com.coope.server.domain.user.enums.Role;
-import com.coope.server.domain.user.repository.UserRepository;
+import com.coope.server.inquiry.presentation.dto.InquiryCreateRequest;
+import com.coope.server.inquiry.domain.Inquiry;
+import com.coope.server.inquiry.domain.enums.InquiryCategory;
+import com.coope.server.inquiry.domain.InquiryRepository;
+import com.coope.server.inquiry.application.InquiryService;
+import com.coope.server.user.domain.User;
+import com.coope.server.user.domain.enums.Role;
+import com.coope.server.user.domain.UserRepository;
 import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.infra.file.FileService;
 import com.coope.server.global.infra.file.ImageCategory;
@@ -64,7 +65,14 @@ class InquiryServiceTest {
         given(inquiryRepository.save(any(Inquiry.class))).willReturn(savedInquiry);
 
         // when
-        Long inquiryId = inquiryService.createInquiry(userId, request);
+        Long inquiryId = inquiryService.createInquiry(
+                userId,
+                request.getTitle(),
+                request.getContent(),
+                request.getCategory(),
+                request.getEnvironment(),
+                request.getFiles()
+        );
 
         // then
         assertThat(inquiryId).isEqualTo(100L);

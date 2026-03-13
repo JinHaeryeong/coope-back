@@ -1,10 +1,11 @@
 package com.coope.server.domain.inquiry.scheduler;
 
-import com.coope.server.domain.inquiry.entity.Inquiry;
-import com.coope.server.domain.inquiry.entity.InquiryFile;
-import com.coope.server.domain.inquiry.repository.InquiryRepository;
+import com.coope.server.inquiry.domain.Inquiry;
+import com.coope.server.inquiry.domain.InquiryFile;
+import com.coope.server.inquiry.domain.InquiryRepository;
 import com.coope.server.global.infra.file.FileService;
 import com.coope.server.global.infra.file.ImageCategory;
+import com.coope.server.inquiry.infrastructure.InquiryCleanupProcessor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

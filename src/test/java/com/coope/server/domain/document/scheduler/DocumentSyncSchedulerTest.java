@@ -2,8 +2,8 @@ package com.coope.server.domain.document.scheduler;
 
 import com.coope.server.domain.document.entity.Document;
 import com.coope.server.domain.document.repository.DocumentRepository;
-import com.coope.server.domain.user.entity.User;
-import com.coope.server.domain.user.repository.UserRepository;
+import com.coope.server.user.domain.User;
+import com.coope.server.user.domain.UserRepository;
 import com.coope.server.domain.workspace.entity.Workspace;
 import com.coope.server.domain.workspace.repository.WorkspaceRepository;
 import com.coope.server.support.AbstractContainerTest;

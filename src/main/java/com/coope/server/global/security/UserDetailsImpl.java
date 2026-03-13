@@ -1,6 +1,6 @@
 package com.coope.server.global.security; // 적절한 패키지 위치
 
-import com.coope.server.domain.user.entity.User;
+import com.coope.server.user.domain.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

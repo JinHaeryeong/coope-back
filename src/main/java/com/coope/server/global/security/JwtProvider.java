@@ -1,6 +1,6 @@
 package com.coope.server.global.security;
 
-import com.coope.server.domain.auth.service.CustomUserDetailsService;
+import com.coope.server.auth.application.CustomUserDetailsService;
 import com.coope.server.global.config.JwtProperties;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
