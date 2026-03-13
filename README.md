@@ -50,7 +50,7 @@
 * Storage: AWS S3
 
 ---
-## 📁 프로젝트 구조
+
 ```
 📦 
 ├─ .gitattributes
@@ -75,11 +75,40 @@
    │  │     └─ coope
    │  │        └─ server
    │  │           ├─ ServerApplication.java
+   │  │           ├─ auth
+   │  │           │  ├─ application
+   │  │           │  │  ├─ AuthService.java
+   │  │           │  │  ├─ CustomOAuth2UserService.java
+   │  │           │  │  ├─ CustomUserDetailsService.java
+   │  │           │  │  └─ EmailAuthService.java
+   │  │           │  ├─ domain
+   │  │           │  │  ├─ GoogleUserInfo.java
+   │  │           │  │  └─ OAuth2UserInfo.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  └─ OAuth2AuthenticationSuccessHandler.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ AuthController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ EmailRequest.java
+   │  │           │        ├─ EmailVerifyRequest.java
+   │  │           │        ├─ LoginRequest.java
+   │  │           │        └─ LoginResponse.java
+   │  │           ├─ comment
+   │  │           │  ├─ application
+   │  │           │  │  └─ CommentService.java
+   │  │           │  ├─ domain
+   │  │           │  │  └─ Comment.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ CommentController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ CommentRequest.java
+   │  │           │        └─ CommentResponse.java
    │  │           ├─ domain
    │  │           │  ├─ ai
    │  │           │  │  ├─ controller
    │  │           │  │  │  └─ AiController.java
    │  │           │  │  ├─ dto
+   │  │           │  │  │  ├─ OpenAICompletionResponse.java
    │  │           │  │  │  └─ VoiceProcessResponse.java
    │  │           │  │  └─ service
    │  │           │  │     └─ AiService.java
@@ -92,24 +121,6 @@
    │  │           │  │  │  └─ AIChatStreamRequest.java
    │  │           │  │  └─ service
    │  │           │  │     └─ AIChatService.java
-   │  │           │  ├─ auth
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  └─ AuthController.java
-   │  │           │  │  ├─ dto
-   │  │           │  │  │  ├─ EmailRequest.java
-   │  │           │  │  │  ├─ EmailVerifyRequest.java
-   │  │           │  │  │  ├─ LoginRequest.java
-   │  │           │  │  │  └─ LoginResponse.java
-   │  │           │  │  ├─ handler
-   │  │           │  │  │  └─ OAuth2AuthenticationSuccessHandler.java
-   │  │           │  │  ├─ oauth
-   │  │           │  │  │  ├─ GoogleUserInfo.java
-   │  │           │  │  │  └─ OAuth2UserInfo.java
-   │  │           │  │  └─ service
-   │  │           │  │     ├─ AuthService.java
-   │  │           │  │     ├─ CustomOAuth2UserService.java
-   │  │           │  │     ├─ CustomUserDetailsService.java
-   │  │           │  │     └─ EmailAuthService.java
    │  │           │  ├─ chat
    │  │           │  │  ├─ controller
    │  │           │  │  │  ├─ ChatController.java
@@ -133,18 +144,6 @@
    │  │           │  │  │  └─ MessageRepository.java
    │  │           │  │  └─ service
    │  │           │  │     └─ ChatService.java
-   │  │           │  ├─ comment
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  └─ CommentController.java
-   │  │           │  │  ├─ dto
-   │  │           │  │  │  ├─ CommentRequest.java
-   │  │           │  │  │  └─ CommentResponse.java
-   │  │           │  │  ├─ entity
-   │  │           │  │  │  └─ Comment.java
-   │  │           │  │  ├─ repository
-   │  │           │  │  │  └─ CommentRepository.java
-   │  │           │  │  └─ service
-   │  │           │  │     └─ CommentService.java
    │  │           │  ├─ common
    │  │           │  │  └─ entity
    │  │           │  │     └─ BaseTimeEntity.java
@@ -176,62 +175,6 @@
    │  │           │  │  │  └─ FriendRepository.java
    │  │           │  │  └─ service
    │  │           │  │     └─ FriendService.java
-   │  │           │  ├─ inquiry
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  └─ InquiryController.java
-   │  │           │  │  ├─ dto
-   │  │           │  │  │  ├─ InquiryAnswerRequest.java
-   │  │           │  │  │  ├─ InquiryCreateRequest.java
-   │  │           │  │  │  └─ InquiryResponse.java
-   │  │           │  │  ├─ entity
-   │  │           │  │  │  ├─ Inquiry.java
-   │  │           │  │  │  ├─ InquiryAnswer.java
-   │  │           │  │  │  └─ InquiryFile.java
-   │  │           │  │  ├─ enums
-   │  │           │  │  │  ├─ InquiryCategory.java
-   │  │           │  │  │  └─ InquiryStatus.java
-   │  │           │  │  ├─ repository
-   │  │           │  │  │  ├─ InquiryAnswerRepository.java
-   │  │           │  │  │  └─ InquiryRepository.java
-   │  │           │  │  ├─ scheduler
-   │  │           │  │  │  ├─ InquiryCleanupProcessor.java
-   │  │           │  │  │  └─ InquiryCleanupScheduler.java
-   │  │           │  │  └─ service
-   │  │           │  │     └─ InquiryService.java
-   │  │           │  ├─ notice
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  └─ NoticeController.java
-   │  │           │  │  ├─ dto
-   │  │           │  │  │  ├─ NoticeDetailResponse.java
-   │  │           │  │  │  ├─ NoticeResponse.java
-   │  │           │  │  │  └─ NoticeWriteRequest.java
-   │  │           │  │  ├─ entity
-   │  │           │  │  │  └─ Notice.java
-   │  │           │  │  ├─ repository
-   │  │           │  │  │  └─ NoticeRepository.java
-   │  │           │  │  ├─ scheduler
-   │  │           │  │  │  └─ ViewCountScheduler.java
-   │  │           │  │  └─ service
-   │  │           │  │     └─ NoticeService.java
-   │  │           │  ├─ user
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  └─ UserController.java
-   │  │           │  │  ├─ dto
-   │  │           │  │  │  ├─ PasswordCheckRequest.java
-   │  │           │  │  │  ├─ ProfileUpdateFullRequest.java
-   │  │           │  │  │  ├─ SignupRequest.java
-   │  │           │  │  │  ├─ SignupResponse.java
-   │  │           │  │  │  ├─ UserResponse.java
-   │  │           │  │  │  └─ UserSearchResponse.java
-   │  │           │  │  ├─ entity
-   │  │           │  │  │  └─ User.java
-   │  │           │  │  ├─ enums
-   │  │           │  │  │  ├─ Provider.java
-   │  │           │  │  │  └─ Role.java
-   │  │           │  │  ├─ repository
-   │  │           │  │  │  └─ UserRepository.java
-   │  │           │  │  └─ service
-   │  │           │  │     └─ UserService.java
    │  │           │  └─ workspace
    │  │           │     ├─ controller
    │  │           │     │  └─ WorkspaceController.java
@@ -252,63 +195,114 @@
    │  │           │     └─ service
    │  │           │        ├─ WorkspaceRoleService.java
    │  │           │        └─ WorkspaceService.java
-   │  │           └─ global
-   │  │              ├─ annotation
-   │  │              │  └─ AiLimit.java
-   │  │              ├─ aspect
-   │  │              │  └─ AiUsageAspect.java
-   │  │              ├─ config
-   │  │              │  ├─ JwtProperties.java
-   │  │              │  ├─ RedisConfig.java
-   │  │              │  ├─ RestTemplateConfig.java
-   │  │              │  ├─ SecurityConfig.java
-   │  │              │  ├─ SwaggerConfig.java
-   │  │              │  ├─ WebClientConfig.java
-   │  │              │  ├─ WebConfig.java
-   │  │              │  └─ WebSocketConfig.java
-   │  │              ├─ error
-   │  │              │  ├─ GlobalExceptionHandler.java
-   │  │              │  ├─ dto
-   │  │              │  │  └─ ErrorResponse.java
-   │  │              │  └─ exception
-   │  │              │     ├─ AccessDeniedException.java
-   │  │              │     ├─ AiServiceException.java
-   │  │              │     ├─ AuthenticationException.java
-   │  │              │     ├─ BadRequestException.java
-   │  │              │     ├─ CommentNotFoundException.java
-   │  │              │     ├─ ConflictException.java
-   │  │              │     ├─ DocumentNotFoundException.java
-   │  │              │     ├─ FileStorageException.java
-   │  │              │     ├─ FriendException.java
-   │  │              │     ├─ InvalidTokenException.java
-   │  │              │     ├─ NoticeNotFoundException.java
-   │  │              │     ├─ UserNotFoundException.java
-   │  │              │     └─ WorkspaceNotFoundException.java
-   │  │              ├─ infra
-   │  │              │  └─ file
-   │  │              │     ├─ FileController.java
-   │  │              │     ├─ FileDeleteEvent.java
-   │  │              │     ├─ FileEventListener.java
-   │  │              │     ├─ FileService.java
-   │  │              │     ├─ ImageCategory.java
-   │  │              │     ├─ LocalFileService.java
-   │  │              │     └─ S3FileService.java
-   │  │              ├─ liveblocks
-   │  │              │  ├─ controller
-   │  │              │  │  └─ LiveblocksAuthController.java
-   │  │              │  └─ service
-   │  │              │     └─ LiveblocksAuthService.java
-   │  │              ├─ security
-   │  │              │  ├─ CustomAuthenticationEntryPoint.java
-   │  │              │  ├─ FilterChannelInterceptor.java
-   │  │              │  ├─ JwtAuthenticationFilter.java
-   │  │              │  ├─ JwtProvider.java
-   │  │              │  └─ UserDetailsImpl.java
-   │  │              ├─ usage
-   │  │              │  ├─ AiUsageController.java
-   │  │              │  └─ AiUsageService.java
-   │  │              └─ util
-   │  │                 └─ SecurityUtil.java
+   │  │           ├─ global
+   │  │           │  ├─ annotation
+   │  │           │  │  └─ AiLimit.java
+   │  │           │  ├─ aspect
+   │  │           │  │  └─ AiUsageAspect.java
+   │  │           │  ├─ config
+   │  │           │  │  ├─ JwtProperties.java
+   │  │           │  │  ├─ RedisConfig.java
+   │  │           │  │  ├─ RestTemplateConfig.java
+   │  │           │  │  ├─ SecurityConfig.java
+   │  │           │  │  ├─ SwaggerConfig.java
+   │  │           │  │  ├─ WebClientConfig.java
+   │  │           │  │  ├─ WebConfig.java
+   │  │           │  │  └─ WebSocketConfig.java
+   │  │           │  ├─ error
+   │  │           │  │  ├─ GlobalExceptionHandler.java
+   │  │           │  │  ├─ dto
+   │  │           │  │  │  └─ ErrorResponse.java
+   │  │           │  │  └─ exception
+   │  │           │  │     ├─ AccessDeniedException.java
+   │  │           │  │     ├─ AiServiceException.java
+   │  │           │  │     ├─ AuthenticationException.java
+   │  │           │  │     ├─ BadRequestException.java
+   │  │           │  │     ├─ CommentNotFoundException.java
+   │  │           │  │     ├─ ConflictException.java
+   │  │           │  │     ├─ DocumentNotFoundException.java
+   │  │           │  │     ├─ FileStorageException.java
+   │  │           │  │     ├─ FriendException.java
+   │  │           │  │     ├─ InvalidTokenException.java
+   │  │           │  │     ├─ NoticeNotFoundException.java
+   │  │           │  │     ├─ UserNotFoundException.java
+   │  │           │  │     └─ WorkspaceNotFoundException.java
+   │  │           │  ├─ infra
+   │  │           │  │  └─ file
+   │  │           │  │     ├─ FileController.java
+   │  │           │  │     ├─ FileDeleteEvent.java
+   │  │           │  │     ├─ FileEventListener.java
+   │  │           │  │     ├─ FileService.java
+   │  │           │  │     ├─ ImageCategory.java
+   │  │           │  │     ├─ LocalFileService.java
+   │  │           │  │     └─ S3FileService.java
+   │  │           │  ├─ liveblocks
+   │  │           │  │  ├─ controller
+   │  │           │  │  │  └─ LiveblocksAuthController.java
+   │  │           │  │  └─ service
+   │  │           │  │     └─ LiveblocksAuthService.java
+   │  │           │  ├─ security
+   │  │           │  │  ├─ CustomAuthenticationEntryPoint.java
+   │  │           │  │  ├─ FilterChannelInterceptor.java
+   │  │           │  │  ├─ JwtAuthenticationFilter.java
+   │  │           │  │  ├─ JwtProvider.java
+   │  │           │  │  └─ UserDetailsImpl.java
+   │  │           │  ├─ usage
+   │  │           │  │  ├─ AiUsageController.java
+   │  │           │  │  └─ AiUsageService.java
+   │  │           │  └─ util
+   │  │           │     └─ SecurityUtil.java
+   │  │           ├─ inquiry
+   │  │           │  ├─ application
+   │  │           │  │  └─ InquiryService.java
+   │  │           │  ├─ domain
+   │  │           │  │  ├─ Inquiry.java
+   │  │           │  │  ├─ InquiryAnswer.java
+   │  │           │  │  ├─ InquiryFile.java
+   │  │           │  │  └─ enums
+   │  │           │  │     ├─ InquiryCategory.java
+   │  │           │  │     └─ InquiryStatus.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  ├─ InquiryCleanupProcessor.java
+   │  │           │  │  └─ InquiryCleanupScheduler.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ InquiryController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ InquiryAnswerRequest.java
+   │  │           │        ├─ InquiryCreateRequest.java
+   │  │           │        └─ InquiryResponse.java
+   │  │           ├─ notice
+   │  │           │  ├─ application
+   │  │           │  │  └─ NoticeService.java
+   │  │           │  ├─ domain
+   │  │           │  │  └─ Notice.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  └─ ViewCountScheduler.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ NoticeController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ NoticeDetailResponse.java
+   │  │           │        ├─ NoticeResponse.java
+   │  │           │        └─ NoticeWriteRequest.java
+   │  │           └─ user
+   │  │              ├─ application
+   │  │              │  └─ UserService.java
+   │  │              ├─ domain
+   │  │              │  ├─ User.java
+   │  │              │  └─ enums
+   │  │              │     ├─ Provider.java
+   │  │              │     └─ Role.java
+   │  │              ├─ infrastructure
+   │  │              │  └─ UserJpaRepository.java
+   │  │              └─ presentation
+   │  │                 ├─ UserController.java
+   │  │                 └─ dto
+   │  │                    ├─ PasswordCheckRequest.java
+   │  │                    ├─ ProfileUpdateFullRequest.java
+   │  │                    ├─ SignupRequest.java
+   │  │                    ├─ SignupResponse.java
+   │  │                    ├─ UserResponse.java
+   │  │                    └─ UserSearchResponse.java
    │  └─ resources
    │     └─ application.yml
    └─ test
