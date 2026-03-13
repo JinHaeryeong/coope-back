@@ -3,13 +3,12 @@ package com.coope.server.notice.infrastructure;
 import com.coope.server.notice.domain.NoticeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
-
-import java.util.Set;
 
 @Slf4j
 @Component
@@ -19,18 +18,29 @@ public class ViewCountScheduler {
     private final RedisTemplate<String, Object> redisTemplate;
     private final NoticeRepository noticeRepository;
 
-    @Scheduled(fixedDelay = 300000)
+    @Scheduled(fixedDelay = 600000)
     @Transactional
     public void syncViewCountToDb() {
-        Set<String> keys = redisTemplate.keys("notice:views:*");
+        ScanOptions options = ScanOptions.scanOptions()
+                .match("notice:views:*")
+                .count(100)
+                .build();
 
-        if (CollectionUtils.isEmpty(keys)) return;
+        try (Cursor<String> cursor = redisTemplate.scan(options)) {
+            int processedCount = 0;
 
-        log.info("조회수 동기화 시작: {} 개의 키 발견", keys.size());
-        for (String key : keys) {
-            processSingleViewCountSync(key);
+            while (cursor.hasNext()) {
+                String key = cursor.next();
+                processSingleViewCountSync(key);
+                processedCount++;
+            }
+
+            if (processedCount > 0) {
+                log.info("[ViewCountScheduler] 동기화 완료: 총 {}개 반영", processedCount);
+            }
+        } catch (Exception e) {
+            log.error("[ViewCountScheduler] SCAN 중 오류 발생: {}", e.getMessage());
         }
-        log.info("조회수 동기화 완료");
     }
 
     private void processSingleViewCountSync(String key) {

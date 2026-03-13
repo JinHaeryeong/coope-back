@@ -1,11 +1,12 @@
 package com.coope.server.domain.document.scheduler;
 
-import com.coope.server.domain.document.entity.Document;
-import com.coope.server.domain.document.repository.DocumentRepository;
+import com.coope.server.document.domain.Document;
+import com.coope.server.document.domain.DocumentRepository;
+import com.coope.server.document.infrastructure.DocumentSyncScheduler;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.domain.UserRepository;
-import com.coope.server.domain.workspace.entity.Workspace;
-import com.coope.server.domain.workspace.repository.WorkspaceRepository;
+import com.coope.server.workspace.domain.Workspace;
+import com.coope.server.workspace.domain.WorkspaceRepository;
 import com.coope.server.support.AbstractContainerTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
