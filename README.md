@@ -1,4 +1,4 @@
-# Coope: WebRTC 기반 화상 회의 및 실시간 동시 편집 솔루션
+# Coope: WebRTC등을 이용한 실시간 통화가 가능한 협업 사이트
 
 <p align="center">
   <img width="554" height="117"  alt="logo" src="https://github.com/user-attachments/assets/ee9196c1-a378-453f-a262-ed885714b888" />
@@ -6,15 +6,12 @@
 
 > "React와 Mediasoup SFU 아키텍처를 결합한 화상 회의 및 실시간 툴"
 ---
-
-## 아직 마이그레이션 중이라 되지않는 기능들이 있습니다 자세한 사항은 결과 참고
-
-
+## 마이그레이션 진행중
+---
 ### 배포주소
 <p align="center">
   <a href="https://www.coope1.me">Coope</a>
 </p>
-
 * 기술스택 변경 전 프로젝트: https://github.com/JinHaeryeong/Coope-project
 * React 주소: https://github.com/JinHaeryeong/coope-front
 * Spring 주소: https://github.com/JinHaeryeong/coope-back
@@ -75,6 +72,24 @@
    │  │     └─ coope
    │  │        └─ server
    │  │           ├─ ServerApplication.java
+   │  │           ├─ ai
+   │  │           │  ├─ application
+   │  │           │  │  └─ AiService.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  └─ OpenAICompletionResponse.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ AiController.java
+   │  │           │     └─ dto
+   │  │           │        └─ VoiceProcessResponse.java
+   │  │           ├─ aichat
+   │  │           │  ├─ application
+   │  │           │  │  └─ AIChatService.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ AIChatController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ AIChatMessage.java
+   │  │           │        ├─ AIChatRequest.java
+   │  │           │        └─ AIChatStreamRequest.java
    │  │           ├─ auth
    │  │           │  ├─ application
    │  │           │  │  ├─ AuthService.java
@@ -93,6 +108,25 @@
    │  │           │        ├─ EmailVerifyRequest.java
    │  │           │        ├─ LoginRequest.java
    │  │           │        └─ LoginResponse.java
+   │  │           ├─ chat
+   │  │           │  ├─ application
+   │  │           │  │  └─ ChatService.java
+   │  │           │  ├─ domain
+   │  │           │  │  ├─ ChatParticipant.java
+   │  │           │  │  ├─ ChatRoom.java
+   │  │           │  │  ├─ Message.java
+   │  │           │  │  ├─ MessageType.java
+   │  │           │  │  └─ RoomType.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ ChatController.java
+   │  │           │     ├─ ChatStompController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ ChatListResponse.java
+   │  │           │        ├─ ChatRoomResponse.java
+   │  │           │        ├─ ChatUploadResponse.java
+   │  │           │        ├─ CreateGroupRequest.java
+   │  │           │        ├─ MessageRequest.java
+   │  │           │        └─ MessageResponse.java
    │  │           ├─ comment
    │  │           │  ├─ application
    │  │           │  │  └─ CommentService.java
@@ -103,98 +137,33 @@
    │  │           │     └─ dto
    │  │           │        ├─ CommentRequest.java
    │  │           │        └─ CommentResponse.java
+   │  │           ├─ document
+   │  │           │  ├─ application
+   │  │           │  │  └─ DocumentService.java
+   │  │           │  ├─ domain
+   │  │           │  │  └─ Document.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  └─ DocumentSyncScheduler.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ DocumentController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ DocumentCreateRequest.java
+   │  │           │        ├─ DocumentResponse.java
+   │  │           │        └─ DocumentUpdateRequest.java
    │  │           ├─ domain
-   │  │           │  ├─ ai
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  └─ AiController.java
-   │  │           │  │  ├─ dto
-   │  │           │  │  │  ├─ OpenAICompletionResponse.java
-   │  │           │  │  │  └─ VoiceProcessResponse.java
-   │  │           │  │  └─ service
-   │  │           │  │     └─ AiService.java
-   │  │           │  ├─ aichat
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  └─ AIChatController.java
-   │  │           │  │  ├─ dto
-   │  │           │  │  │  ├─ AIChatMessage.java
-   │  │           │  │  │  ├─ AIChatRequest.java
-   │  │           │  │  │  └─ AIChatStreamRequest.java
-   │  │           │  │  └─ service
-   │  │           │  │     └─ AIChatService.java
-   │  │           │  ├─ chat
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  ├─ ChatController.java
-   │  │           │  │  │  └─ ChatStompController.java
-   │  │           │  │  ├─ dto
-   │  │           │  │  │  ├─ ChatListResponse.java
-   │  │           │  │  │  ├─ ChatRoomResponse.java
-   │  │           │  │  │  ├─ ChatUploadResponse.java
-   │  │           │  │  │  ├─ CreateGroupRequest.java
-   │  │           │  │  │  ├─ MessageRequest.java
-   │  │           │  │  │  └─ MessageResponse.java
-   │  │           │  │  ├─ entity
-   │  │           │  │  │  ├─ ChatParticipant.java
-   │  │           │  │  │  ├─ ChatRoom.java
-   │  │           │  │  │  ├─ Message.java
-   │  │           │  │  │  ├─ MessageType.java
-   │  │           │  │  │  └─ RoomType.java
-   │  │           │  │  ├─ repository
-   │  │           │  │  │  ├─ ChatParticipantRepository.java
-   │  │           │  │  │  ├─ ChatRoomRepository.java
-   │  │           │  │  │  └─ MessageRepository.java
-   │  │           │  │  └─ service
-   │  │           │  │     └─ ChatService.java
-   │  │           │  ├─ common
-   │  │           │  │  └─ entity
-   │  │           │  │     └─ BaseTimeEntity.java
-   │  │           │  ├─ document
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  └─ DocumentController.java
-   │  │           │  │  ├─ dto
-   │  │           │  │  │  ├─ DocumentCreateRequest.java
-   │  │           │  │  │  ├─ DocumentEvent.java
-   │  │           │  │  │  ├─ DocumentResponse.java
-   │  │           │  │  │  └─ DocumentUpdateRequest.java
-   │  │           │  │  ├─ entity
-   │  │           │  │  │  └─ Document.java
-   │  │           │  │  ├─ repository
-   │  │           │  │  │  └─ DocumentRepository.java
-   │  │           │  │  ├─ scheduler
-   │  │           │  │  │  └─ DocumentSyncScheduler.java
-   │  │           │  │  └─ service
-   │  │           │  │     └─ DocumentService.java
-   │  │           │  ├─ friend
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  └─ FriendController.java
-   │  │           │  │  ├─ dto
-   │  │           │  │  │  └─ FriendResponse.java
-   │  │           │  │  ├─ entity
-   │  │           │  │  │  ├─ Friend.java
-   │  │           │  │  │  └─ FriendStatus.java
-   │  │           │  │  ├─ repository
-   │  │           │  │  │  └─ FriendRepository.java
-   │  │           │  │  └─ service
-   │  │           │  │     └─ FriendService.java
-   │  │           │  └─ workspace
-   │  │           │     ├─ controller
-   │  │           │     │  └─ WorkspaceController.java
-   │  │           │     ├─ dto
-   │  │           │     │  ├─ MemberRoleUpdateRequest.java
-   │  │           │     │  ├─ WorkspaceJoinRequest.java
-   │  │           │     │  ├─ WorkspaceMemberResponse.java
-   │  │           │     │  ├─ WorkspaceResponse.java
-   │  │           │     │  └─ WorkspaceWriteRequest.java
-   │  │           │     ├─ entity
-   │  │           │     │  ├─ Workspace.java
-   │  │           │     │  └─ WorkspaceMember.java
-   │  │           │     ├─ enums
-   │  │           │     │  └─ WorkspaceRole.java
-   │  │           │     ├─ repository
-   │  │           │     │  ├─ WorkspaceMemberRepository.java
-   │  │           │     │  └─ WorkspaceRepository.java
-   │  │           │     └─ service
-   │  │           │        ├─ WorkspaceRoleService.java
-   │  │           │        └─ WorkspaceService.java
+   │  │           │  └─ common
+   │  │           │     └─ entity
+   │  │           │        └─ BaseTimeEntity.java
+   │  │           ├─ friend
+   │  │           │  ├─ application
+   │  │           │  │  └─ FriendService.java
+   │  │           │  ├─ domain
+   │  │           │  │  ├─ Friend.java
+   │  │           │  │  └─ FriendStatus.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ FriendController.java
+   │  │           │     └─ dto
+   │  │           │        └─ FriendResponse.java
    │  │           ├─ global
    │  │           │  ├─ annotation
    │  │           │  │  └─ AiLimit.java
@@ -284,25 +253,42 @@
    │  │           │        ├─ NoticeDetailResponse.java
    │  │           │        ├─ NoticeResponse.java
    │  │           │        └─ NoticeWriteRequest.java
-   │  │           └─ user
+   │  │           ├─ user
+   │  │           │  ├─ application
+   │  │           │  │  └─ UserService.java
+   │  │           │  ├─ domain
+   │  │           │  │  ├─ User.java
+   │  │           │  │  └─ enums
+   │  │           │  │     ├─ Provider.java
+   │  │           │  │     └─ Role.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  └─ UserJpaRepository.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ UserController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ PasswordCheckRequest.java
+   │  │           │        ├─ ProfileUpdateFullRequest.java
+   │  │           │        ├─ SignupRequest.java
+   │  │           │        ├─ SignupResponse.java
+   │  │           │        ├─ UserResponse.java
+   │  │           │        └─ UserSearchResponse.java
+   │  │           └─ workspace
    │  │              ├─ application
-   │  │              │  └─ UserService.java
+   │  │              │  ├─ WorkspaceRoleService.java
+   │  │              │  └─ WorkspaceService.java
    │  │              ├─ domain
-   │  │              │  ├─ User.java
+   │  │              │  ├─ Workspace.java
+   │  │              │  ├─ WorkspaceMember.java
    │  │              │  └─ enums
-   │  │              │     ├─ Provider.java
-   │  │              │     └─ Role.java
-   │  │              ├─ infrastructure
-   │  │              │  └─ UserJpaRepository.java
+   │  │              │     └─ WorkspaceRole.java
    │  │              └─ presentation
-   │  │                 ├─ UserController.java
+   │  │                 ├─ WorkspaceController.java
    │  │                 └─ dto
-   │  │                    ├─ PasswordCheckRequest.java
-   │  │                    ├─ ProfileUpdateFullRequest.java
-   │  │                    ├─ SignupRequest.java
-   │  │                    ├─ SignupResponse.java
-   │  │                    ├─ UserResponse.java
-   │  │                    └─ UserSearchResponse.java
+   │  │                    ├─ MemberRoleUpdateRequest.java
+   │  │                    ├─ WorkspaceJoinRequest.java
+   │  │                    ├─ WorkspaceMemberResponse.java
+   │  │                    ├─ WorkspaceResponse.java
+   │  │                    └─ WorkspaceWriteRequest.java
    │  └─ resources
    │     └─ application.yml
    └─ test
