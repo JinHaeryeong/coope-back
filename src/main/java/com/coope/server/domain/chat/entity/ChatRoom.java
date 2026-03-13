@@ -48,11 +48,18 @@ public class ChatRoom extends BaseTimeEntity {
         return room;
     }
 
+    public void updateLastMessage(Message message) {
+        String summary = message.getSummaryContent();
+
+        this.participants.forEach(participant ->
+                participant.updateLastMessage(message.getCreatedAt(), summary)
+        );
+    }
+
     public void updateTitleByParticipants(List<User> participants) {
         if (this.type != RoomType.GROUP) {
             return;
         }
-
         if (participants == null || participants.isEmpty()) {
             return;
         }
@@ -85,8 +92,6 @@ public class ChatRoom extends BaseTimeEntity {
 
         return room;
     }
-
-
 
     public void addParticipant(User user) {
         this.participants.add(ChatParticipant.of(this, user));

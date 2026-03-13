@@ -48,6 +48,16 @@ public class Friend extends BaseTimeEntity {
                 .build();
     }
 
+    public Friend createInverse() {
+        if (this.status != FriendStatus.ACCEPTED) {
+            throw new FriendException("승인된 관계에서만 역방향 관계를 생성할 수 있습니다.");
+        }
+        return Friend.builder()
+                .user(this.friend)
+                .friend(this.user)
+                .status(FriendStatus.ACCEPTED)
+                .build();
+    }
 
     public static Friend sendRequest(User me, User targetFriend) {
         return Friend.builder()

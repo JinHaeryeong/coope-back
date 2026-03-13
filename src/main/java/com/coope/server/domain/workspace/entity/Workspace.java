@@ -75,6 +75,10 @@ public class Workspace extends BaseTimeEntity {
         this.members.add(workspaceMember);
     }
 
+    public void validateMember(Long userId) {
+        findMember(userId);
+    }
+
     public void validateOwner(Long userId) {
         WorkspaceMember member = findMember(userId);
         if (!member.isOwner()) {

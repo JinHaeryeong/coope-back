@@ -3,8 +3,6 @@ package com.coope.server.domain.auth.service;
 import com.coope.server.domain.auth.oauth.GoogleUserInfo;
 import com.coope.server.domain.auth.oauth.OAuth2UserInfo;
 import com.coope.server.domain.user.entity.User;
-import com.coope.server.domain.user.enums.Provider;
-import com.coope.server.domain.user.enums.Role;
 import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
@@ -29,19 +27,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         final OAuth2UserInfo userInfo = getOAuth2UserInfo(userRequest, oAuth2User);
 
         String email = userInfo.getEmail();
-        Provider provider = userInfo.getProvider();
-        String providerId = userInfo.getProviderId();
 
         User user = userRepository.findByEmail(email)
-                .orElseGet(() -> userRepository.save(User.builder()
-                        .email(email)
-                        .name(userInfo.getName())
-                        .nickname(userInfo.getName())
-                        .userIcon(userInfo.getPicture())
-                        .role(Role.ROLE_USER)
-                        .provider(provider)
-                        .providerId(providerId)
-                        .build()));
+                .orElseGet(() -> userRepository.save(User.createSocialUser(userInfo)));
 
         return new UserDetailsImpl(user, oAuth2User.getAttributes());
     }

@@ -81,7 +81,7 @@ public class ChatService {
         if ((request.getContent() == null || request.getContent().trim().isEmpty())
                 && (request.getFileUrl() == null || request.getFileUrl().isEmpty())) {
             log.warn("[Chat] 텍스트와 파일이 모두 없는 메시지 전송 시도 차단");
-            return null;
+            throw new IllegalArgumentException("메시지 내용이나 파일 중 하나는 반드시 있어야 합니다.");
         }
 
         ChatRoom chatRoom = findChatRoom(request.getRoomId());
@@ -91,10 +91,7 @@ public class ChatService {
         Message message = Message.createTalkMessage(chatRoom, sender, request);
         Message saved = messageRepository.save(message);
 
-        String lastContent = (saved.getContent() != null && !saved.getContent().isEmpty())
-                ? saved.getContent() : "사진을 보냈습니다.";
-
-        participantRepository.updateLastMessageInfoByRoom(chatRoom.getId(), saved.getCreatedAt(), lastContent);
+        chatRoom.updateLastMessage(saved);
 
         sendChatUpdateNotifications(chatRoom, saved);
         return MessageResponse.from(saved);
@@ -119,7 +116,7 @@ public class ChatService {
         User user = participant.getUser();
 
         Message leaveMsg = messageRepository.save(Message.createLeaveMessage(room, user));
-        participantRepository.updateLastMessageInfoByRoom(roomId, leaveMsg.getCreatedAt(), leaveMsg.getContent());
+        room.updateLastMessage(leaveMsg);
 
         broadcastLeaveInfo(room, leaveMsg, userId);
         participantRepository.delete(participant);
@@ -146,10 +143,10 @@ public class ChatService {
                 .build();
     }
 
-    public ResponseEntity<Resource> downloadChatFile(Long roomId, Long userId, String fileUrl, String fileName, ImageCategory category) {
+    public ResponseEntity<Resource> downloadChatFile(Long roomId, Long userId, String fileUrl, String fileName) {
         validateParticipant(roomId, userId);
 
-        Resource resource = fileService.loadAsResource(fileUrl, category);
+        Resource resource = fileService.loadAsResource(fileUrl, ImageCategory.CHAT);
 
         String encodedFileName = UriUtils.encode(fileName, StandardCharsets.UTF_8);
         String contentDisposition = "attachment; filename=\"" + encodedFileName + "\"";

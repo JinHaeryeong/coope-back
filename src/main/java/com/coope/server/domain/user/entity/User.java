@@ -1,10 +1,12 @@
 package com.coope.server.domain.user.entity;
 
+import com.coope.server.domain.auth.oauth.OAuth2UserInfo;
 import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.user.dto.SignupRequest;
 import com.coope.server.domain.user.enums.Provider;
 import com.coope.server.domain.user.enums.Role;
 import com.coope.server.global.error.exception.AuthenticationException;
+import com.coope.server.global.error.exception.BadRequestException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -69,21 +71,38 @@ public class User extends BaseTimeEntity {
                 .build();
     }
 
+    public static User createSocialUser(OAuth2UserInfo userInfo) {
+        return User.builder()
+                .email(userInfo.getEmail())
+                .name(userInfo.getName())
+                .nickname(userInfo.getName())
+                .userIcon(userInfo.getPicture())
+                .role(Role.ROLE_USER)
+                .provider(userInfo.getProvider())
+                .providerId(userInfo.getProviderId())
+                .build();
+    }
+
     public void changeNickname(String newNickname) {
-        if (!StringUtils.hasText(newNickname)) return;
+        if (!StringUtils.hasText(newNickname)) {
+            throw new IllegalArgumentException("닉네임은 필수입니다.");
+        }
+        if (this.nickname.equals(newNickname)) {
+            return;
+        }
         this.nickname = newNickname;
     }
 
-    public void changeProfileImage(String newUserIcon) {
+    public void updateProfileImage(String newUserIcon) {
         this.userIcon = newUserIcon;
     }
 
     public void changePassword(String newEncodedPassword, String currentRawPassword, PasswordEncoder passwordEncoder) {
-        // 소셜 가입이 아닌 로컬 가입자의 경우 비밀번호 검증 필요
-        if (StringUtils.hasText(this.password)) {
-            if (!matchesPassword(currentRawPassword, passwordEncoder)) {
-                throw new AuthenticationException("현재 비밀번호가 일치하지 않아 수정을 완료할 수 없습니다.");
+        if (isLocalUser()) { // 로컬 유저일 때만 체크
+            if (!StringUtils.hasText(currentRawPassword)) {
+                throw new BadRequestException("현재 비밀번호 입력은 필수입니다.");
             }
+            authenticate(currentRawPassword, passwordEncoder);
         }
         this.password = newEncodedPassword;
     }
@@ -93,5 +112,18 @@ public class User extends BaseTimeEntity {
             return false;
         }
         return passwordEncoder.matches(rawPassword, this.password);
+    }
+
+    public void authenticate(String rawPassword, PasswordEncoder passwordEncoder) {
+        if (!matchesPassword(rawPassword, passwordEncoder)) {
+            throw new AuthenticationException("비밀번호가 일치하지 않습니다.");
+        }
+    }
+    public boolean isLocalUser() {
+        return Provider.LOCAL.equals(this.provider);
+    }
+
+    public boolean isSameNickname(String nickname) {
+        return this.nickname.equals(nickname);
     }
 }

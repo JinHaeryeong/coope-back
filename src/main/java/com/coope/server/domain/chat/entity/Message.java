@@ -71,4 +71,11 @@ public class Message extends BaseTimeEntity {
                 .type(MessageType.LEAVE)
                 .build();
     }
+
+    public String getSummaryContent() {
+        if (this.type == MessageType.TALK) {
+            return (this.content != null && !this.content.isEmpty()) ? this.content : "사진을 보냈습니다.";
+        }
+        return this.content;
+    }
 }

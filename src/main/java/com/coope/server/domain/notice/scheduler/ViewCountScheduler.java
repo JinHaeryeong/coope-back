@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Set;
 
@@ -23,7 +24,7 @@ public class ViewCountScheduler {
     public void syncViewCountToDb() {
         Set<String> keys = redisTemplate.keys("notice:views:*");
 
-        if (keys.isEmpty()) return;
+        if (CollectionUtils.isEmpty(keys)) return;
 
         log.info("조회수 동기화 시작: {} 개의 키 발견", keys.size());
 

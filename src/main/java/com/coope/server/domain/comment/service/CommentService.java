@@ -7,8 +7,6 @@ import com.coope.server.domain.comment.repository.CommentRepository;
 import com.coope.server.domain.notice.entity.Notice;
 import com.coope.server.domain.notice.repository.NoticeRepository;
 import com.coope.server.domain.user.entity.User;
-import com.coope.server.domain.user.enums.Role;
-import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.error.exception.CommentNotFoundException;
 import com.coope.server.global.error.exception.NoticeNotFoundException;
 import com.coope.server.global.infra.file.FileDeleteEvent;
@@ -54,14 +52,10 @@ public class CommentService {
 
     @Transactional
     public void deleteComment(Long noticeId, Long commentId, User user) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new CommentNotFoundException("해당 댓글이 존재하지 않습니다."));
+        Comment comment = findCommentOrThrow(commentId);
 
-        validateCommentOwnership(noticeId, comment);
-
-        if (!comment.getUser().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
-            throw new AccessDeniedException("댓글 삭제 권한이 없습니다.");
-        }
+        comment.validateNoticeOwnership(noticeId);
+        comment.validateDeletionAuthority(user);
 
         String currentImageUrl = comment.getImageUrl();
         commentRepository.delete(comment);
@@ -72,26 +66,16 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentResponse updateComment(Long noticeId, Long commentId, CommentRequest requestDto, User user) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new CommentNotFoundException("해당 댓글이 존재하지 않습니다."));
+    public CommentResponse updateComment(Long noticeId, Long commentId, CommentRequest request, User user) {
+        Comment comment = findCommentOrThrow(commentId);
 
-        validateCommentOwnership(noticeId, comment);
+        comment.validateNoticeOwnership(noticeId);
+        comment.validateOwner(user);
 
-        if (!comment.getUser().getId().equals(user.getId())) {
-            throw new AccessDeniedException("댓글 수정 권한이 없습니다.");
-        }
+        handleImageUpdate(comment, request);
+        comment.update(request.getContent());
 
-        handleImageUpdate(comment, requestDto);
-
-        comment.update(requestDto.getContent());
         return CommentResponse.from(comment);
-    }
-
-    private void validateCommentOwnership(Long noticeId, Comment comment) {
-        if (!comment.getNotice().getId().equals(noticeId)) {
-            throw new AccessDeniedException("해당 공지사항의 댓글이 아닙니다.");
-        }
     }
 
     private void handleImageUpdate(Comment comment, CommentRequest requestDto) {
@@ -106,5 +90,10 @@ public class CommentService {
             String newImageUrl = fileService.upload(requestDto.getFile(), ImageCategory.COMMENT);
             comment.updateImage(newImageUrl);
         }
+    }
+
+    private Comment findCommentOrThrow(Long commentId) {
+        return commentRepository.findById(commentId)
+                .orElseThrow(() -> new CommentNotFoundException("해당 댓글이 존재하지 않습니다."));
     }
 }

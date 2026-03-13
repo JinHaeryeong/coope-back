@@ -30,7 +30,7 @@ public class EmailAuthService {
         String authCode = String.valueOf(secureRandom.nextInt(900000) + 100000);
 
         redisTemplate.opsForValue().set(
-                "AUTH:" + email,
+                getAuthKey(email),
                 authCode,
                 Duration.ofMinutes(5)
         );
@@ -53,16 +53,15 @@ public class EmailAuthService {
     }
 
     public void verifyCode(String email, String code) {
-        String savedCode = redisTemplate.opsForValue().get("AUTH:" + email);
+        String savedCode = redisTemplate.opsForValue().get(getAuthKey(email));
 
         if (savedCode == null || !savedCode.equals(code)) {
             throw new BadRequestException("인증번호가 일치하지 않거나 만료되었습니다.");
         }
 
-        redisTemplate.delete("AUTH:" + email);
-
+        redisTemplate.delete(getAuthKey(email));
         redisTemplate.opsForValue().set(
-                "AUTH_COMPLETE:" + email,
+                getCompleteKey(email),
                 "true",
                 Duration.ofMinutes(10)
         );
@@ -72,4 +71,7 @@ public class EmailAuthService {
         String isComplete = redisTemplate.opsForValue().get("AUTH_COMPLETE:" + email);
         return "true".equals(isComplete);
     }
+
+    private String getAuthKey(String email) { return "AUTH:" + email; }
+    private String getCompleteKey(String email) { return "AUTH_COMPLETE:" + email; }
 }

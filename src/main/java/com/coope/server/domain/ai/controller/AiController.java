@@ -33,7 +33,7 @@ public class AiController {
                 userDetails.getUsername(), workspaceCode, file.getOriginalFilename());
         Workspace workspace = workspaceService.getByInviteCode(workspaceCode);
 
-        workspaceService.validateMember(workspace.getId(), userDetails.getUser().getId());
+        workspace.validateMember(userDetails.getUser().getId());
 
         VoiceProcessResponse result = aiService.processVoice(file);
 

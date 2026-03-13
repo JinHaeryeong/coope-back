@@ -108,7 +108,7 @@ public class DocumentController {
     }
 
     @Operation(summary = "Redis 스냅샷 수동 저장", description = "실시간 편집 중인 내용을 Redis에 임시 저장합니다.")
-    @PostMapping("/{documentId}/snapshots")
+    @PutMapping("/{documentId}/snapshots")
     public ResponseEntity<Void> saveRedisSnapshot(
             @PathVariable Long documentId,
             @RequestBody String content,

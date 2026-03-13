@@ -9,7 +9,6 @@ import com.coope.server.domain.user.dto.UserResponse;
 import com.coope.server.domain.user.dto.UserSearchResponse;
 import com.coope.server.domain.user.entity.User;
 import com.coope.server.domain.user.repository.UserRepository;
-import com.coope.server.global.error.exception.AuthenticationException;
 import com.coope.server.global.error.exception.BadRequestException;
 import com.coope.server.global.error.exception.ConflictException;
 import com.coope.server.global.error.exception.UserNotFoundException;
@@ -60,16 +59,12 @@ public class UserService {
 
     public void checkPassword(Long userId, String password) {
         User user = findUserOrThrow(userId);
-        if (!user.matchesPassword(password, passwordEncoder)) {
-            throw new AuthenticationException("비밀번호가 일치하지 않습니다.");
-        }
+        user.authenticate(password, passwordEncoder);
     }
 
     public User validateUser(LoginRequest request) {
         User user = findByEmail(request.getEmail());
-        if (!user.matchesPassword(request.getPassword(), passwordEncoder)) {
-            throw new AuthenticationException("비밀번호가 일치하지 않습니다.");
-        }
+        user.authenticate(request.getPassword(), passwordEncoder);
         return user;
     }
 
@@ -82,6 +77,7 @@ public class UserService {
         User user = findUserOrThrow(userId);
 
         handleNicknameUpdate(user, request.getNickname());
+
         handleProfileImageUpdate(user, request);
 
         if (StringUtils.hasText(request.getNewPassword())) {
@@ -104,7 +100,7 @@ public class UserService {
     }
 
     private void handleNicknameUpdate(User user, String newNickname) {
-        if (!StringUtils.hasText(newNickname) || newNickname.equals(user.getNickname())) {
+        if (!StringUtils.hasText(newNickname) || user.isSameNickname(newNickname)) {
             return;
         }
         if (userRepository.existsByNickname(newNickname)) {
@@ -121,7 +117,7 @@ public class UserService {
         String oldIcon = user.getUserIcon();
         String newUrl = hasNewImage ? uploadNewImage(request.getProfileImage()) : null;
 
-        user.changeProfileImage(newUrl);
+        user.updateProfileImage(newUrl);
         deleteOldImageIfExists(oldIcon);
     }
 

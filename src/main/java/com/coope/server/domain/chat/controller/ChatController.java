@@ -2,7 +2,6 @@ package com.coope.server.domain.chat.controller;
 
 import com.coope.server.domain.chat.dto.*;
 import com.coope.server.domain.chat.service.ChatService;
-import com.coope.server.global.infra.file.ImageCategory;
 import com.coope.server.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -78,9 +77,8 @@ public class ChatController {
             @PathVariable Long roomId,
             @RequestParam String fileUrl,
             @RequestParam String fileName,
-            @RequestParam ImageCategory category,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        return chatService.downloadChatFile(roomId, userDetails.getUser().getId(), fileUrl, fileName, category);
+        return chatService.downloadChatFile(roomId, userDetails.getUser().getId(), fileUrl, fileName);
     }
 }

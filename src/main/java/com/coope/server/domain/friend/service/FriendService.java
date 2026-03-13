@@ -43,15 +43,15 @@ public class FriendService {
 
     @Transactional
     public void acceptFriendRequest(Long currentUserId, Long friendId) {
-        User me = findUserById(currentUserId);
-        User friend = findUserById(friendId);
-
-        Friend request = friendRepository.findByUserAndFriend(friend, me)
+        Friend request = friendRepository.findByUserAndFriend(findUserById(friendId), findUserById(currentUserId))
                 .orElseThrow(() -> new FriendException("받은 친구 신청 내역이 없습니다."));
 
         request.accept();
 
-        createInverseFriendshipIfAbsent(me, friend);
+        if (!friendRepository.existsFriendship(request.getFriend(), request.getUser())) {
+            friendRepository.save(request.createInverse());
+        }
+
         notifyFriendUpdate(friendId);
     }
 
@@ -78,13 +78,6 @@ public class FriendService {
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 계정입니다."));
-    }
-
-    private void createInverseFriendshipIfAbsent(User me, User friend) {
-        if (friendRepository.findByUserAndFriend(me, friend).isEmpty()) {
-            Friend inverseFriend = Friend.createFriendship(me, friend, FriendStatus.ACCEPTED);
-            friendRepository.save(inverseFriend);
-        }
     }
 
     public List<FriendResponse> getFriends(Long userId, FriendStatus status) {

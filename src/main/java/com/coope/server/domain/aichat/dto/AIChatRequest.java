@@ -1,6 +1,8 @@
 package com.coope.server.domain.aichat.dto;
 
 import lombok.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -14,7 +16,17 @@ public class AIChatRequest {
     private Integer max_tokens;
     private Double temperature;
 
-    public static AIChatRequest createDefault(List<AIChatMessage> allMessages) {
+    public static AIChatRequest of(String userPrompt, List<AIChatMessage> history) {
+        List<AIChatMessage> allMessages = new ArrayList<>();
+
+        allMessages.add(createSystemMessage());
+
+        if (history != null && !history.isEmpty()) {
+            allMessages.addAll(history);
+        }
+
+        allMessages.add(new AIChatMessage("user", userPrompt));
+
         return AIChatRequest.builder()
                 .model("gpt-4o-mini")
                 .messages(allMessages)

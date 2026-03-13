@@ -80,6 +80,24 @@ public class Inquiry extends BaseTimeEntity {
         answer.initInquiry(this);
     }
 
+    public static Inquiry createInquiry(User user, String title, String content,
+                                        InquiryCategory category, String environment,
+                                        List<String> fileUrls) { // 파일 리스트 추가
+        Inquiry inquiry = Inquiry.builder()
+                .user(user)
+                .title(title)
+                .content(content)
+                .category(category)
+                .environment(environment)
+                .build();
+
+        if (fileUrls != null && !fileUrls.isEmpty()) {
+            inquiry.addFiles(fileUrls);
+        }
+
+        return inquiry;
+    }
+
     public void addFiles(List<String> fileUrls) {
         if (fileUrls == null || fileUrls.isEmpty()) return;
 
@@ -99,7 +117,8 @@ public class Inquiry extends BaseTimeEntity {
         }
     }
 
-    public void softDelete() {
+    @PreRemove
+    public void preRemove() {
         this.deletedAt = LocalDateTime.now();
     }
 

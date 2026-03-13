@@ -34,20 +34,13 @@ public class InquiryService {
     public Long createInquiry(Long userId, InquiryCreateRequest request) {
         User user = findUserOrThrow(userId);
 
-        Inquiry inquiry = Inquiry.createInquiry(
-                user,
-                request.getTitle(),
-                request.getContent(),
-                request.getCategory(),
-                request.getEnvironment()
-        );
+        List<String> uploadedUrls = (request.getFiles() != null) ?
+                request.getFiles().stream().map(f -> fileService.upload(f, ImageCategory.INQUIRY)).toList() : null;
 
-        if (request.getFiles() != null && !request.getFiles().isEmpty()) {
-            List<String> uploadedUrls = request.getFiles().stream()
-                    .map(file -> fileService.upload(file, ImageCategory.INQUIRY))
-                    .toList();
-            inquiry.addFiles(uploadedUrls);
-        }
+        Inquiry inquiry = Inquiry.createInquiry(
+                user, request.getTitle(), request.getContent(),
+                request.getCategory(), request.getEnvironment(), uploadedUrls
+        );
 
         return inquiryRepository.save(inquiry).getId();
     }
@@ -55,7 +48,6 @@ public class InquiryService {
     public InquiryResponse getInquiry(Long inquiryId, Long userId, Role userRole) {
         Inquiry inquiry = findInquiryOrThrow(inquiryId);
         inquiry.validateAccess(userId, userRole);
-
         return InquiryResponse.from(inquiry);
     }
 
@@ -63,8 +55,6 @@ public class InquiryService {
     public void deleteInquiry(Long inquiryId, Long userId, Role userRole) {
         Inquiry inquiry = findInquiryOrThrow(inquiryId);
         inquiry.validateAccess(userId, userRole);
-
-        inquiry.softDelete();
         inquiryRepository.delete(inquiry);
     }
 

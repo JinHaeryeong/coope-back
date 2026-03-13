@@ -25,16 +25,18 @@ public class InquiryCleanupProcessor {
         List<String> urlsToDelete = inquiry.getFiles().stream()
                 .map(InquiryFile::getFileUrl)
                 .toList();
-
-        inquiryRepository.hardDeleteById(inquiry.getId());
-
         deleteFilesSilently(inquiry.getId(), urlsToDelete);
+        inquiryRepository.hardDeleteById(inquiry.getId());
     }
 
     private void deleteFilesSilently(Long inquiryId, List<String> urls) {
         for (String url : urls) {
             try {
-                fileService.deleteFile(url, ImageCategory.INQUIRY);
+                boolean isDeleted = fileService.deleteFile(url, ImageCategory.INQUIRY);
+
+                if (!isDeleted) {
+                    log.warn("[Cleanup] S3 파일 삭제 실패 (inquiryId: {}, url: {})", inquiryId, url);
+                }
             } catch (Exception e) {
                 log.error("[Cleanup] S3 파일 삭제 도중 예외 발생 (inquiryId: {}, url: {})", inquiryId, url, e);
             }
