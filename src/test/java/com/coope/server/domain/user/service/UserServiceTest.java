@@ -1,19 +1,16 @@
 package com.coope.server.domain.user.service;
 
 import com.coope.server.domain.user.dto.ProfileUpdateFullRequest;
-import com.coope.server.domain.user.dto.UserResponse;
 import com.coope.server.domain.user.entity.User;
+import com.coope.server.domain.user.enums.Provider;
 import com.coope.server.domain.user.repository.UserRepository;
 import com.coope.server.global.error.exception.AuthenticationException;
-import com.coope.server.global.infra.file.FileService;
-import com.coope.server.global.infra.file.ImageCategory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -27,44 +24,50 @@ class UserServiceTest {
 
     @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
-    @Mock private FileService fileService;
 
 
     @InjectMocks
     private UserService userService;
 
     @Test
-    @DisplayName("프로필 수정 성공 - 닉네임, 이미지, 비밀번호 모두 변경")
-    void updateProfile_success() {
-        Long userId = 1L;
-        User user = User.builder()
-                .email("test@coope.com")
-                .nickname("oldNickname")
-                .userIcon("old-icon.jpg")
-                .password("encodedOldPassword")
-                .build();
+    @DisplayName("프로필 수정 성공 - 닉네임과 이미지만 변경")
+    void updateProfile_only_nickname_and_image() {
+        // given
+        User user = User.builder().nickname("old").userIcon("old.jpg").build();
+        given(userRepository.findById(anyLong())).willReturn(Optional.of(user));
 
-        MockMultipartFile newImage = new MockMultipartFile("profileImage", "new.jpg", "image/jpeg", "test".getBytes());
         ProfileUpdateFullRequest request = new ProfileUpdateFullRequest();
-        request.setNickname("newNickname");
-        request.setProfileImage(newImage);
-        request.setCurrentPassword("oldPassword123!");
-        request.setNewPassword("newPassword123!");
-
-        given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(userRepository.existsByNickname("newNickname")).willReturn(false);
-        given(fileService.upload(any(), eq(ImageCategory.PROFILE))).willReturn("new-icon-url.jpg");
-        given(passwordEncoder.matches("oldPassword123!", "encodedOldPassword")).willReturn(true);
-        given(passwordEncoder.encode("newPassword123!")).willReturn("encodedNewPassword");
+        request.setNickname("newNick");
 
         // when
-        UserResponse response = userService.updateProfile(userId, request);
+        userService.updateProfile(1L, request);
 
         // then
-        assertThat(response.getNickname()).isEqualTo("newNickname");
-        assertThat(user.getUserIcon()).isEqualTo("new-icon-url.jpg");
+        assertThat(user.getNickname()).isEqualTo("newNick");
+        verify(passwordEncoder, never()).encode(anyString()); // 비번 암호화가 호출되면 안 됨!
+    }
 
-        verify(fileService).deleteFile("old-icon.jpg", ImageCategory.PROFILE);
+    @Test
+    @DisplayName("프로필 수정 성공 - 비밀번호까지 전체 변경")
+    void updateProfile_full_success() {
+        // given
+        User user = User.builder()
+                .password("encodedOld")
+                .provider(Provider.LOCAL)
+                .build();
+        given(userRepository.findById(anyLong())).willReturn(Optional.of(user));
+        given(passwordEncoder.matches("currentRaw", "encodedOld")).willReturn(true);
+        given(passwordEncoder.encode("newRaw")).willReturn("encodedNew");
+
+        ProfileUpdateFullRequest request = new ProfileUpdateFullRequest();
+        request.setCurrentPassword("currentRaw");
+        request.setNewPassword("newRaw");
+
+        // when
+        userService.updateProfile(1L, request);
+
+        // then
+        assertThat(user.getPassword()).isEqualTo("encodedNew");
     }
 
     @Test

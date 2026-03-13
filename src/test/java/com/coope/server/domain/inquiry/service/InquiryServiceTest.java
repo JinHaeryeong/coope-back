@@ -89,8 +89,8 @@ class InquiryServiceTest {
         inquiryService.deleteInquiry(inquiryId, userId, Role.ROLE_USER);
 
         // then
-        // SoftDelete 로직 확인: deletedAt 필드가 채워졌는지 확인
         assertThat(inquiry.getDeletedAt()).isNotNull();
+
         verify(inquiryRepository).delete(inquiry);
     }
 
@@ -108,6 +108,7 @@ class InquiryServiceTest {
         Inquiry inquiry = Inquiry.createInquiry(owner, "제목", "내용", InquiryCategory.ERROR, "PC");
         given(inquiryRepository.findById(inquiryId)).willReturn(Optional.of(inquiry));
 
+        // when & then
         assertThatThrownBy(() -> inquiryService.deleteInquiry(inquiryId, otherUserId, Role.ROLE_USER))
                 .isInstanceOf(AccessDeniedException.class);
     }

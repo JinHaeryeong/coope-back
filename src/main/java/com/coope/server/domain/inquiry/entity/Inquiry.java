@@ -117,9 +117,15 @@ public class Inquiry extends BaseTimeEntity {
         }
     }
 
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
     @PreRemove
     public void preRemove() {
-        this.deletedAt = LocalDateTime.now();
+        if (this.deletedAt == null) {
+            this.softDelete();
+        }
     }
 
     public boolean isEditable() {

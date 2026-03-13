@@ -55,6 +55,7 @@ public class InquiryService {
     public void deleteInquiry(Long inquiryId, Long userId, Role userRole) {
         Inquiry inquiry = findInquiryOrThrow(inquiryId);
         inquiry.validateAccess(userId, userRole);
+        inquiry.softDelete();
         inquiryRepository.delete(inquiry);
     }
 
