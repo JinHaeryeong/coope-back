@@ -2,7 +2,7 @@ package com.coope.server.domain.document.entity;
 
 import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.document.dto.DocumentCreateRequest;
-import com.coope.server.domain.user.entity.User;
+import com.coope.server.user.domain.User;
 import com.coope.server.domain.workspace.entity.Workspace;
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,6 +1,6 @@
 package com.coope.server.domain.workspace.service;
 
-import com.coope.server.domain.user.entity.User;
+import com.coope.server.user.domain.User;
 import com.coope.server.domain.workspace.dto.WorkspaceMemberResponse;
 import com.coope.server.domain.workspace.dto.WorkspaceResponse;
 import com.coope.server.domain.workspace.dto.WorkspaceWriteRequest;

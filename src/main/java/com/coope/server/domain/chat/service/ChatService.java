@@ -7,8 +7,8 @@ import com.coope.server.domain.chat.entity.Message;
 import com.coope.server.domain.chat.repository.ChatParticipantRepository;
 import com.coope.server.domain.chat.repository.ChatRoomRepository;
 import com.coope.server.domain.chat.repository.MessageRepository;
-import com.coope.server.domain.user.entity.User;
-import com.coope.server.domain.user.repository.UserRepository;
+import com.coope.server.user.domain.User;
+import com.coope.server.user.domain.UserRepository;
 import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.infra.file.FileService;
 import com.coope.server.global.infra.file.ImageCategory;
@@ -61,7 +61,7 @@ public class ChatService {
 
         Set<Long> participantIds = new HashSet<>(friendIds);
         participantIds.add(creatorId);
-        List<User> users = userRepository.findAllById(participantIds);
+        List<User> users = userRepository.findAllById(List.copyOf(participantIds));
 
         ChatRoom groupRoom = ChatRoom.createGroup(roomName, users);
 

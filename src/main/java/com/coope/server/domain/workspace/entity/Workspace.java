@@ -2,7 +2,7 @@ package com.coope.server.domain.workspace.entity;
 
 import com.coope.server.domain.common.entity.BaseTimeEntity;
 import com.coope.server.domain.document.entity.Document;
-import com.coope.server.domain.user.entity.User;
+import com.coope.server.user.domain.User;
 import com.coope.server.domain.workspace.enums.WorkspaceRole;
 import com.coope.server.global.error.exception.AccessDeniedException;
 import com.coope.server.global.error.exception.BadRequestException;

@@ -1,7 +1,7 @@
 package com.coope.server.global.config;
 
-import com.coope.server.domain.auth.handler.OAuth2AuthenticationSuccessHandler;
-import com.coope.server.domain.auth.service.CustomOAuth2UserService;
+import com.coope.server.auth.infrastructure.OAuth2AuthenticationSuccessHandler;
+import com.coope.server.auth.application.CustomOAuth2UserService;
 import com.coope.server.global.security.CustomAuthenticationEntryPoint;
 import com.coope.server.global.security.JwtAuthenticationFilter;
 import com.coope.server.global.security.JwtProvider;

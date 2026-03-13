@@ -2,7 +2,7 @@ package com.coope.server.domain.friend.repository;
 
 import com.coope.server.domain.friend.entity.Friend;
 import com.coope.server.domain.friend.entity.FriendStatus;
-import com.coope.server.domain.user.entity.User;
+import com.coope.server.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

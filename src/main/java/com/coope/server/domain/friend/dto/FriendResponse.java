@@ -2,7 +2,7 @@ package com.coope.server.domain.friend.dto;
 
 import com.coope.server.domain.friend.entity.Friend;
 import com.coope.server.domain.friend.entity.FriendStatus;
-import com.coope.server.domain.user.entity.User;
+import com.coope.server.user.domain.User;
 import lombok.Builder;
 import lombok.Getter;
 

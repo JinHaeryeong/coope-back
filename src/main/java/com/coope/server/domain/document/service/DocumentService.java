@@ -6,7 +6,7 @@ import com.coope.server.domain.document.dto.DocumentResponse;
 import com.coope.server.domain.document.dto.DocumentUpdateRequest;
 import com.coope.server.domain.document.entity.Document;
 import com.coope.server.domain.document.repository.DocumentRepository;
-import com.coope.server.domain.user.entity.User;
+import com.coope.server.user.domain.User;
 import com.coope.server.domain.workspace.entity.Workspace;
 import com.coope.server.domain.workspace.service.WorkspaceService;
 import com.coope.server.global.error.exception.BadRequestException;
