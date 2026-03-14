@@ -49,7 +49,6 @@
 * Storage: AWS S3
 
 ---
-
 ```
 📦 
 ├─ .gitattributes
@@ -94,10 +93,14 @@
    │  │           │        └─ AIChatStreamRequest.java
    │  │           ├─ auth
    │  │           │  ├─ application
+   │  │           │  │  ├─ AccountRecoveryService.java
    │  │           │  │  ├─ AuthService.java
    │  │           │  │  ├─ CustomOAuth2UserService.java
    │  │           │  │  ├─ CustomUserDetailsService.java
-   │  │           │  │  └─ EmailAuthService.java
+   │  │           │  │  ├─ EmailAuthService.java
+   │  │           │  │  ├─ LoginAttemptService.java
+   │  │           │  │  ├─ MailService.java
+   │  │           │  │  └─ TokenService.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ GoogleUserInfo.java
    │  │           │  │  └─ OAuth2UserInfo.java
@@ -108,17 +111,31 @@
    │  │           │     └─ dto
    │  │           │        ├─ EmailRequest.java
    │  │           │        ├─ EmailVerifyRequest.java
+   │  │           │        ├─ FindEmailRequest.java
+   │  │           │        ├─ FindEmailResponse.java
+   │  │           │        ├─ FindPasswordRequest.java
    │  │           │        ├─ LoginRequest.java
-   │  │           │        └─ LoginResponse.java
+   │  │           │        ├─ LoginResponse.java
+   │  │           │        └─ ResetPasswordRequest.java
    │  │           ├─ chat
    │  │           │  ├─ application
    │  │           │  │  └─ ChatService.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ ChatParticipant.java
+   │  │           │  │  ├─ ChatParticipantRepository.java
    │  │           │  │  ├─ ChatRoom.java
+   │  │           │  │  ├─ ChatRoomRepository.java
    │  │           │  │  ├─ Message.java
+   │  │           │  │  ├─ MessageRepository.java
    │  │           │  │  ├─ MessageType.java
    │  │           │  │  └─ RoomType.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  ├─ ChatParticipantJpaRepository.java
+   │  │           │  │  ├─ ChatParticipantRepositoryImpl.java
+   │  │           │  │  ├─ ChatRoomJpaRepository.java
+   │  │           │  │  ├─ ChatRoomRepositoryImpl.java
+   │  │           │  │  ├─ MessageJpaRepository.java
+   │  │           │  │  └─ MessageRepositoryImpl.java
    │  │           │  └─ presentation
    │  │           │     ├─ ChatController.java
    │  │           │     ├─ ChatStompController.java
@@ -133,7 +150,11 @@
    │  │           │  ├─ application
    │  │           │  │  └─ CommentService.java
    │  │           │  ├─ domain
-   │  │           │  │  └─ Comment.java
+   │  │           │  │  ├─ Comment.java
+   │  │           │  │  └─ CommentRepository.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  ├─ CommentJpaRepository.java
+   │  │           │  │  └─ CommentRepositoryImpl.java
    │  │           │  └─ presentation
    │  │           │     ├─ CommentController.java
    │  │           │     └─ dto
@@ -143,34 +164,80 @@
    │  │           │  ├─ application
    │  │           │  │  └─ DocumentService.java
    │  │           │  ├─ domain
-   │  │           │  │  └─ Document.java
+   │  │           │  │  ├─ Document.java
+   │  │           │  │  └─ DocumentRepository.java
    │  │           │  ├─ infrastructure
+   │  │           │  │  ├─ DocumentEvent.java
+   │  │           │  │  ├─ DocumentJpaRepository.java
+   │  │           │  │  ├─ DocumentRepositoryImpl.java
    │  │           │  │  └─ DocumentSyncScheduler.java
+   │  │           │  ├─ liveblocks
+   │  │           │  │  ├─ LiveblocksAuthController.java
+   │  │           │  │  └─ LiveblocksAuthService.java
    │  │           │  └─ presentation
    │  │           │     ├─ DocumentController.java
    │  │           │     └─ dto
    │  │           │        ├─ DocumentCreateRequest.java
    │  │           │        ├─ DocumentResponse.java
    │  │           │        └─ DocumentUpdateRequest.java
-   │  │           ├─ domain
-   │  │           │  └─ common
-   │  │           │     └─ entity
-   │  │           │        └─ BaseTimeEntity.java
    │  │           ├─ friend
    │  │           │  ├─ application
    │  │           │  │  └─ FriendService.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Friend.java
+   │  │           │  │  ├─ FriendRepository.java
    │  │           │  │  └─ FriendStatus.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  ├─ FriendJpaRepository.java
+   │  │           │  │  └─ FriendRepositoryImpl.java
    │  │           │  └─ presentation
    │  │           │     ├─ FriendController.java
    │  │           │     └─ dto
    │  │           │        └─ FriendResponse.java
-   │  │           ├─ global
-   │  │           │  ├─ annotation
-   │  │           │  │  └─ AiLimit.java
-   │  │           │  ├─ aspect
-   │  │           │  │  └─ AiUsageAspect.java
+   │  │           ├─ inquiry
+   │  │           │  ├─ application
+   │  │           │  │  └─ InquiryService.java
+   │  │           │  ├─ domain
+   │  │           │  │  ├─ Inquiry.java
+   │  │           │  │  ├─ InquiryAnswer.java
+   │  │           │  │  ├─ InquiryFile.java
+   │  │           │  │  ├─ InquiryRepository.java
+   │  │           │  │  └─ enums
+   │  │           │  │     ├─ InquiryCategory.java
+   │  │           │  │     └─ InquiryStatus.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  ├─ InquiryCleanupProcessor.java
+   │  │           │  │  ├─ InquiryCleanupScheduler.java
+   │  │           │  │  ├─ InquiryJpaRepository.java
+   │  │           │  │  └─ InquiryRepositoryImpl.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ InquiryController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ InquiryAnswerRequest.java
+   │  │           │        ├─ InquiryCreateRequest.java
+   │  │           │        └─ InquiryResponse.java
+   │  │           ├─ notice
+   │  │           │  ├─ application
+   │  │           │  │  └─ NoticeService.java
+   │  │           │  ├─ domain
+   │  │           │  │  ├─ Notice.java
+   │  │           │  │  └─ NoticeRepository.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  ├─ NoticeJpaRepository.java
+   │  │           │  │  ├─ NoticeRepositoryImpl.java
+   │  │           │  │  └─ ViewCountScheduler.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ NoticeController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ NoticeDetailResponse.java
+   │  │           │        ├─ NoticeResponse.java
+   │  │           │        └─ NoticeWriteRequest.java
+   │  │           ├─ shared
+   │  │           │  ├─ ai
+   │  │           │  │  ├─ AiLimit.java
+   │  │           │  │  ├─ AiUsageAspect.java
+   │  │           │  │  ├─ AiUsageController.java
+   │  │           │  │  └─ AiUsageService.java
    │  │           │  ├─ config
    │  │           │  │  ├─ JwtProperties.java
    │  │           │  │  ├─ RedisConfig.java
@@ -180,12 +247,15 @@
    │  │           │  │  ├─ WebClientConfig.java
    │  │           │  │  ├─ WebConfig.java
    │  │           │  │  └─ WebSocketConfig.java
+   │  │           │  ├─ domain
+   │  │           │  │  └─ BaseTimeEntity.java
    │  │           │  ├─ error
    │  │           │  │  ├─ GlobalExceptionHandler.java
    │  │           │  │  ├─ dto
    │  │           │  │  │  └─ ErrorResponse.java
    │  │           │  │  └─ exception
    │  │           │  │     ├─ AccessDeniedException.java
+   │  │           │  │     ├─ AccountLockedException.java
    │  │           │  │     ├─ AiServiceException.java
    │  │           │  │     ├─ AuthenticationException.java
    │  │           │  │     ├─ BadRequestException.java
@@ -198,73 +268,34 @@
    │  │           │  │     ├─ NoticeNotFoundException.java
    │  │           │  │     ├─ UserNotFoundException.java
    │  │           │  │     └─ WorkspaceNotFoundException.java
-   │  │           │  ├─ infra
-   │  │           │  │  └─ file
-   │  │           │  │     ├─ FileController.java
-   │  │           │  │     ├─ FileDeleteEvent.java
-   │  │           │  │     ├─ FileEventListener.java
-   │  │           │  │     ├─ FileService.java
-   │  │           │  │     ├─ ImageCategory.java
-   │  │           │  │     ├─ LocalFileService.java
-   │  │           │  │     └─ S3FileService.java
-   │  │           │  ├─ liveblocks
-   │  │           │  │  ├─ controller
-   │  │           │  │  │  └─ LiveblocksAuthController.java
-   │  │           │  │  └─ service
-   │  │           │  │     └─ LiveblocksAuthService.java
+   │  │           │  ├─ file
+   │  │           │  │  ├─ FileController.java
+   │  │           │  │  ├─ FileDeleteEvent.java
+   │  │           │  │  ├─ FileEventListener.java
+   │  │           │  │  ├─ FileService.java
+   │  │           │  │  ├─ ImageCategory.java
+   │  │           │  │  ├─ LocalFileService.java
+   │  │           │  │  └─ S3FileService.java
    │  │           │  ├─ security
    │  │           │  │  ├─ CustomAuthenticationEntryPoint.java
    │  │           │  │  ├─ FilterChannelInterceptor.java
    │  │           │  │  ├─ JwtAuthenticationFilter.java
    │  │           │  │  ├─ JwtProvider.java
    │  │           │  │  └─ UserDetailsImpl.java
-   │  │           │  ├─ usage
-   │  │           │  │  ├─ AiUsageController.java
-   │  │           │  │  └─ AiUsageService.java
    │  │           │  └─ util
    │  │           │     └─ SecurityUtil.java
-   │  │           ├─ inquiry
-   │  │           │  ├─ application
-   │  │           │  │  └─ InquiryService.java
-   │  │           │  ├─ domain
-   │  │           │  │  ├─ Inquiry.java
-   │  │           │  │  ├─ InquiryAnswer.java
-   │  │           │  │  ├─ InquiryFile.java
-   │  │           │  │  └─ enums
-   │  │           │  │     ├─ InquiryCategory.java
-   │  │           │  │     └─ InquiryStatus.java
-   │  │           │  ├─ infrastructure
-   │  │           │  │  ├─ InquiryCleanupProcessor.java
-   │  │           │  │  └─ InquiryCleanupScheduler.java
-   │  │           │  └─ presentation
-   │  │           │     ├─ InquiryController.java
-   │  │           │     └─ dto
-   │  │           │        ├─ InquiryAnswerRequest.java
-   │  │           │        ├─ InquiryCreateRequest.java
-   │  │           │        └─ InquiryResponse.java
-   │  │           ├─ notice
-   │  │           │  ├─ application
-   │  │           │  │  └─ NoticeService.java
-   │  │           │  ├─ domain
-   │  │           │  │  └─ Notice.java
-   │  │           │  ├─ infrastructure
-   │  │           │  │  └─ ViewCountScheduler.java
-   │  │           │  └─ presentation
-   │  │           │     ├─ NoticeController.java
-   │  │           │     └─ dto
-   │  │           │        ├─ NoticeDetailResponse.java
-   │  │           │        ├─ NoticeResponse.java
-   │  │           │        └─ NoticeWriteRequest.java
    │  │           ├─ user
    │  │           │  ├─ application
    │  │           │  │  └─ UserService.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ User.java
+   │  │           │  │  ├─ UserRepository.java
    │  │           │  │  └─ enums
    │  │           │  │     ├─ Provider.java
    │  │           │  │     └─ Role.java
    │  │           │  ├─ infrastructure
-   │  │           │  │  └─ UserJpaRepository.java
+   │  │           │  │  ├─ UserJpaRepository.java
+   │  │           │  │  └─ UserRepositoryImpl.java
    │  │           │  └─ presentation
    │  │           │     ├─ UserController.java
    │  │           │     └─ dto
@@ -281,8 +312,15 @@
    │  │              ├─ domain
    │  │              │  ├─ Workspace.java
    │  │              │  ├─ WorkspaceMember.java
+   │  │              │  ├─ WorkspaceMemberRepository.java
+   │  │              │  ├─ WorkspaceRepository.java
    │  │              │  └─ enums
    │  │              │     └─ WorkspaceRole.java
+   │  │              ├─ infrastructure
+   │  │              │  ├─ WorkspaceJpaRepository.java
+   │  │              │  ├─ WorkspaceMemberJpaRepository.java
+   │  │              │  ├─ WorkspaceMemberRepositoryImpl.java
+   │  │              │  └─ WorkspaceRepositoryImpl.java
    │  │              └─ presentation
    │  │                 ├─ WorkspaceController.java
    │  │                 └─ dto
@@ -299,6 +337,11 @@
             └─ coope
                └─ server
                   ├─ ServerApplicationTests.java
+                  ├─ auth
+                  │  └─ application
+                  │     ├─ AccountRecoveryServiceTest.java
+                  │     ├─ AuthServiceLoginTest.java
+                  │     └─ LoginAttemptServiceTest.java
                   ├─ domain
                   │  ├─ document
                   │  │  └─ scheduler
