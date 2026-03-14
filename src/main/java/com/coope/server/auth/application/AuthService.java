@@ -44,16 +44,18 @@ public class AuthService {
         User user;
         try {
             user = userService.validateUser(email, request.getPassword());
-        } catch (AuthenticationException e) {
+        } catch (Exception e) {
             boolean locked = loginAttemptService.recordFailure(email);
+
             if (locked) {
                 accountRecoveryService.sendUnlockEmail(email);
                 throw new AccountLockedException(
                         "로그인 5회 초과로 계정이 잠겼습니다. 가입 이메일로 잠금 해제 링크를 발송했습니다.");
             }
+
             int remaining = 5 - loginAttemptService.getFailCount(email);
             throw new AuthenticationException(
-                    "비밀번호가 일치하지 않습니다. (남은 시도: " + Math.max(remaining, 0) + "회)");
+                    "이메일 또는 비밀번호가 일치하지 않습니다. (남은 시도: " + Math.max(remaining, 0) + "회)");
         }
 
         loginAttemptService.clearFailures(email);

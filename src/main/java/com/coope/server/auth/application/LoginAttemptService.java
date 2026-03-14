@@ -22,7 +22,7 @@ public class LoginAttemptService {
     private static final String LOCKED_KEY_PREFIX = "LOGIN_LOCKED:";
 
     public boolean isLocked(String email) {
-        return redisTemplate.hasKey(LOCKED_KEY_PREFIX + email);
+        return Boolean.TRUE.equals(redisTemplate.hasKey(LOCKED_KEY_PREFIX + email));
     }
 
     public long getRemainingLockMinutes(String email) {

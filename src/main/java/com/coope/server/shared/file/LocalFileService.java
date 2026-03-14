@@ -42,7 +42,7 @@ public class LocalFileService implements FileService {
 
             return "http://localhost:8080" + accessUrl + category.dir() + "/" + fileName;
         } catch (IOException e) {
-            throw new FileStorageException("파일 저장 실패");
+            throw new FileStorageException("파일 저장 실패", e);
         }
     }
 
@@ -57,7 +57,7 @@ public class LocalFileService implements FileService {
             if (resource.exists() && resource.isReadable()) return resource;
             throw new FileStorageException("파일을 찾을 수 없거나 읽기 권한이 없습니다: " + fileName);
         } catch (Exception e) {
-            throw new FileStorageException("파일 로드 중 오류 발생: " + fileUrl);
+            throw new FileStorageException("파일 로드 중 오류 발생: " + fileUrl, e);
         }
     }
 
@@ -81,7 +81,7 @@ public class LocalFileService implements FileService {
             else log.warn("삭제할 파일이 존재하지 않습니다: {}", targetPath);
             return true;
         } catch (Exception e) {
-            log.error("파일 삭제 도중 예상치 못한 에러 발생: {}", e.getMessage());
+            log.error("파일 삭제 도중 예상치 못한 에러 발생: {}", e.getMessage(), e);
             return false;
         }
     }

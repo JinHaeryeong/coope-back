@@ -33,7 +33,7 @@ public class S3FileService implements FileService {
             s3Template.upload(bucket, s3Key, file.getInputStream());
             return String.format("https://%s.s3.amazonaws.com/%s", bucket, s3Key);
         } catch (IOException e) {
-            throw new FileStorageException("S3 파일 업로드 실패");
+            throw new FileStorageException("S3 파일 업로드 실패", e);
         }
     }
 
@@ -45,7 +45,7 @@ public class S3FileService implements FileService {
             String s3Key = path.startsWith("/") ? path.substring(1) : path;
             return s3Template.download(bucket, s3Key);
         } catch (Exception e) {
-            throw new FileStorageException("유효하지 않은 S3 URL 형식입니다: " + fileUrl);
+            throw new FileStorageException("유효하지 않은 S3 URL 형식입니다: " + fileUrl, e);
         }
     }
 
@@ -61,7 +61,7 @@ public class S3FileService implements FileService {
             log.info("S3 파일 삭제 완료: {}", s3Key);
             return true;
         } catch (Exception e) {
-            log.error("S3 파일 삭제 중 에러 발생: {}", e.getMessage());
+            log.error("S3 파일 삭제 중 에러 발생: {}", e.getMessage(), e);
             return false;
         }
     }
