@@ -4,7 +4,7 @@ import com.coope.server.notice.application.NoticeService;
 import com.coope.server.notice.presentation.dto.NoticeDetailResponse;
 import com.coope.server.notice.presentation.dto.NoticeResponse;
 import com.coope.server.notice.presentation.dto.NoticeWriteRequest;
-import com.coope.server.global.security.UserDetailsImpl;
+import com.coope.server.shared.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

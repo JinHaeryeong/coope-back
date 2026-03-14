@@ -2,8 +2,8 @@ package com.coope.server.ai.application;
 
 import com.coope.server.ai.infrastructure.OpenAICompletionResponse;
 import com.coope.server.ai.presentation.dto.VoiceProcessResponse;
-import com.coope.server.global.annotation.AiLimit;
-import com.coope.server.global.error.exception.BadRequestException;
+import com.coope.server.shared.ai.AiLimit;
+import com.coope.server.shared.error.exception.BadRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

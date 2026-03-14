@@ -1,4 +1,4 @@
-package com.coope.server.domain.common.entity;
+package com.coope.server.shared.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

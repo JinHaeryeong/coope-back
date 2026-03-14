@@ -1,12 +1,12 @@
 package com.coope.server.user.domain;
 
 import com.coope.server.auth.domain.OAuth2UserInfo;
-import com.coope.server.domain.common.entity.BaseTimeEntity;
+import com.coope.server.shared.domain.BaseTimeEntity;
 import com.coope.server.user.presentation.dto.SignupRequest;
 import com.coope.server.user.domain.enums.Provider;
 import com.coope.server.user.domain.enums.Role;
-import com.coope.server.global.error.exception.AuthenticationException;
-import com.coope.server.global.error.exception.BadRequestException;
+import com.coope.server.shared.error.exception.AuthenticationException;
+import com.coope.server.shared.error.exception.BadRequestException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -125,5 +125,9 @@ public class User extends BaseTimeEntity {
 
     public boolean isSameNickname(String nickname) {
         return this.nickname.equals(nickname);
+    }
+
+    public void resetPassword(String newEncodedPassword) {
+        this.password = newEncodedPassword;
     }
 }

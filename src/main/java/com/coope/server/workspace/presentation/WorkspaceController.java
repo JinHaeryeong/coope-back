@@ -2,7 +2,7 @@ package com.coope.server.workspace.presentation;
 
 import com.coope.server.workspace.application.WorkspaceService;
 import com.coope.server.workspace.presentation.dto.*;
-import com.coope.server.global.security.UserDetailsImpl;
+import com.coope.server.shared.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

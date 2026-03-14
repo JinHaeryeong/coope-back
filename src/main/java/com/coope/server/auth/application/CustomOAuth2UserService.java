@@ -4,7 +4,7 @@ import com.coope.server.auth.domain.GoogleUserInfo;
 import com.coope.server.auth.domain.OAuth2UserInfo;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.domain.UserRepository;
-import com.coope.server.global.security.UserDetailsImpl;
+import com.coope.server.shared.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;

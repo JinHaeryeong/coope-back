@@ -1,8 +1,8 @@
 package com.coope.server.friend.domain;
 
-import com.coope.server.domain.common.entity.BaseTimeEntity;
+import com.coope.server.shared.domain.BaseTimeEntity;
 import com.coope.server.user.domain.User;
-import com.coope.server.global.error.exception.FriendException;
+import com.coope.server.shared.error.exception.FriendException;
 import jakarta.persistence.*;
 import lombok.*;
 

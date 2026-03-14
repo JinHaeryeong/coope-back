@@ -3,7 +3,7 @@ package com.coope.server.friend.presentation;
 import com.coope.server.friend.application.FriendService;
 import com.coope.server.friend.domain.FriendStatus;
 import com.coope.server.friend.presentation.dto.FriendResponse;
-import com.coope.server.global.security.UserDetailsImpl;
+import com.coope.server.shared.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

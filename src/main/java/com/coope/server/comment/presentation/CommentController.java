@@ -3,7 +3,7 @@ package com.coope.server.comment.presentation;
 import com.coope.server.comment.application.CommentService;
 import com.coope.server.comment.presentation.dto.CommentRequest;
 import com.coope.server.comment.presentation.dto.CommentResponse;
-import com.coope.server.global.security.UserDetailsImpl;
+import com.coope.server.shared.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

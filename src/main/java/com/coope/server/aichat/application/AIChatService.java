@@ -2,7 +2,7 @@ package com.coope.server.aichat.application;
 
 import com.coope.server.aichat.presentation.dto.AIChatRequest;
 import com.coope.server.aichat.presentation.dto.AIChatMessage;
-import com.coope.server.global.annotation.AiLimit;
+import com.coope.server.shared.ai.AiLimit;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

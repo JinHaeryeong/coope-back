@@ -1,6 +1,6 @@
-package com.coope.server.global.config;
+package com.coope.server.shared.config;
 
-import com.coope.server.global.security.FilterChannelInterceptor;
+import com.coope.server.shared.security.FilterChannelInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

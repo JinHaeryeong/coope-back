@@ -1,6 +1,6 @@
 package com.coope.server.chat.domain;
 
-import com.coope.server.domain.common.entity.BaseTimeEntity;
+import com.coope.server.shared.domain.BaseTimeEntity;
 import com.coope.server.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;

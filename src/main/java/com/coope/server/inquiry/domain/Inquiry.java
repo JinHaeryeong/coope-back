@@ -1,11 +1,11 @@
 package com.coope.server.inquiry.domain;
 
-import com.coope.server.domain.common.entity.BaseTimeEntity;
+import com.coope.server.shared.domain.BaseTimeEntity;
 import com.coope.server.inquiry.domain.enums.InquiryCategory;
 import com.coope.server.inquiry.domain.enums.InquiryStatus;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.domain.enums.Role;
-import com.coope.server.global.error.exception.AccessDeniedException;
+import com.coope.server.shared.error.exception.AccessDeniedException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

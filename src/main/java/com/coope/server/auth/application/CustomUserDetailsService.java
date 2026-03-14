@@ -1,7 +1,7 @@
 package com.coope.server.auth.application;
 
 import com.coope.server.user.domain.UserRepository;
-import com.coope.server.global.security.UserDetailsImpl;
+import com.coope.server.shared.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

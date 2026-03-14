@@ -1,4 +1,4 @@
-package com.coope.server.global.config;
+package com.coope.server.shared.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
