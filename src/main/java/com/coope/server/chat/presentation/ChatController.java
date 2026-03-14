@@ -2,7 +2,7 @@ package com.coope.server.chat.presentation;
 
 import com.coope.server.chat.application.ChatService;
 import com.coope.server.chat.presentation.dto.*;
-import com.coope.server.global.security.UserDetailsImpl;
+import com.coope.server.shared.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;

@@ -4,7 +4,7 @@ import com.coope.server.ai.application.AiService;
 import com.coope.server.ai.presentation.dto.VoiceProcessResponse;
 import com.coope.server.workspace.domain.Workspace;
 import com.coope.server.workspace.application.WorkspaceService;
-import com.coope.server.global.security.UserDetailsImpl;
+import com.coope.server.shared.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

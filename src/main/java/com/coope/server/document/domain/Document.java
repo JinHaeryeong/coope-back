@@ -1,6 +1,6 @@
 package com.coope.server.document.domain;
 
-import com.coope.server.domain.common.entity.BaseTimeEntity;
+import com.coope.server.shared.domain.BaseTimeEntity;
 import com.coope.server.user.domain.User;
 import com.coope.server.workspace.domain.Workspace;
 import jakarta.persistence.*;

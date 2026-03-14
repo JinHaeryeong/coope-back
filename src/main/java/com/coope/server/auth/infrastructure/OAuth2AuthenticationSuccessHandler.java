@@ -1,9 +1,9 @@
 package com.coope.server.auth.infrastructure;
 
 import com.coope.server.user.domain.User;
-import com.coope.server.global.config.JwtProperties;
-import com.coope.server.global.security.JwtProvider;
-import com.coope.server.global.security.UserDetailsImpl;
+import com.coope.server.shared.config.JwtProperties;
+import com.coope.server.shared.security.JwtProvider;
+import com.coope.server.shared.security.UserDetailsImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

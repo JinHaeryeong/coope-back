@@ -1,11 +1,11 @@
 package com.coope.server.workspace.domain;
 
-import com.coope.server.domain.common.entity.BaseTimeEntity;
+import com.coope.server.shared.domain.BaseTimeEntity;
 import com.coope.server.document.domain.Document;
 import com.coope.server.user.domain.User;
 import com.coope.server.workspace.domain.enums.WorkspaceRole;
-import com.coope.server.global.error.exception.AccessDeniedException;
-import com.coope.server.global.error.exception.BadRequestException;
+import com.coope.server.shared.error.exception.AccessDeniedException;
+import com.coope.server.shared.error.exception.BadRequestException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.util.StringUtils;

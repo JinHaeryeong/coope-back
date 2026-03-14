@@ -2,7 +2,7 @@ package com.coope.server.user.presentation;
 
 import com.coope.server.user.presentation.dto.*;
 import com.coope.server.user.application.UserService;
-import com.coope.server.global.security.UserDetailsImpl;
+import com.coope.server.shared.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;

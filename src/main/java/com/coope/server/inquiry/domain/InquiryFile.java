@@ -1,6 +1,6 @@
 package com.coope.server.inquiry.domain;
 
-import com.coope.server.domain.common.entity.BaseTimeEntity;
+import com.coope.server.shared.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

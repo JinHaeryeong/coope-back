@@ -4,7 +4,7 @@ import com.coope.server.user.presentation.dto.ProfileUpdateFullRequest;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.domain.enums.Provider;
 import com.coope.server.user.domain.UserRepository;
-import com.coope.server.global.error.exception.AuthenticationException;
+import com.coope.server.shared.error.exception.AuthenticationException;
 import com.coope.server.user.application.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

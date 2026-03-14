@@ -6,8 +6,8 @@ import com.coope.server.friend.domain.FriendStatus;
 import com.coope.server.friend.presentation.dto.FriendResponse;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.domain.UserRepository;
-import com.coope.server.global.error.exception.FriendException;
-import com.coope.server.global.error.exception.UserNotFoundException;
+import com.coope.server.shared.error.exception.FriendException;
+import com.coope.server.shared.error.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -42,16 +42,21 @@ public class FriendService {
 
     @Transactional
     public void acceptFriendRequest(Long currentUserId, Long friendId) {
-        Friend request = friendRepository.findByUserAndFriend(findUserById(friendId), findUserById(currentUserId))
+        User requester = findUserById(friendId);    // 신청 보낸 사람
+        User acceptor  = findUserById(currentUserId); // 수락하는 사람
+
+        Friend request = friendRepository.findByUserAndFriend(requester, acceptor)
                 .orElseThrow(() -> new FriendException("받은 친구 신청 내역이 없습니다."));
 
         request.accept();
+        friendRepository.save(request);
 
-        if (!friendRepository.existsFriendship(request.getFriend(), request.getUser())) {
-            friendRepository.save(request.createInverse());
+        if (!friendRepository.existsByUserAndFriend(acceptor, requester)) {
+            friendRepository.save(request.createInverse()); // acceptor→requester ACCEPTED 저장
         }
 
         notifyFriendUpdate(friendId);
+        notifyFriendUpdate(currentUserId); // 수락한 본인 화면도 갱신
     }
 
     public List<FriendResponse> getReceivedRequests(Long currentUserId) {
