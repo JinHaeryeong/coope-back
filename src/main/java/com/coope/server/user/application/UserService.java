@@ -3,6 +3,8 @@ package com.coope.server.user.application;
 
 import com.coope.server.auth.application.EmailAuthService;
 import com.coope.server.friend.application.FriendService;
+import com.coope.server.shared.file.FileDeleteEvent;
+import com.coope.server.shared.file.FileRollbackDeleteEvent;
 import com.coope.server.user.presentation.dto.ProfileUpdateFullRequest;
 import com.coope.server.user.presentation.dto.SignupRequest;
 import com.coope.server.user.presentation.dto.UserResponse;
@@ -16,6 +18,7 @@ import com.coope.server.shared.file.FileService;
 import com.coope.server.shared.file.ImageCategory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,12 +36,23 @@ public class UserService {
     private final FileService fileService;
     private final FriendService friendService;
     private final EmailAuthService emailAuthService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Long signup(SignupRequest request) {
         validateSignup(request);
 
-        String userIconUrl = fileService.upload(request.getUserIcon(), ImageCategory.PROFILE);
+
+        String userIconUrl = null;
+
+        if (request.getUserIcon() != null && !request.getUserIcon().isEmpty()) {
+            userIconUrl = fileService.upload(request.getUserIcon(), ImageCategory.PROFILE);
+
+            eventPublisher.publishEvent(
+                    new FileRollbackDeleteEvent(userIconUrl, ImageCategory.PROFILE)
+            );
+        }
+
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
         User user = User.createLocalUser(request, encodedPassword, userIconUrl);
@@ -125,16 +139,22 @@ public class UserService {
         if (image.getSize() > 10 * 1024 * 1024) {
             throw new BadRequestException("프로필 이미지는 10MB를 초과할 수 없습니다.");
         }
-        return fileService.upload(image, ImageCategory.PROFILE);
+
+        String url = fileService.upload(image, ImageCategory.PROFILE);
+
+        eventPublisher.publishEvent(
+                new FileRollbackDeleteEvent(url, ImageCategory.PROFILE)
+        );
+
+        return url;
     }
 
     private void deleteOldImageIfExists(String oldIcon) {
         if (!StringUtils.hasText(oldIcon)) return;
 
-        if (!fileService.deleteFile(oldIcon, ImageCategory.PROFILE)) {
-            log.warn("기존 프로필 이미지 삭제 실패: {}", oldIcon);
-            throw new BadRequestException("기존 이미지 삭제 실패로 인해 업데이트를 중단합니다.");
-        }
+        eventPublisher.publishEvent(
+                new FileDeleteEvent(oldIcon, ImageCategory.PROFILE)
+        );
     }
 
     public User findByEmail(String email) {

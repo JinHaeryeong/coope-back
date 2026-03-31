@@ -2,6 +2,7 @@ package com.coope.server.shared.file;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -13,6 +14,7 @@ public class FileEventListener {
 
     private final FileService fileService;
 
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleFileDelete(FileDeleteEvent event) {
         log.info("파일 삭제 이벤트 처리 시작 - URL: {}, 카테고리: {}", event.imageUrl(), event.category());
@@ -23,4 +25,15 @@ public class FileEventListener {
             log.error("파일 삭제 중 예외 발생 - URL: {}, Error: {}", event.imageUrl(), e.getMessage());
         }
     }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
+    public void handleFileRollbackDelete(FileRollbackDeleteEvent event) {
+        log.info("롤백으로 인한 파일 삭제 - URL: {}, 카테고리: {}", event.url(), event.category());
+        try {
+            fileService.deleteFile(event.url(), event.category());
+        } catch (Exception e) {
+            log.error("롤백 파일 삭제 실패 - URL: {}, Error: {}", event.url(), e.getMessage());
+        }
+    }
+
 }

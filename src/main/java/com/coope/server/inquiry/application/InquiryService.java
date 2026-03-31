@@ -5,6 +5,7 @@ import com.coope.server.inquiry.domain.InquiryAnswer;
 import com.coope.server.inquiry.domain.InquiryRepository;
 import com.coope.server.inquiry.domain.enums.InquiryCategory;
 import com.coope.server.inquiry.presentation.dto.InquiryResponse;
+import com.coope.server.shared.file.FileRollbackDeleteEvent;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.domain.UserRepository;
 import com.coope.server.user.domain.enums.Role;
@@ -13,6 +14,7 @@ import com.coope.server.shared.file.FileService;
 import com.coope.server.shared.file.ImageCategory;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ public class InquiryService {
     private final InquiryRepository inquiryRepository;
     private final UserRepository userRepository;
     private final FileService fileService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Long createInquiry(Long userId, String title, String content,
@@ -36,8 +39,11 @@ public class InquiryService {
         User user = findUserOrThrow(userId);
 
         List<String> uploadedUrls = (files != null)
-                ? files.stream().map(f -> fileService.upload(f, ImageCategory.INQUIRY)).toList()
-                : null;
+                ? files.stream()
+                .filter(f -> f != null && !f.isEmpty())
+                .map(this::uploadWithRollback)
+                .toList()
+                : List.of();
 
         Inquiry inquiry = Inquiry.createInquiry(user, title, content, category, environment, uploadedUrls);
         return inquiryRepository.save(inquiry).getId();
@@ -82,5 +88,15 @@ public class InquiryService {
     private Inquiry findInquiryOrThrow(Long inquiryId) {
         return inquiryRepository.findById(inquiryId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 문의사항입니다."));
+    }
+
+    private String uploadWithRollback(MultipartFile file) {
+        String url = fileService.upload(file, ImageCategory.INQUIRY);
+
+        eventPublisher.publishEvent(
+                new FileRollbackDeleteEvent(url, ImageCategory.INQUIRY)
+        );
+
+        return url;
     }
 }

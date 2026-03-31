@@ -5,12 +5,14 @@ import com.coope.server.notice.domain.NoticeRepository;
 import com.coope.server.notice.presentation.dto.NoticeDetailResponse;
 import com.coope.server.notice.presentation.dto.NoticeResponse;
 import com.coope.server.notice.presentation.dto.NoticeWriteRequest;
+import com.coope.server.shared.file.FileDeleteEvent;
+import com.coope.server.shared.file.FileRollbackDeleteEvent;
 import com.coope.server.user.domain.User;
-import com.coope.server.shared.error.exception.FileStorageException;
 import com.coope.server.shared.error.exception.NoticeNotFoundException;
 import com.coope.server.shared.file.FileService;
 import com.coope.server.shared.file.ImageCategory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -26,6 +28,7 @@ public class NoticeService {
     private final NoticeRepository noticeRepository;
     private final FileService fileService;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ApplicationEventPublisher eventPublisher;
     private static final String VIEW_COUNT_KEY = "notice:views:";
 
     public Page<NoticeResponse> getAllNotices(Pageable pageable) {
@@ -38,6 +41,10 @@ public class NoticeService {
         String savedImageUrl = null;
         if (file != null && !file.isEmpty()) {
             savedImageUrl = fileService.upload(file, ImageCategory.NOTICE);
+
+            eventPublisher.publishEvent(
+                    new FileRollbackDeleteEvent(savedImageUrl, ImageCategory.NOTICE)
+            );
         }
 
         Notice notice = Notice.createNotice(request.getTitle(), request.getContent(), savedImageUrl, user);
@@ -79,34 +86,30 @@ public class NoticeService {
         if (!shouldDeleteExisting) return;
 
         if (notice.getImageUrl() != null) {
-            if (!fileService.deleteFile(notice.getImageUrl(), ImageCategory.NOTICE)) {
-                throw new FileStorageException("파일 삭제 실패: " + notice.getImageUrl());
-            }
+            eventPublisher.publishEvent(new FileDeleteEvent(notice.getImageUrl(), ImageCategory.NOTICE));
             notice.removeImage();
         }
 
         if (hasNewFile) {
             String newUrl = fileService.upload(dto.getFile(), ImageCategory.NOTICE);
+            eventPublisher.publishEvent(
+                    new FileRollbackDeleteEvent(newUrl, ImageCategory.NOTICE)
+            );
             notice.changeImage(newUrl);
         }
     }
+
 
     @Transactional
     public void deleteNotice(Long id) {
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new NoticeNotFoundException("해당 공지사항을 찾을 수 없습니다."));
 
-        deleteNoticeImage(notice);
-        noticeRepository.delete(notice);
-    }
-
-    private void deleteNoticeImage(Notice notice) {
         String currentImageUrl = notice.getImageUrl();
-        if (currentImageUrl == null || currentImageUrl.isEmpty()) return;
+        noticeRepository.delete(notice);
 
-        if (!fileService.deleteFile(currentImageUrl, ImageCategory.NOTICE)) {
-            throw new FileStorageException("파일 삭제에 실패하여 삭제를 완료할 수 없습니다." + currentImageUrl);
+        if (currentImageUrl != null && !currentImageUrl.isEmpty()) {
+            eventPublisher.publishEvent(new FileDeleteEvent(currentImageUrl, ImageCategory.NOTICE));
         }
-        notice.removeImage();
     }
 }
