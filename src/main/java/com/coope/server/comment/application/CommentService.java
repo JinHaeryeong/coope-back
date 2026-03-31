@@ -5,6 +5,7 @@ import com.coope.server.comment.domain.CommentRepository;
 import com.coope.server.comment.presentation.dto.CommentResponse;
 import com.coope.server.notice.domain.Notice;
 import com.coope.server.notice.domain.NoticeRepository;
+import com.coope.server.shared.file.FileRollbackDeleteEvent;
 import com.coope.server.user.domain.User;
 import com.coope.server.shared.error.exception.CommentNotFoundException;
 import com.coope.server.shared.error.exception.NoticeNotFoundException;
@@ -35,9 +36,15 @@ public class CommentService {
         Notice notice = noticeRepository.findById(noticeId)
                 .orElseThrow(() -> new NoticeNotFoundException("해당 공지사항이 존재하지 않습니다."));
 
-        String savedImageUrl = file != null && !file.isEmpty()
-                ? fileService.upload(file, ImageCategory.COMMENT)
-                : null;
+        String savedImageUrl = null;
+
+        if (file != null && !file.isEmpty()) {
+            savedImageUrl = fileService.upload(file, ImageCategory.COMMENT);
+
+            eventPublisher.publishEvent(
+                    new FileRollbackDeleteEvent(savedImageUrl, ImageCategory.COMMENT)
+            );
+        }
 
         Comment comment = Comment.createComment(notice, user, content, savedImageUrl);
         return CommentResponse.from(commentRepository.save(comment));
@@ -90,7 +97,11 @@ public class CommentService {
             }
         }
         if (hasNewFile) {
-            comment.updateImage(fileService.upload(file, ImageCategory.COMMENT));
+            String newUrl = fileService.upload(file, ImageCategory.COMMENT);
+            eventPublisher.publishEvent(
+                    new FileRollbackDeleteEvent(newUrl, ImageCategory.COMMENT)
+            );
+            comment.updateImage(newUrl);
         }
     }
 

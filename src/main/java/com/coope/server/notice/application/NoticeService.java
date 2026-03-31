@@ -6,6 +6,7 @@ import com.coope.server.notice.presentation.dto.NoticeDetailResponse;
 import com.coope.server.notice.presentation.dto.NoticeResponse;
 import com.coope.server.notice.presentation.dto.NoticeWriteRequest;
 import com.coope.server.shared.file.FileDeleteEvent;
+import com.coope.server.shared.file.FileRollbackDeleteEvent;
 import com.coope.server.user.domain.User;
 import com.coope.server.shared.error.exception.NoticeNotFoundException;
 import com.coope.server.shared.file.FileService;
@@ -40,6 +41,10 @@ public class NoticeService {
         String savedImageUrl = null;
         if (file != null && !file.isEmpty()) {
             savedImageUrl = fileService.upload(file, ImageCategory.NOTICE);
+
+            eventPublisher.publishEvent(
+                    new FileRollbackDeleteEvent(savedImageUrl, ImageCategory.NOTICE)
+            );
         }
 
         Notice notice = Notice.createNotice(request.getTitle(), request.getContent(), savedImageUrl, user);
@@ -87,6 +92,9 @@ public class NoticeService {
 
         if (hasNewFile) {
             String newUrl = fileService.upload(dto.getFile(), ImageCategory.NOTICE);
+            eventPublisher.publishEvent(
+                    new FileRollbackDeleteEvent(newUrl, ImageCategory.NOTICE)
+            );
             notice.changeImage(newUrl);
         }
     }
