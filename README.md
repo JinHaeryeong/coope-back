@@ -5,15 +5,8 @@
 </p>
 
 > "React와 Mediasoup SFU 아키텍처를 결합한 화상 회의 및 실시간 툴"
----
-## 마이그레이션 진행중
----
-### 배포주소
 
-<p align="center">
-  <a href="https://www.coope1.me">Coope</a>
-</p>
-
+---
 * 기술스택 변경 전 프로젝트: https://github.com/JinHaeryeong/Coope-project
 * React 주소: https://github.com/JinHaeryeong/coope-front
 * Spring 주소: https://github.com/JinHaeryeong/coope-back
