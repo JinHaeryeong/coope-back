@@ -3,6 +3,13 @@ name: Java CD with Docker
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
