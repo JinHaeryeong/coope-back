@@ -2,7 +2,7 @@ package com.coope.server.comment.application;
 
 import com.coope.server.comment.domain.Comment;
 import com.coope.server.comment.domain.CommentRepository;
-import com.coope.server.comment.presentation.dto.CommentResponse;
+import com.coope.server.comment.application.dto.CommentResponse;
 import com.coope.server.notice.domain.Notice;
 import com.coope.server.notice.domain.NoticeRepository;
 import com.coope.server.shared.file.FileRollbackDeleteEvent;

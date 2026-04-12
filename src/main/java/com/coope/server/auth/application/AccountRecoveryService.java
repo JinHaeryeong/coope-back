@@ -1,6 +1,6 @@
 package com.coope.server.auth.application;
 
-import com.coope.server.auth.presentation.dto.FindEmailResponse;
+import com.coope.server.auth.application.dto.FindEmailResponse;
 import com.coope.server.shared.error.exception.BadRequestException;
 import com.coope.server.shared.error.exception.UserNotFoundException;
 import com.coope.server.user.domain.User;

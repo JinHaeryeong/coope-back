@@ -4,7 +4,7 @@ import com.coope.server.inquiry.domain.Inquiry;
 import com.coope.server.inquiry.domain.InquiryAnswer;
 import com.coope.server.inquiry.domain.InquiryRepository;
 import com.coope.server.inquiry.domain.enums.InquiryCategory;
-import com.coope.server.inquiry.presentation.dto.InquiryResponse;
+import com.coope.server.inquiry.application.dto.InquiryResponse;
 import com.coope.server.shared.file.FileRollbackDeleteEvent;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.domain.UserRepository;

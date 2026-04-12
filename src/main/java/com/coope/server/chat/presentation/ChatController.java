@@ -1,7 +1,11 @@
 package com.coope.server.chat.presentation;
 
 import com.coope.server.chat.application.ChatService;
-import com.coope.server.chat.presentation.dto.*;
+import com.coope.server.chat.application.dto.ChatListResponse;
+import com.coope.server.chat.application.dto.ChatRoomResponse;
+import com.coope.server.chat.application.dto.ChatUploadResponse;
+import com.coope.server.chat.application.dto.CreateGroupRequest;
+import com.coope.server.chat.application.dto.MessageResponse;
 import com.coope.server.shared.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
