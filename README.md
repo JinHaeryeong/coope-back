@@ -68,22 +68,22 @@
    │  │           ├─ ServerApplication.java
    │  │           ├─ ai
    │  │           │  ├─ application
-   │  │           │  │  └─ AiService.java
+   │  │           │  │  ├─ AiService.java
+   │  │           │  │  └─ dto
+   │  │           │  │     └─ VoiceProcessResponse.java
    │  │           │  ├─ infrastructure
    │  │           │  │  └─ OpenAICompletionResponse.java
    │  │           │  └─ presentation
-   │  │           │     ├─ AiController.java
-   │  │           │     └─ dto
-   │  │           │        └─ VoiceProcessResponse.java
+   │  │           │     └─ AiController.java
    │  │           ├─ aichat
    │  │           │  ├─ application
-   │  │           │  │  └─ AIChatService.java
+   │  │           │  │  ├─ AIChatService.java
+   │  │           │  │  └─ dto
+   │  │           │  │     ├─ AIChatMessage.java
+   │  │           │  │     ├─ AIChatRequest.java
+   │  │           │  │     └─ AIChatStreamRequest.java
    │  │           │  └─ presentation
-   │  │           │     ├─ AIChatController.java
-   │  │           │     └─ dto
-   │  │           │        ├─ AIChatMessage.java
-   │  │           │        ├─ AIChatRequest.java
-   │  │           │        └─ AIChatStreamRequest.java
+   │  │           │     └─ AIChatController.java
    │  │           ├─ auth
    │  │           │  ├─ application
    │  │           │  │  ├─ AccountRecoveryService.java
@@ -93,26 +93,33 @@
    │  │           │  │  ├─ EmailAuthService.java
    │  │           │  │  ├─ LoginAttemptService.java
    │  │           │  │  ├─ MailService.java
-   │  │           │  │  └─ TokenService.java
+   │  │           │  │  ├─ TokenService.java
+   │  │           │  │  └─ dto
+   │  │           │  │     ├─ EmailRequest.java
+   │  │           │  │     ├─ EmailVerifyRequest.java
+   │  │           │  │     ├─ FindEmailRequest.java
+   │  │           │  │     ├─ FindEmailResponse.java
+   │  │           │  │     ├─ FindPasswordRequest.java
+   │  │           │  │     ├─ LoginRequest.java
+   │  │           │  │     ├─ LoginResponse.java
+   │  │           │  │     └─ ResetPasswordRequest.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ GoogleUserInfo.java
    │  │           │  │  └─ OAuth2UserInfo.java
    │  │           │  ├─ infrastructure
    │  │           │  │  └─ OAuth2AuthenticationSuccessHandler.java
    │  │           │  └─ presentation
-   │  │           │     ├─ AuthController.java
-   │  │           │     └─ dto
-   │  │           │        ├─ EmailRequest.java
-   │  │           │        ├─ EmailVerifyRequest.java
-   │  │           │        ├─ FindEmailRequest.java
-   │  │           │        ├─ FindEmailResponse.java
-   │  │           │        ├─ FindPasswordRequest.java
-   │  │           │        ├─ LoginRequest.java
-   │  │           │        ├─ LoginResponse.java
-   │  │           │        └─ ResetPasswordRequest.java
+   │  │           │     └─ AuthController.java
    │  │           ├─ chat
    │  │           │  ├─ application
-   │  │           │  │  └─ ChatService.java
+   │  │           │  │  ├─ ChatService.java
+   │  │           │  │  └─ dto
+   │  │           │  │     ├─ ChatListResponse.java
+   │  │           │  │     ├─ ChatRoomResponse.java
+   │  │           │  │     ├─ ChatUploadResponse.java
+   │  │           │  │     ├─ CreateGroupRequest.java
+   │  │           │  │     ├─ MessageRequest.java
+   │  │           │  │     └─ MessageResponse.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ ChatParticipant.java
    │  │           │  │  ├─ ChatParticipantRepository.java
@@ -131,17 +138,13 @@
    │  │           │  │  └─ MessageRepositoryImpl.java
    │  │           │  └─ presentation
    │  │           │     ├─ ChatController.java
-   │  │           │     ├─ ChatStompController.java
-   │  │           │     └─ dto
-   │  │           │        ├─ ChatListResponse.java
-   │  │           │        ├─ ChatRoomResponse.java
-   │  │           │        ├─ ChatUploadResponse.java
-   │  │           │        ├─ CreateGroupRequest.java
-   │  │           │        ├─ MessageRequest.java
-   │  │           │        └─ MessageResponse.java
+   │  │           │     └─ ChatStompController.java
    │  │           ├─ comment
    │  │           │  ├─ application
-   │  │           │  │  └─ CommentService.java
+   │  │           │  │  ├─ CommentService.java
+   │  │           │  │  └─ dto
+   │  │           │  │     ├─ CommentRequest.java
+   │  │           │  │     └─ CommentResponse.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Comment.java
    │  │           │  │  └─ CommentRepository.java
@@ -149,13 +152,14 @@
    │  │           │  │  ├─ CommentJpaRepository.java
    │  │           │  │  └─ CommentRepositoryImpl.java
    │  │           │  └─ presentation
-   │  │           │     ├─ CommentController.java
-   │  │           │     └─ dto
-   │  │           │        ├─ CommentRequest.java
-   │  │           │        └─ CommentResponse.java
+   │  │           │     └─ CommentController.java
    │  │           ├─ document
    │  │           │  ├─ application
-   │  │           │  │  └─ DocumentService.java
+   │  │           │  │  ├─ DocumentService.java
+   │  │           │  │  └─ dto
+   │  │           │  │     ├─ DocumentCreateRequest.java
+   │  │           │  │     ├─ DocumentResponse.java
+   │  │           │  │     └─ DocumentUpdateRequest.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Document.java
    │  │           │  │  └─ DocumentRepository.java
@@ -168,14 +172,12 @@
    │  │           │  │  ├─ LiveblocksAuthController.java
    │  │           │  │  └─ LiveblocksAuthService.java
    │  │           │  └─ presentation
-   │  │           │     ├─ DocumentController.java
-   │  │           │     └─ dto
-   │  │           │        ├─ DocumentCreateRequest.java
-   │  │           │        ├─ DocumentResponse.java
-   │  │           │        └─ DocumentUpdateRequest.java
+   │  │           │     └─ DocumentController.java
    │  │           ├─ friend
    │  │           │  ├─ application
-   │  │           │  │  └─ FriendService.java
+   │  │           │  │  ├─ FriendService.java
+   │  │           │  │  └─ dto
+   │  │           │  │     └─ FriendResponse.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Friend.java
    │  │           │  │  ├─ FriendRepository.java
@@ -184,12 +186,14 @@
    │  │           │  │  ├─ FriendJpaRepository.java
    │  │           │  │  └─ FriendRepositoryImpl.java
    │  │           │  └─ presentation
-   │  │           │     ├─ FriendController.java
-   │  │           │     └─ dto
-   │  │           │        └─ FriendResponse.java
+   │  │           │     └─ FriendController.java
    │  │           ├─ inquiry
    │  │           │  ├─ application
-   │  │           │  │  └─ InquiryService.java
+   │  │           │  │  ├─ InquiryService.java
+   │  │           │  │  └─ dto
+   │  │           │  │     ├─ InquiryAnswerRequest.java
+   │  │           │  │     ├─ InquiryCreateRequest.java
+   │  │           │  │     └─ InquiryResponse.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Inquiry.java
    │  │           │  │  ├─ InquiryAnswer.java
@@ -204,14 +208,14 @@
    │  │           │  │  ├─ InquiryJpaRepository.java
    │  │           │  │  └─ InquiryRepositoryImpl.java
    │  │           │  └─ presentation
-   │  │           │     ├─ InquiryController.java
-   │  │           │     └─ dto
-   │  │           │        ├─ InquiryAnswerRequest.java
-   │  │           │        ├─ InquiryCreateRequest.java
-   │  │           │        └─ InquiryResponse.java
+   │  │           │     └─ InquiryController.java
    │  │           ├─ notice
    │  │           │  ├─ application
-   │  │           │  │  └─ NoticeService.java
+   │  │           │  │  ├─ NoticeService.java
+   │  │           │  │  └─ dto
+   │  │           │  │     ├─ NoticeDetailResponse.java
+   │  │           │  │     ├─ NoticeResponse.java
+   │  │           │  │     └─ NoticeWriteRequest.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Notice.java
    │  │           │  │  └─ NoticeRepository.java
@@ -220,11 +224,7 @@
    │  │           │  │  ├─ NoticeRepositoryImpl.java
    │  │           │  │  └─ ViewCountScheduler.java
    │  │           │  └─ presentation
-   │  │           │     ├─ NoticeController.java
-   │  │           │     └─ dto
-   │  │           │        ├─ NoticeDetailResponse.java
-   │  │           │        ├─ NoticeResponse.java
-   │  │           │        └─ NoticeWriteRequest.java
+   │  │           │     └─ NoticeController.java
    │  │           ├─ shared
    │  │           │  ├─ ai
    │  │           │  │  ├─ AiLimit.java
@@ -265,7 +265,9 @@
    │  │           │  │  ├─ FileController.java
    │  │           │  │  ├─ FileDeleteEvent.java
    │  │           │  │  ├─ FileEventListener.java
+   │  │           │  │  ├─ FileRollbackDeleteEvent.java
    │  │           │  │  ├─ FileService.java
+   │  │           │  │  ├─ FileUploadResponse.java
    │  │           │  │  ├─ ImageCategory.java
    │  │           │  │  ├─ LocalFileService.java
    │  │           │  │  └─ S3FileService.java
@@ -335,23 +337,21 @@
                   │     ├─ AccountRecoveryServiceTest.java
                   │     ├─ AuthServiceLoginTest.java
                   │     └─ LoginAttemptServiceTest.java
-                  ├─ domain
-                  │  ├─ document
-                  │  │  └─ scheduler
-                  │  │     └─ DocumentSyncSchedulerTest.java
-                  │  ├─ inquiry
-                  │  │  ├─ scheduler
-                  │  │  │  └─ InquiryCleanupProcessorTest.java
-                  │  │  └─ service
-                  │  │     └─ InquiryServiceTest.java
-                  │  └─ user
-                  │     └─ service
-                  │        └─ UserServiceTest.java
-                  └─ support
-                     └─ AbstractContainerTest.java
+                  ├─ document
+                  │  └─ infrastructure
+                  │     └─ DocumentSyncSchedulerTest.java
+                  ├─ inquiry
+                  │  ├─ application
+                  │  │  └─ InquiryServiceTest.java
+                  │  └─ infrastructure
+                  │     └─ InquiryCleanupProcessorTest.java
+                  ├─ support
+                  │  └─ AbstractContainerTest.java
+                  └─ user
+                     └─ application
+                        └─ UserServiceTest.java
 ```
 ©generated by [Project Tree Generator](https://woochanleee.github.io/project-tree-generator)
-
 
 ## 🧪예시 결과
 ### 아래는 Next 시절 결과로 마이그레이션 완료사항은 완성 표시
