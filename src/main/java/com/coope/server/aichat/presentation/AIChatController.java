@@ -1,8 +1,8 @@
 package com.coope.server.aichat.presentation;
 
 import com.coope.server.aichat.application.AIChatService;
-import com.coope.server.aichat.presentation.dto.AIChatMessage;
-import com.coope.server.aichat.presentation.dto.AIChatStreamRequest;
+import com.coope.server.aichat.application.dto.AIChatMessage;
+import com.coope.server.aichat.application.dto.AIChatStreamRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;

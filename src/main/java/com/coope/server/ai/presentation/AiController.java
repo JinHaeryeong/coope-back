@@ -1,7 +1,7 @@
 package com.coope.server.ai.presentation;
 
 import com.coope.server.ai.application.AiService;
-import com.coope.server.ai.presentation.dto.VoiceProcessResponse;
+import com.coope.server.ai.application.dto.VoiceProcessResponse;
 import com.coope.server.workspace.domain.Workspace;
 import com.coope.server.workspace.application.WorkspaceService;
 import com.coope.server.shared.security.UserDetailsImpl;

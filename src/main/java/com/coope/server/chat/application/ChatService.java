@@ -1,7 +1,11 @@
 package com.coope.server.chat.application;
 
+import com.coope.server.chat.application.dto.ChatListResponse;
+import com.coope.server.chat.application.dto.ChatRoomResponse;
+import com.coope.server.chat.application.dto.ChatUploadResponse;
+import com.coope.server.chat.application.dto.MessageRequest;
+import com.coope.server.chat.application.dto.MessageResponse;
 import com.coope.server.chat.domain.*;
-import com.coope.server.chat.presentation.dto.*;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.domain.UserRepository;
 import com.coope.server.shared.error.exception.AccessDeniedException;

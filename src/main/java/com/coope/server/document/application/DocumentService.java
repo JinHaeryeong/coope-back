@@ -3,7 +3,7 @@ package com.coope.server.document.application;
 import com.coope.server.document.domain.Document;
 import com.coope.server.document.domain.DocumentRepository;
 import com.coope.server.document.infrastructure.DocumentEvent;
-import com.coope.server.document.presentation.dto.DocumentResponse;
+import com.coope.server.document.application.dto.DocumentResponse;
 import com.coope.server.user.domain.User;
 import com.coope.server.workspace.domain.Workspace;
 import com.coope.server.workspace.application.WorkspaceService;

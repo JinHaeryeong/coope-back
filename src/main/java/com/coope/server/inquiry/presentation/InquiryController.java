@@ -1,9 +1,9 @@
 package com.coope.server.inquiry.presentation;
 
 import com.coope.server.inquiry.application.InquiryService;
-import com.coope.server.inquiry.presentation.dto.InquiryAnswerRequest;
-import com.coope.server.inquiry.presentation.dto.InquiryCreateRequest;
-import com.coope.server.inquiry.presentation.dto.InquiryResponse;
+import com.coope.server.inquiry.application.dto.InquiryAnswerRequest;
+import com.coope.server.inquiry.application.dto.InquiryCreateRequest;
+import com.coope.server.inquiry.application.dto.InquiryResponse;
 import com.coope.server.shared.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

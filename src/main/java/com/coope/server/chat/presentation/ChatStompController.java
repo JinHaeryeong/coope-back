@@ -1,8 +1,8 @@
 package com.coope.server.chat.presentation;
 
 import com.coope.server.chat.application.ChatService;
-import com.coope.server.chat.presentation.dto.MessageRequest;
-import com.coope.server.chat.presentation.dto.MessageResponse;
+import com.coope.server.chat.application.dto.MessageRequest;
+import com.coope.server.chat.application.dto.MessageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;

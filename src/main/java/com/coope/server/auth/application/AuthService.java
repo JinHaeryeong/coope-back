@@ -1,7 +1,7 @@
 package com.coope.server.auth.application;
 
-import com.coope.server.auth.presentation.dto.LoginRequest;
-import com.coope.server.auth.presentation.dto.LoginResponse;
+import com.coope.server.auth.application.dto.LoginRequest;
+import com.coope.server.auth.application.dto.LoginResponse;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.application.UserService;
 import com.coope.server.shared.config.JwtProperties;
