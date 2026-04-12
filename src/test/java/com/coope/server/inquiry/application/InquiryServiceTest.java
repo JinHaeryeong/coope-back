@@ -1,10 +1,9 @@
-package com.coope.server.domain.inquiry.service;
+package com.coope.server.inquiry.application;
 
 import com.coope.server.inquiry.application.dto.InquiryCreateRequest;
 import com.coope.server.inquiry.domain.Inquiry;
 import com.coope.server.inquiry.domain.enums.InquiryCategory;
 import com.coope.server.inquiry.domain.InquiryRepository;
-import com.coope.server.inquiry.application.InquiryService;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.domain.enums.Role;
 import com.coope.server.user.domain.UserRepository;
@@ -35,6 +34,8 @@ class InquiryServiceTest {
     @Mock private InquiryRepository inquiryRepository;
     @Mock private UserRepository userRepository;
     @Mock private FileService fileService;
+
+    @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private InquiryService inquiryService;
