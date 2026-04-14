@@ -2,9 +2,9 @@ package com.coope.server.notice.application;
 
 import com.coope.server.notice.domain.Notice;
 import com.coope.server.notice.domain.NoticeRepository;
-import com.coope.server.notice.application.dto.NoticeDetailResponse;
-import com.coope.server.notice.application.dto.NoticeResponse;
-import com.coope.server.notice.application.dto.NoticeWriteRequest;
+import com.coope.server.notice.presentation.dto.NoticeDetailResponse;
+import com.coope.server.notice.presentation.dto.NoticeResponse;
+import com.coope.server.notice.presentation.dto.NoticeWriteRequest;
 import com.coope.server.shared.file.FileDeleteEvent;
 import com.coope.server.shared.file.FileRollbackDeleteEvent;
 import com.coope.server.user.domain.User;

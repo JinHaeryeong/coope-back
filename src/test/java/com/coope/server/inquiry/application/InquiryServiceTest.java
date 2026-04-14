@@ -1,6 +1,6 @@
 package com.coope.server.inquiry.application;
 
-import com.coope.server.inquiry.application.dto.InquiryCreateRequest;
+import com.coope.server.inquiry.presentation.dto.InquiryCreateRequest;
 import com.coope.server.inquiry.domain.Inquiry;
 import com.coope.server.inquiry.domain.enums.InquiryCategory;
 import com.coope.server.inquiry.domain.InquiryRepository;

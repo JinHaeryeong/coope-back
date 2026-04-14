@@ -50,6 +50,8 @@ public class GlobalExceptionHandler {
             CommentNotFoundException.class,
             DocumentNotFoundException.class,
             WorkspaceNotFoundException.class,
+            PostNotFoundException.class,          // 커뮤니티 게시글 없음
+            PostCommentNotFoundException.class,    // 커뮤니티 댓글 없음
             jakarta.persistence.EntityNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException e) {
