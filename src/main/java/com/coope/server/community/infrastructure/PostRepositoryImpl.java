@@ -46,4 +46,14 @@ public class PostRepositoryImpl implements PostRepository {
     public Page<Post> findByCategoryWithAuthor(PostCategory category, Pageable pageable) {
         return postJpaRepository.findByCategoryWithAuthor(category, pageable);
     }
+
+    @Override
+    public void incrementCommentCount(Long id) {
+        postJpaRepository.incrementCommentCount(id);
+    }
+
+    @Override
+    public void decrementCommentCount(Long id) {
+        postJpaRepository.decrementCommentCount(id);
+    }
 }

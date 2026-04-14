@@ -57,7 +57,7 @@ public class RecruitmentCardResponse {
                 .authorNickname(post.getAuthor().getNickname())
                 .authorIcon(post.getAuthor().getUserIcon())
                 .viewCount(post.getViewCount())
-                .commentCount(post.getComments().size())
+                .commentCount(post.getCommentCount())
                 .createdAt(post.getCreatedAt())
                 .build();
     }

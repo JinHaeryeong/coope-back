@@ -2,6 +2,7 @@ package com.coope.server.community.presentation.dto;
 
 import com.coope.server.community.domain.comment.PostComment;
 import com.coope.server.user.domain.User;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -20,8 +21,10 @@ public class CommentResponse {
     private Long id;
     private String content;
 
+    @JsonProperty("isPrivate")
     private boolean isPrivate;
 
+    @JsonProperty("isMasked")
     private boolean isMasked;
 
     private String authorNickname;

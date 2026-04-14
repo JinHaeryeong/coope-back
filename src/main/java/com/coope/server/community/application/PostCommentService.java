@@ -4,6 +4,7 @@ import com.coope.server.community.domain.comment.PostComment;
 import com.coope.server.community.domain.comment.PostCommentRepository;
 import com.coope.server.community.domain.post.Post;
 import com.coope.server.community.domain.post.PostRepository;
+import com.coope.server.community.presentation.dto.CommentUpdateRequest;
 import com.coope.server.shared.error.exception.PostCommentNotFoundException;
 import com.coope.server.shared.error.exception.PostNotFoundException;
 import com.coope.server.community.presentation.dto.CommentCreateRequest;
@@ -44,25 +45,35 @@ public class PostCommentService {
 
     @Transactional
     public CommentResponse createComment(Long postId, CommentCreateRequest request, User author) {
+
         Post post = findPostOrThrow(postId);
         PostComment comment = PostComment.create(request.getContent(), request.isPrivate(), post, author);
         PostComment saved = postCommentRepository.save(comment);
 
+        postRepository.incrementCommentCount(postId);
         return CommentResponse.from(saved, author);
     }
 
     @Transactional
-    public CommentResponse updateComment(Long commentId, String newContent, User requester) {
+    public CommentResponse updateComment(Long postId, Long commentId, CommentUpdateRequest request, User requester) {
         PostComment comment = findCommentOrThrow(commentId);
+
+        // 데이터 무결성 검증
+        validateCommentOwnership(comment, postId);
         validateCommentAuthor(comment, requester);
 
-        comment.update(newContent);
+        // DTO에서 컨텐츠 추출하여 업데이트
+        comment.update(request.getContent());
+
         return CommentResponse.from(comment, requester);
     }
 
     @Transactional
-    public void deleteComment(Long commentId, User requester) {
+    public void deleteComment(Long postId, Long commentId, User requester) {
         PostComment comment = findCommentOrThrow(commentId);
+
+        // 데이터 무결성 검증
+        validateCommentOwnership(comment, postId);
 
         boolean isCommentAuthor = comment.isAuthor(requester);
         boolean isPostOwner = comment.getPost().isAuthor(requester);
@@ -70,7 +81,15 @@ public class PostCommentService {
         if (!isCommentAuthor && !isPostOwner) {
             throw new AccessDeniedException("댓글 작성자 또는 게시글 작성자만 삭제할 수 있습니다.");
         }
+
+        postRepository.decrementCommentCount(postId);
         postCommentRepository.delete(comment);
+    }
+
+    private void validateCommentOwnership(PostComment comment, Long postId) {
+        if (!comment.getPost().getId().equals(postId)) {
+            throw new AccessDeniedException("해당 게시글의 댓글이 아닙니다.");
+        }
     }
 
     private Post findPostOrThrow(Long postId) {

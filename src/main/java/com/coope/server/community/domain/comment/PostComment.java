@@ -3,6 +3,7 @@ package com.coope.server.community.domain.comment;
 import com.coope.server.community.domain.post.Post;
 import com.coope.server.shared.domain.BaseTimeEntity;
 import com.coope.server.user.domain.User;
+import com.coope.server.user.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -63,12 +64,21 @@ public class PostComment extends BaseTimeEntity {
      * 현재 사용자가 이 댓글을 열람할 수 있는지 확인
      *
      * @param viewer 열람 요청 사용자
-     * @return 공개 댓글이거나, 게시글 작성자이거나, 댓글 작성자일 때 true
+     * @return 공개 댓글이거나, 게시글 작성자이거나, 댓글 작성자거나 관리자일 때 true
      */
     public boolean isReadableBy(User viewer) {
         if (!this.isPrivate) {
             return true;
         }
+
+        if (viewer == null) {
+            return false;
+        }
+
+        if (viewer.getRole() == Role.ROLE_ADMIN) {
+            return true;
+        }
+
         // 비밀 댓글: 게시글 작성자 또는 댓글 작성자만 허용
         Long viewerId = viewer.getId();
         return viewerId.equals(this.post.getAuthor().getId())

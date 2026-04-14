@@ -3,6 +3,7 @@ package com.coope.server.community.presentation;
 import com.coope.server.community.application.PostCommentService;
 import com.coope.server.community.presentation.dto.CommentCreateRequest;
 import com.coope.server.community.presentation.dto.CommentResponse;
+import com.coope.server.community.presentation.dto.CommentUpdateRequest;
 import com.coope.server.shared.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,10 +42,10 @@ public class PostCommentController {
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @RequestParam String content,
+            @Valid @RequestBody CommentUpdateRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        return ResponseEntity.ok(postCommentService.updateComment(commentId, content, userDetails.getUser()));
+        return ResponseEntity.ok(postCommentService.updateComment(postId, commentId, request, userDetails.getUser()));
     }
 
     @Operation(summary = "댓글 삭제", description = "댓글을 삭제합니다. 작성자 본인만 가능합니다.")
@@ -54,7 +55,7 @@ public class PostCommentController {
             @PathVariable Long commentId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        postCommentService.deleteComment(commentId, userDetails.getUser());
+        postCommentService.deleteComment(postId, commentId, userDetails.getUser());
         return ResponseEntity.noContent().build();
     }
 }

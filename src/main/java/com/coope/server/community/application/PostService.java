@@ -1,6 +1,5 @@
 package com.coope.server.community.application;
 
-import com.coope.server.community.domain.comment.PostCommentRepository;
 import com.coope.server.community.domain.post.Post;
 import com.coope.server.community.domain.post.PostRepository;
 import com.coope.server.community.domain.post.enums.PostCategory;
@@ -22,7 +21,6 @@ import java.util.List;
 public class PostService {
 
     private final PostRepository postRepository;
-    private final PostCommentRepository postCommentRepository;
     private final PostCommentService postCommentService;
 
     /**

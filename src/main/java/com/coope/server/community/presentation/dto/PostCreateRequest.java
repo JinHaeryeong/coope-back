@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * 게시글 생성 요청 DTO
@@ -13,6 +14,7 @@ import lombok.Getter;
  * 서비스 계층에서 추가로 검증
  */
 @Getter
+@NoArgsConstructor
 public class PostCreateRequest {
 
     @NotNull(message = "카테고리는 필수입니다.")

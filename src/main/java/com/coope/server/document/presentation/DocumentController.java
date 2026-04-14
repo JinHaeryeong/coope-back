@@ -6,6 +6,7 @@ import com.coope.server.document.presentation.dto.DocumentResponse;
 import com.coope.server.document.presentation.dto.DocumentUpdateRequest;
 import com.coope.server.shared.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ import java.util.List;
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor
 @Slf4j
-@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "BearerAuth")
+@SecurityRequirement(name = "BearerAuth")
 public class DocumentController {
 
     private final DocumentService documentService;

@@ -12,4 +12,6 @@ public interface PostRepository {
     void delete(Post post);
     Page<Post> findAllWithAuthor(Pageable pageable);
     Page<Post> findByCategoryWithAuthor(PostCategory category, Pageable pageable);
+    void incrementCommentCount(Long id);
+    void decrementCommentCount(Long id);
 }

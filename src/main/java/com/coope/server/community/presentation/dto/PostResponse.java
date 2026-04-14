@@ -37,7 +37,7 @@ public class PostResponse {
                 .authorNickname(post.getAuthor().getNickname())
                 .authorIcon(post.getAuthor().getUserIcon())
                 .viewCount(post.getViewCount())
-                .commentCount(post.getComments().size())
+                .commentCount(post.getCommentCount())
                 .createdAt(post.getCreatedAt())
                 .techStack(post.getTechStack())
                 .currentMembers(post.getCurrentMembers())

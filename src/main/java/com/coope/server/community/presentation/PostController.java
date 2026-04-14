@@ -4,6 +4,7 @@ import com.coope.server.community.application.PostService;
 import com.coope.server.community.domain.post.enums.PostCategory;
 import com.coope.server.community.presentation.dto.*;
 import com.coope.server.shared.security.UserDetailsImpl;
+import com.coope.server.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -24,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/community/posts")
 @RequiredArgsConstructor
 @Slf4j
-@SecurityRequirement(name = "BearerAuth")
 public class PostController {
 
     private final PostService postService;
@@ -52,7 +52,8 @@ public class PostController {
             @PathVariable("id") Long postId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        return ResponseEntity.ok(postService.getPostDetail(postId, userDetails.getUser()));
+        User viewer = (userDetails != null) ? userDetails.getUser() : null;
+        return ResponseEntity.ok(postService.getPostDetail(postId, viewer));
     }
 
     @Operation(summary = "조회수 증가", description = "게시글 상세 페이지 진입 시 해당 게시글의 조회수를 1 증가시킵니다.")
@@ -63,6 +64,7 @@ public class PostController {
     }
 
     @Operation(summary = "게시글 작성", description = "새로운 커뮤니티 게시글을 작성합니다. 모집글인 경우 기술 스택 및 인원 정보가 필요합니다.")
+    @SecurityRequirement(name = "BearerAuth")
     @PostMapping
     public ResponseEntity<PostResponse> createPost(
             @Valid @RequestBody PostCreateRequest request,
@@ -73,6 +75,7 @@ public class PostController {
     }
 
     @Operation(summary = "게시글 수정", description = "게시글의 제목이나 내용을 수정합니다. 작성자 본인만 가능합니다.")
+    @SecurityRequirement(name = "BearerAuth")
     @PutMapping("/{id}")
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable("id") Long postId,
@@ -83,6 +86,7 @@ public class PostController {
     }
 
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다. 작성자 본인만 가능합니다.")
+    @SecurityRequirement(name = "BearerAuth")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(
             @PathVariable("id") Long postId,
