@@ -25,7 +25,6 @@ public class PostService {
 
     /**
      * 게시글 목록 페이징 조회 (카테고리 필터 선택적 적용)
-     *
      * @param category null이면 전체 조회, 값이 있으면 해당 카테고리만 조회
      */
     public Page<PostResponse> getPosts(PostCategory category, Pageable pageable) {
