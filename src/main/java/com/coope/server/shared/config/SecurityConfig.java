@@ -68,6 +68,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/inquiries/*/answers").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/notices", "/api/notices/{id}").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/notices/{id}/views").permitAll()
+                        // 커뮤니티
+                        .requestMatchers(HttpMethod.GET, "/api/community/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/community/posts/*/views").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/community/posts").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/community/posts/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/community/posts/*").authenticated()
+                        .requestMatchers("/api/community/posts/*/comments/**").authenticated()
+                        //
                         .requestMatchers(HttpMethod.POST, "/api/user").permitAll()
                         .requestMatchers("/api/inquiries/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/inquiries/{id}").authenticated()

@@ -3,7 +3,7 @@ package com.coope.server.friend.application;
 import com.coope.server.friend.domain.Friend;
 import com.coope.server.friend.domain.FriendRepository;
 import com.coope.server.friend.domain.FriendStatus;
-import com.coope.server.friend.application.dto.FriendResponse;
+import com.coope.server.friend.presentation.dto.FriendResponse;
 import com.coope.server.user.domain.User;
 import com.coope.server.user.domain.UserRepository;
 import com.coope.server.shared.error.exception.FriendException;
