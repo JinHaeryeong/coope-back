@@ -38,6 +38,16 @@ public class PostController {
         return ResponseEntity.ok(postService.getPosts(category, pageable));
     }
 
+    @Operation(summary = "게시글 검색", description = "키워드로 게시글 제목·내용을 검색합니다. 카테고리를 함께 지정하면 해당 카테고리 내에서만 검색합니다.")
+    @GetMapping("/search")
+    public ResponseEntity<Page<PostResponse>> searchPosts(
+            @RequestParam String keyword,
+            @RequestParam(required = false) PostCategory category,
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(postService.searchPosts(keyword, category, pageable));
+    }
+
     @Operation(summary = "모집 카드 목록 조회", description = "팀원 모집 카테고리의 글만 카드 UI 렌더링용 응답 규격으로 조회합니다.")
     @GetMapping("/recruitment")
     public ResponseEntity<Page<RecruitmentCardResponse>> getRecruitmentCards(

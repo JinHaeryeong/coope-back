@@ -35,6 +35,21 @@ public class PostService {
     }
 
     /**
+     * 게시글 키워드 검색 (제목 + 내용 대상, 카테고리 필터 선택적 적용)
+     * @param keyword  검색어 (공백, null이면 일반 목록 조회로 폴백)
+     * @param category null이면 전체 카테고리 검색
+     */
+    public Page<PostResponse> searchPosts(String keyword, PostCategory category, Pageable pageable) {
+        if (keyword == null || keyword.isBlank()) {
+            return getPosts(category, pageable);
+        }
+        if (category == null) {
+            return postRepository.searchByKeyword(keyword.trim(), pageable).map(PostResponse::from);
+        }
+        return postRepository.searchByCategoryAndKeyword(category, keyword.trim(), pageable).map(PostResponse::from);
+    }
+
+    /**
      * 모집 카드 목록 전용 조회 (RECRUITMENT 카테고리만 반환)
      */
     public Page<RecruitmentCardResponse> getRecruitmentCards(Pageable pageable) {

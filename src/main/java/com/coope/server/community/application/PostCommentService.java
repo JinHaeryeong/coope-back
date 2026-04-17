@@ -29,8 +29,8 @@ public class PostCommentService {
      * 특정 게시글의 댓글 목록 조회
      * 비밀 댓글 처리:
      * 각 댓글에 대해 {@link PostComment#isReadableBy(User)}를 호출하고,
-     * 열람 권한이 없으면 내용을 "비밀 댓글입니다."로 마스킹합니다.
-     * 마스킹 여부(isMasked)는 클라이언트가 잠금 UI를 표현하는 데 활용됩니다.
+     * 열람 권한이 없으면 내용을 "비밀 댓글입니다."로 마스킹
+     * 마스킹 여부(isMasked)는 클라이언트가 잠금 UI를 표현하는 데 활용
      *
      * @param postId 게시글 ID
      * @param viewer 현재 요청 사용자

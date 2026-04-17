@@ -12,9 +12,8 @@ import java.util.Optional;
 
 /**
  * {@link PostRepository} 도메인 인터페이스의 JPA 구현체
- *
- * <p>Service는 {@code PostRepository} 인터페이스에만 의존하므로
- * 추후 JPA → 다른 기술로 교체하더라도 도메인·애플리케이션 계층은 변경이 없습니다.</p>
+ * Service는 {@code PostRepository} 인터페이스에만 의존하므로
+ * 추후 JPA → 다른 기술로 교체하더라도 도메인, 애플리케이션 계층은 변경 없음
  */
 @Repository
 @RequiredArgsConstructor
@@ -55,5 +54,15 @@ public class PostRepositoryImpl implements PostRepository {
     @Override
     public void decrementCommentCount(Long id) {
         postJpaRepository.decrementCommentCount(id);
+    }
+
+    @Override
+    public Page<Post> searchByKeyword(String keyword, Pageable pageable) {
+        return postJpaRepository.searchByKeyword(keyword, pageable);
+    }
+
+    @Override
+    public Page<Post> searchByCategoryAndKeyword(PostCategory category, String keyword, Pageable pageable) {
+        return postJpaRepository.searchByCategoryAndKeyword(category, keyword, pageable);
     }
 }
