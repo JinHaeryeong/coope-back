@@ -30,6 +30,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
@@ -168,7 +170,7 @@ public class PostServiceTest {
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).getTitle()).isEqualTo("스프링 질문");
         verify(postRepository).searchByKeyword("스프링", pageable);
-        verify(postRepository, never()).searchByCategoryAndKeyword(null, "스프링", pageable);
+        verify(postRepository, never()).searchByCategoryAndKeyword(any(), anyString(), any());
     }
 
     @Test
@@ -209,7 +211,7 @@ public class PostServiceTest {
         // Then
         assertThat(result.getTotalElements()).isEqualTo(1);
         verify(postRepository).findAllWithAuthor(pageable);
-        verify(postRepository, never()).searchByKeyword(null, pageable);
+        verify(postRepository, never()).searchByKeyword(anyString(), any());
     }
 
     @Test
@@ -229,7 +231,7 @@ public class PostServiceTest {
         // Then
         assertThat(result.getTotalElements()).isEqualTo(1);
         verify(postRepository).findAllWithAuthor(pageable);
-        verify(postRepository, never()).searchByKeyword("   ", pageable);
+        verify(postRepository, never()).searchByKeyword(anyString(), any());
     }
 
     @Test

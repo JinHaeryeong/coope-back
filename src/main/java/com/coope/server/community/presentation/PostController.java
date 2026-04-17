@@ -41,7 +41,7 @@ public class PostController {
     @Operation(summary = "게시글 검색", description = "키워드로 게시글 제목·내용을 검색합니다. 카테고리를 함께 지정하면 해당 카테고리 내에서만 검색합니다.")
     @GetMapping("/search")
     public ResponseEntity<Page<PostResponse>> searchPosts(
-            @RequestParam String keyword,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) PostCategory category,
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
