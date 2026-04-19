@@ -24,4 +24,10 @@ public interface PostJpaRepository extends JpaRepository<Post, Long> {
     @Modifying(clearAutomatically = true)
     @Query("update Post p set p.commentCount = p.commentCount - 1 where p.id = :id and p.commentCount > 0")
     void decrementCommentCount(@Param("id") Long id);
+
+    @Query("SELECT p FROM Post p JOIN FETCH p.author WHERE p.title LIKE %:keyword% OR p.content LIKE %:keyword% ORDER BY p.id DESC")
+    Page<Post> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT p FROM Post p JOIN FETCH p.author WHERE p.category = :category AND (p.title LIKE %:keyword% OR p.content LIKE %:keyword%) ORDER BY p.id DESC")
+    Page<Post> searchByCategoryAndKeyword(@Param("category") PostCategory category, @Param("keyword") String keyword, Pageable pageable);
 }

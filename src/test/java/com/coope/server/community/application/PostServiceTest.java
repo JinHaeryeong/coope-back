@@ -6,6 +6,7 @@ import com.coope.server.community.domain.post.PostRepository;
 import com.coope.server.community.domain.post.enums.PostCategory;
 import com.coope.server.community.presentation.dto.PostCreateRequest;
 import com.coope.server.community.presentation.dto.PostDetailResponse;
+import com.coope.server.community.presentation.dto.PostResponse;
 import com.coope.server.community.presentation.dto.PostUpdateRequest;
 import com.coope.server.shared.error.exception.AccessDeniedException;
 import com.coope.server.shared.error.exception.PostNotFoundException;
@@ -17,15 +18,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 public class PostServiceTest {
@@ -139,5 +148,103 @@ public class PostServiceTest {
         assertThatThrownBy(() -> postService.getPostDetail(999L, null))
                 .isInstanceOf(PostNotFoundException.class)
                 .hasMessage("해당 게시글을 찾을 수 없습니다.");
+    }
+
+    // 검색 테스트
+
+    @Test
+    @DisplayName("키워드 검색 시 카테고리 없으면 전체 검색 메서드를 호출한다")
+    void searchPosts_KeywordOnly() {
+        // Given
+        User author = CommunityTestUtils.createTestUser(1L, "작성자", Role.ROLE_USER);
+        Post post = Post.createGeneralPost(PostCategory.QNA, "스프링 질문", "내용", author);
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Post> mockPage = new PageImpl<>(List.of(post));
+
+        given(postRepository.searchByKeyword("스프링", pageable)).willReturn(mockPage);
+
+        // When
+        Page<PostResponse> result = postService.searchPosts("스프링", null, pageable);
+
+        // Then
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo("스프링 질문");
+        verify(postRepository).searchByKeyword("스프링", pageable);
+        verify(postRepository, never()).searchByCategoryAndKeyword(any(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("키워드 + 카테고리 검색 시 카테고리 필터 검색 메서드를 호출한다")
+    void searchPosts_KeywordAndCategory() {
+        // Given
+        User author = CommunityTestUtils.createTestUser(1L, "작성자", Role.ROLE_USER);
+        Post post = Post.createGeneralPost(PostCategory.QNA, "스프링 질문", "내용", author);
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Post> mockPage = new PageImpl<>(List.of(post));
+
+        given(postRepository.searchByCategoryAndKeyword(PostCategory.QNA, "스프링", pageable)).willReturn(mockPage);
+
+        // When
+        Page<PostResponse> result = postService.searchPosts("스프링", PostCategory.QNA, pageable);
+
+        // Then
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).getCategory()).isEqualTo(PostCategory.QNA);
+        verify(postRepository).searchByCategoryAndKeyword(PostCategory.QNA, "스프링", pageable);
+        verify(postRepository, never()).searchByKeyword("스프링", pageable);
+    }
+
+    @Test
+    @DisplayName("keyword가 null이면 일반 목록 조회로 폴백한다")
+    void searchPosts_NullKeyword_FallbackToList() {
+        // Given
+        User author = CommunityTestUtils.createTestUser(1L, "작성자", Role.ROLE_USER);
+        Post post = Post.createGeneralPost(PostCategory.GENERAL, "일반글", "내용", author);
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Post> mockPage = new PageImpl<>(List.of(post));
+
+        given(postRepository.findAllWithAuthor(pageable)).willReturn(mockPage);
+
+        // When
+        Page<PostResponse> result = postService.searchPosts(null, null, pageable);
+
+        // Then
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        verify(postRepository).findAllWithAuthor(pageable);
+        verify(postRepository, never()).searchByKeyword(anyString(), any());
+    }
+
+    @Test
+    @DisplayName("keyword가 공백 문자열이면 일반 목록 조회로 폴백한다")
+    void searchPosts_BlankKeyword_FallbackToList() {
+        // Given
+        User author = CommunityTestUtils.createTestUser(1L, "작성자", Role.ROLE_USER);
+        Post post = Post.createGeneralPost(PostCategory.GENERAL, "일반글", "내용", author);
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Post> mockPage = new PageImpl<>(List.of(post));
+
+        given(postRepository.findAllWithAuthor(pageable)).willReturn(mockPage);
+
+        // When
+        Page<PostResponse> result = postService.searchPosts("   ", null, pageable);
+
+        // Then
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        verify(postRepository).findAllWithAuthor(pageable);
+        verify(postRepository, never()).searchByKeyword(anyString(), any());
+    }
+
+    @Test
+    @DisplayName("검색 결과가 없으면 빈 페이지를 반환한다")
+    void searchPosts_NoResult_ReturnsEmptyPage() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 20);
+        given(postRepository.searchByKeyword("없는키워드", pageable)).willReturn(Page.empty());
+
+        // When
+        Page<PostResponse> result = postService.searchPosts("없는키워드", null, pageable);
+
+        // Then
+        assertThat(result.isEmpty()).isTrue();
     }
 }
