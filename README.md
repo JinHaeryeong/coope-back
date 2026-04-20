@@ -1,4 +1,4 @@
-# Coope: WebRTC등을 이용한 실시간 통화가 가능한 협업 사이트
+# Coope: 협업 사이트
 
 <p align="center">
   <img width="554" height="117"  alt="logo" src="https://github.com/user-attachments/assets/ee9196c1-a378-453f-a262-ed885714b888" />
@@ -68,22 +68,22 @@
    │  │           ├─ ServerApplication.java
    │  │           ├─ ai
    │  │           │  ├─ application
-   │  │           │  │  ├─ AiService.java
-   │  │           │  │  └─ dto
-   │  │           │  │     └─ VoiceProcessResponse.java
+   │  │           │  │  └─ AiService.java
    │  │           │  ├─ infrastructure
    │  │           │  │  └─ OpenAICompletionResponse.java
    │  │           │  └─ presentation
-   │  │           │     └─ AiController.java
+   │  │           │     ├─ AiController.java
+   │  │           │     └─ dto
+   │  │           │        └─ VoiceProcessResponse.java
    │  │           ├─ aichat
    │  │           │  ├─ application
-   │  │           │  │  ├─ AIChatService.java
-   │  │           │  │  └─ dto
-   │  │           │  │     ├─ AIChatMessage.java
-   │  │           │  │     ├─ AIChatRequest.java
-   │  │           │  │     └─ AIChatStreamRequest.java
+   │  │           │  │  └─ AIChatService.java
    │  │           │  └─ presentation
-   │  │           │     └─ AIChatController.java
+   │  │           │     ├─ AIChatController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ AIChatMessage.java
+   │  │           │        ├─ AIChatRequest.java
+   │  │           │        └─ AIChatStreamRequest.java
    │  │           ├─ auth
    │  │           │  ├─ application
    │  │           │  │  ├─ AccountRecoveryService.java
@@ -93,23 +93,23 @@
    │  │           │  │  ├─ EmailAuthService.java
    │  │           │  │  ├─ LoginAttemptService.java
    │  │           │  │  ├─ MailService.java
-   │  │           │  │  ├─ TokenService.java
-   │  │           │  │  └─ dto
-   │  │           │  │     ├─ EmailRequest.java
-   │  │           │  │     ├─ EmailVerifyRequest.java
-   │  │           │  │     ├─ FindEmailRequest.java
-   │  │           │  │     ├─ FindEmailResponse.java
-   │  │           │  │     ├─ FindPasswordRequest.java
-   │  │           │  │     ├─ LoginRequest.java
-   │  │           │  │     ├─ LoginResponse.java
-   │  │           │  │     └─ ResetPasswordRequest.java
+   │  │           │  │  └─ TokenService.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ GoogleUserInfo.java
    │  │           │  │  └─ OAuth2UserInfo.java
    │  │           │  ├─ infrastructure
    │  │           │  │  └─ OAuth2AuthenticationSuccessHandler.java
    │  │           │  └─ presentation
-   │  │           │     └─ AuthController.java
+   │  │           │     ├─ AuthController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ EmailRequest.java
+   │  │           │        ├─ EmailVerifyRequest.java
+   │  │           │        ├─ FindEmailRequest.java
+   │  │           │        ├─ FindEmailResponse.java
+   │  │           │        ├─ FindPasswordRequest.java
+   │  │           │        ├─ LoginRequest.java
+   │  │           │        ├─ LoginResponse.java
+   │  │           │        └─ ResetPasswordRequest.java
    │  │           ├─ chat
    │  │           │  ├─ application
    │  │           │  │  ├─ ChatService.java
@@ -141,10 +141,7 @@
    │  │           │     └─ ChatStompController.java
    │  │           ├─ comment
    │  │           │  ├─ application
-   │  │           │  │  ├─ CommentService.java
-   │  │           │  │  └─ dto
-   │  │           │  │     ├─ CommentRequest.java
-   │  │           │  │     └─ CommentResponse.java
+   │  │           │  │  └─ CommentService.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Comment.java
    │  │           │  │  └─ CommentRepository.java
@@ -152,14 +149,43 @@
    │  │           │  │  ├─ CommentJpaRepository.java
    │  │           │  │  └─ CommentRepositoryImpl.java
    │  │           │  └─ presentation
-   │  │           │     └─ CommentController.java
+   │  │           │     ├─ CommentController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ CommentRequest.java
+   │  │           │        └─ CommentResponse.java
+   │  │           ├─ community
+   │  │           │  ├─ application
+   │  │           │  │  ├─ PostCommentService.java
+   │  │           │  │  └─ PostService.java
+   │  │           │  ├─ domain
+   │  │           │  │  ├─ comment
+   │  │           │  │  │  ├─ PostComment.java
+   │  │           │  │  │  └─ PostCommentRepository.java
+   │  │           │  │  └─ post
+   │  │           │  │     ├─ Post.java
+   │  │           │  │     ├─ PostRepository.java
+   │  │           │  │     └─ enums
+   │  │           │  │        └─ PostCategory.java
+   │  │           │  ├─ infrastructure
+   │  │           │  │  ├─ PostCommentJpaRepository.java
+   │  │           │  │  ├─ PostCommentRepositoryImpl.java
+   │  │           │  │  ├─ PostJpaRepository.java
+   │  │           │  │  └─ PostRepositoryImpl.java
+   │  │           │  └─ presentation
+   │  │           │     ├─ PostCommentController.java
+   │  │           │     ├─ PostController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ CommentCreateRequest.java
+   │  │           │        ├─ CommentResponse.java
+   │  │           │        ├─ CommentUpdateRequest.java
+   │  │           │        ├─ PostCreateRequest.java
+   │  │           │        ├─ PostDetailResponse.java
+   │  │           │        ├─ PostResponse.java
+   │  │           │        ├─ PostUpdateRequest.java
+   │  │           │        └─ RecruitmentCardResponse.java
    │  │           ├─ document
    │  │           │  ├─ application
-   │  │           │  │  ├─ DocumentService.java
-   │  │           │  │  └─ dto
-   │  │           │  │     ├─ DocumentCreateRequest.java
-   │  │           │  │     ├─ DocumentResponse.java
-   │  │           │  │     └─ DocumentUpdateRequest.java
+   │  │           │  │  └─ DocumentService.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Document.java
    │  │           │  │  └─ DocumentRepository.java
@@ -172,12 +198,14 @@
    │  │           │  │  ├─ LiveblocksAuthController.java
    │  │           │  │  └─ LiveblocksAuthService.java
    │  │           │  └─ presentation
-   │  │           │     └─ DocumentController.java
+   │  │           │     ├─ DocumentController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ DocumentCreateRequest.java
+   │  │           │        ├─ DocumentResponse.java
+   │  │           │        └─ DocumentUpdateRequest.java
    │  │           ├─ friend
    │  │           │  ├─ application
-   │  │           │  │  ├─ FriendService.java
-   │  │           │  │  └─ dto
-   │  │           │  │     └─ FriendResponse.java
+   │  │           │  │  └─ FriendService.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Friend.java
    │  │           │  │  ├─ FriendRepository.java
@@ -186,14 +214,12 @@
    │  │           │  │  ├─ FriendJpaRepository.java
    │  │           │  │  └─ FriendRepositoryImpl.java
    │  │           │  └─ presentation
-   │  │           │     └─ FriendController.java
+   │  │           │     ├─ FriendController.java
+   │  │           │     └─ dto
+   │  │           │        └─ FriendResponse.java
    │  │           ├─ inquiry
    │  │           │  ├─ application
-   │  │           │  │  ├─ InquiryService.java
-   │  │           │  │  └─ dto
-   │  │           │  │     ├─ InquiryAnswerRequest.java
-   │  │           │  │     ├─ InquiryCreateRequest.java
-   │  │           │  │     └─ InquiryResponse.java
+   │  │           │  │  └─ InquiryService.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Inquiry.java
    │  │           │  │  ├─ InquiryAnswer.java
@@ -208,14 +234,14 @@
    │  │           │  │  ├─ InquiryJpaRepository.java
    │  │           │  │  └─ InquiryRepositoryImpl.java
    │  │           │  └─ presentation
-   │  │           │     └─ InquiryController.java
+   │  │           │     ├─ InquiryController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ InquiryAnswerRequest.java
+   │  │           │        ├─ InquiryCreateRequest.java
+   │  │           │        └─ InquiryResponse.java
    │  │           ├─ notice
    │  │           │  ├─ application
-   │  │           │  │  ├─ NoticeService.java
-   │  │           │  │  └─ dto
-   │  │           │  │     ├─ NoticeDetailResponse.java
-   │  │           │  │     ├─ NoticeResponse.java
-   │  │           │  │     └─ NoticeWriteRequest.java
+   │  │           │  │  └─ NoticeService.java
    │  │           │  ├─ domain
    │  │           │  │  ├─ Notice.java
    │  │           │  │  └─ NoticeRepository.java
@@ -224,7 +250,11 @@
    │  │           │  │  ├─ NoticeRepositoryImpl.java
    │  │           │  │  └─ ViewCountScheduler.java
    │  │           │  └─ presentation
-   │  │           │     └─ NoticeController.java
+   │  │           │     ├─ NoticeController.java
+   │  │           │     └─ dto
+   │  │           │        ├─ NoticeDetailResponse.java
+   │  │           │        ├─ NoticeResponse.java
+   │  │           │        └─ NoticeWriteRequest.java
    │  │           ├─ shared
    │  │           │  ├─ ai
    │  │           │  │  ├─ AiLimit.java
@@ -259,6 +289,8 @@
    │  │           │  │     ├─ FriendException.java
    │  │           │  │     ├─ InvalidTokenException.java
    │  │           │  │     ├─ NoticeNotFoundException.java
+   │  │           │  │     ├─ PostCommentNotFoundException.java
+   │  │           │  │     ├─ PostNotFoundException.java
    │  │           │  │     ├─ UserNotFoundException.java
    │  │           │  │     └─ WorkspaceNotFoundException.java
    │  │           │  ├─ file
@@ -337,6 +369,11 @@
                   │     ├─ AccountRecoveryServiceTest.java
                   │     ├─ AuthServiceLoginTest.java
                   │     └─ LoginAttemptServiceTest.java
+                  ├─ community
+                  │  ├─ CommunityTestUtils.java
+                  │  └─ application
+                  │     ├─ PostCommentServiceTest.java
+                  │     └─ PostServiceTest.java
                   ├─ document
                   │  └─ infrastructure
                   │     └─ DocumentSyncSchedulerTest.java
