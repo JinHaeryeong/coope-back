@@ -39,6 +39,8 @@ public class PostService {
 
     /**
      * 게시글 키워드 검색 (제목 + 내용 대상, 카테고리 필터 선택적 적용)
+     * @param keyword  검색어 (공백, null이면 일반 목록 조회로 폴백)
+     * @param category null이면 전체 카테고리 검색
      */
     public Page<PostResponse> searchPosts(String keyword, PostCategory category, Pageable pageable) {
         if (keyword == null || keyword.isBlank()) {
