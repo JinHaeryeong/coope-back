@@ -1,6 +1,8 @@
 package com.coope.server.community.application;
 
 import com.coope.server.community.CommunityTestUtils;
+import com.coope.server.community.domain.like.PostLike;
+import com.coope.server.community.domain.like.PostLikeRepository;
 import com.coope.server.community.domain.post.Post;
 import com.coope.server.community.domain.post.PostRepository;
 import com.coope.server.community.domain.post.enums.PostCategory;
@@ -35,6 +37,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.anyLong;
 
 @ExtendWith(MockitoExtension.class)
 public class PostServiceTest {
@@ -44,6 +47,9 @@ public class PostServiceTest {
 
     @Mock
     private PostCommentService postCommentService;
+
+    @Mock
+    private PostLikeRepository postLikeRepository;
 
     @InjectMocks
     private PostService postService;
@@ -92,6 +98,7 @@ public class PostServiceTest {
 
         given(postRepository.findById(100L)).willReturn(Optional.of(post));
         given(postCommentService.getComments(100L, author)).willReturn(Collections.emptyList());
+        given(postLikeRepository.existsByUserIdAndPostId(anyLong(), anyLong())).willReturn(false);
 
         // When
         PostDetailResponse response = postService.getPostDetail(100L, author);
@@ -246,5 +253,114 @@ public class PostServiceTest {
 
         // Then
         assertThat(result.isEmpty()).isTrue();
+    }
+
+    // getTopPosts 테스트
+
+    @Test
+    @DisplayName("인기글 조회 시 likeCount 내림차순으로 정렬된 목록을 반환한다")
+    void getTopPosts_ReturnsSortedByLikeCount() {
+        // Given
+        User author = CommunityTestUtils.createTestUser(1L, "작성자", Role.ROLE_USER);
+
+        Post highLiked = Post.createGeneralPost(PostCategory.GENERAL, "인기글", "내용", author);
+        ReflectionTestUtils.setField(highLiked, "id", 1L);
+        ReflectionTestUtils.setField(highLiked, "likeCount", 100);
+
+        Post lowLiked = Post.createGeneralPost(PostCategory.GENERAL, "일반글", "내용", author);
+        ReflectionTestUtils.setField(lowLiked, "id", 2L);
+        ReflectionTestUtils.setField(lowLiked, "likeCount", 5);
+
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Post> mockPage = new PageImpl<>(List.of(highLiked, lowLiked));
+
+        given(postRepository.findTopByLikeCount(pageable)).willReturn(mockPage);
+
+        // When
+        Page<PostResponse> result = postService.getTopPosts(pageable);
+
+        // Then
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getContent().get(0).getLikeCount()).isEqualTo(100);
+        assertThat(result.getContent().get(1).getLikeCount()).isEqualTo(5);
+        verify(postRepository).findTopByLikeCount(pageable);
+    }
+
+    @Test
+    @DisplayName("인기글 조회 결과가 없으면 빈 페이지를 반환한다")
+    void getTopPosts_NoResult_ReturnsEmptyPage() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 20);
+        given(postRepository.findTopByLikeCount(pageable)).willReturn(Page.empty());
+
+        // When
+        Page<PostResponse> result = postService.getTopPosts(pageable);
+
+        // Then
+        assertThat(result.isEmpty()).isTrue();
+        verify(postRepository).findTopByLikeCount(pageable);
+    }
+
+    // toggleLike 테스트
+
+    @Test
+    @DisplayName("좋아요가 없는 상태에서 토글하면 좋아요가 저장되고 likeCount가 증가한다")
+    void toggleLike_NewLike_SaveAndIncrement() {
+        // Given
+        User user = CommunityTestUtils.createTestUser(1L, "유저", Role.ROLE_USER);
+        Post post = Post.createGeneralPost(PostCategory.GENERAL, "제목", "내용", user);
+        ReflectionTestUtils.setField(post, "id", 100L);
+
+        given(postRepository.findById(100L)).willReturn(Optional.of(post));
+        given(postLikeRepository.findByUserIdAndPostId(1L, 100L)).willReturn(Optional.empty());
+        given(postLikeRepository.save(any(PostLike.class))).willAnswer(i -> i.getArgument(0));
+
+        // When
+        boolean result = postService.toggleLike(100L, user);
+
+        // Then
+        assertThat(result).isTrue();
+        verify(postLikeRepository).save(any(PostLike.class));
+        verify(postRepository).incrementLikeCount(100L);
+        verify(postLikeRepository, never()).delete(any());
+        verify(postRepository, never()).decrementLikeCount(anyLong());
+    }
+
+    @Test
+    @DisplayName("이미 좋아요한 상태에서 토글하면 좋아요가 삭제되고 likeCount가 감소한다")
+    void toggleLike_ExistingLike_DeleteAndDecrement() {
+        // Given
+        User user = CommunityTestUtils.createTestUser(1L, "유저", Role.ROLE_USER);
+        Post post = Post.createGeneralPost(PostCategory.GENERAL, "제목", "내용", user);
+        ReflectionTestUtils.setField(post, "id", 100L);
+
+        PostLike existingLike = PostLike.of(user, post);
+        given(postLikeRepository.findByUserIdAndPostId(1L, 100L)).willReturn(Optional.of(existingLike));
+
+        // When
+        boolean result = postService.toggleLike(100L, user);
+
+        // Then
+        assertThat(result).isFalse();
+        verify(postLikeRepository).delete(existingLike);
+        verify(postRepository).decrementLikeCount(100L);
+        verify(postLikeRepository, never()).save(any());
+        verify(postRepository, never()).incrementLikeCount(anyLong());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 게시글에 좋아요하면 PostNotFoundException이 발생한다")
+    void toggleLike_PostNotFound_ThrowsException() {
+        // Given
+        User user = CommunityTestUtils.createTestUser(1L, "유저", Role.ROLE_USER);
+        given(postRepository.findById(999L)).willReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> postService.toggleLike(999L, user))
+                .isInstanceOf(PostNotFoundException.class)
+                .hasMessage("해당 게시글을 찾을 수 없습니다.");
+
+        verify(postLikeRepository, never()).save(any());
+        verify(postLikeRepository, never()).delete(any());
     }
 }

@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+
 @Tag(name = "Community Post", description = "커뮤니티 게시글 관리 API")
 @RestController
 @RequestMapping("/api/community/posts")
@@ -48,6 +49,14 @@ public class PostController {
         return ResponseEntity.ok(postService.searchPosts(keyword, category, pageable));
     }
 
+    @Operation(summary = "인기글 목록 조회", description = "좋아요 수 기준으로 인기 게시글 목록을 조회합니다.")
+    @GetMapping("/top")
+    public ResponseEntity<Page<PostResponse>> getTopPosts(
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return ResponseEntity.ok(postService.getTopPosts(pageable));
+    }
+
     @Operation(summary = "모집 카드 목록 조회", description = "팀원 모집 카테고리의 글만 카드 UI 렌더링용 응답 규격으로 조회합니다.")
     @GetMapping("/recruitment")
     public ResponseEntity<Page<RecruitmentCardResponse>> getRecruitmentCards(
@@ -71,6 +80,17 @@ public class PostController {
     public ResponseEntity<Void> increaseViewCount(@PathVariable("id") Long postId) {
         postService.increaseViewCount(postId);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "좋아요 토글", description = "게시글에 좋아요를 추가하거나 취소합니다. 로그인 필수.")
+    @SecurityRequirement(name = "BearerAuth")
+    @PostMapping("/{id}/likes")
+    public ResponseEntity<LikeToggleResponse> toggleLike(
+            @PathVariable("id") Long postId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        boolean liked = postService.toggleLike(postId, userDetails.getUser());
+        return ResponseEntity.ok(LikeToggleResponse.of(liked));
     }
 
     @Operation(summary = "게시글 작성", description = "새로운 커뮤니티 게시글을 작성합니다. 모집글인 경우 기술 스택 및 인원 정보가 필요합니다.")

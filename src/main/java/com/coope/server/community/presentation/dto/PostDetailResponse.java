@@ -2,6 +2,7 @@ package com.coope.server.community.presentation.dto;
 
 import com.coope.server.community.domain.post.Post;
 import com.coope.server.community.domain.post.enums.PostCategory;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -30,12 +31,17 @@ public class PostDetailResponse {
     private String authorNickname;
     private String authorIcon;
     private int viewCount;
+    private int likeCount;
+
+    @JsonProperty("isLiked")
+    private boolean isLiked;
+
     private LocalDateTime createdAt;
 
     // 댓글 목록 (비밀 댓글 마스킹 적용됨)
     private List<CommentResponse> comments;
 
-    public static PostDetailResponse from(Post post, List<CommentResponse> comments) {
+    public static PostDetailResponse from(Post post, List<CommentResponse> comments, boolean isLiked) {
         return PostDetailResponse.builder()
                 .id(post.getId())
                 .category(post.getCategory())
@@ -47,6 +53,8 @@ public class PostDetailResponse {
                 .authorNickname(post.getAuthor().getNickname())
                 .authorIcon(post.getAuthor().getUserIcon())
                 .viewCount(post.getViewCount())
+                .likeCount(post.getLikeCount())
+                .isLiked(isLiked)
                 .createdAt(post.getCreatedAt())
                 .comments(comments)
                 .build();

@@ -57,6 +57,21 @@ public class PostRepositoryImpl implements PostRepository {
     }
 
     @Override
+    public void incrementLikeCount(Long id) {
+        postJpaRepository.incrementLikeCount(id);
+    }
+
+    @Override
+    public void decrementLikeCount(Long id) {
+        postJpaRepository.decrementLikeCount(id);
+    }
+
+    @Override
+    public Page<Post> findTopByLikeCount(Pageable pageable) {
+        return postJpaRepository.findTopByLikeCount(pageable);
+    }
+
+    @Override
     public Page<Post> searchByKeyword(String keyword, Pageable pageable) {
         return postJpaRepository.searchByKeyword(keyword, pageable);
     }
