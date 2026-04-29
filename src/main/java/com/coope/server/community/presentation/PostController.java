@@ -20,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @Tag(name = "Community Post", description = "커뮤니티 게시글 관리 API")
 @RestController
@@ -86,12 +85,12 @@ public class PostController {
     @Operation(summary = "좋아요 토글", description = "게시글에 좋아요를 추가하거나 취소합니다. 로그인 필수.")
     @SecurityRequirement(name = "BearerAuth")
     @PostMapping("/{id}/likes")
-    public ResponseEntity<Map<String, Object>> toggleLike(
+    public ResponseEntity<LikeToggleResponse> toggleLike(
             @PathVariable("id") Long postId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         boolean liked = postService.toggleLike(postId, userDetails.getUser());
-        return ResponseEntity.ok(Map.of("liked", liked));
+        return ResponseEntity.ok(LikeToggleResponse.of(liked));
     }
 
     @Operation(summary = "게시글 작성", description = "새로운 커뮤니티 게시글을 작성합니다. 모집글인 경우 기술 스택 및 인원 정보가 필요합니다.")

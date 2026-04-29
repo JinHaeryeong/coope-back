@@ -10,6 +10,7 @@ import com.coope.server.community.presentation.dto.*;
 import com.coope.server.shared.error.exception.AccessDeniedException;
 import com.coope.server.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -120,23 +121,26 @@ public class PostService {
      */
     @Transactional
     public boolean toggleLike(Long postId, User user) {
-        findPostOrThrow(postId); // 게시글 존재 여부 검증
-
         Optional<PostLike> existing = postLikeRepository.findByUserIdAndPostId(user.getId(), postId);
 
         if (existing.isPresent()) {
             postLikeRepository.delete(existing.get());
             postRepository.decrementLikeCount(postId);
             return false;
-        } else {
+        }
+
+        try {
+            // 추가할 때만 게시글 존재 여부를 검증
             Post post = findPostOrThrow(postId);
             postLikeRepository.save(PostLike.of(user, post));
             postRepository.incrementLikeCount(postId);
             return true;
+        } catch (DataIntegrityViolationException e) {
+            // 동시에 두 번 클릭되어 중복 저장 에러가 난 경우,
+            // 이미 다른 요청이 저장에 성공한 것이므로 성공으로 간주하여 true 반환
+            return true;
         }
     }
-
-    // ── private helpers ──────────────────────────────────────────────────────
 
     private Post findPostOrThrow(Long postId) {
         return postRepository.findById(postId)
