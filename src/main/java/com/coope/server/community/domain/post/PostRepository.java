@@ -14,6 +14,9 @@ public interface PostRepository {
     Page<Post> findByCategoryWithAuthor(PostCategory category, Pageable pageable);
     void incrementCommentCount(Long id);
     void decrementCommentCount(Long id);
+    void incrementLikeCount(Long id);
+    void decrementLikeCount(Long id);
     Page<Post> searchByKeyword(String keyword, Pageable pageable);
     Page<Post> searchByCategoryAndKeyword(PostCategory category, String keyword, Pageable pageable);
+    Page<Post> findTopByLikeCount(Pageable pageable);
 }

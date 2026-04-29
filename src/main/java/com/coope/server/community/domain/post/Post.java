@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * 커뮤니티 게시글 엔티티
- *카테고리에 따라 일반 게시글과 모집 카드(Recruitment) 두 가지 형태로 활용
+ * 카테고리에 따라 일반 게시글과 모집 카드(Recruitment) 두 가지 형태로 활용
  * 모집 카드 전용 필드(techStack, currentMembers, targetMembers)는
  * category == RECRUITMENT 일 때만 유의미한 값을 가짐
  */
@@ -54,9 +54,13 @@ public class Post extends BaseTimeEntity {
     @Column(nullable = false)
     private int viewCount = 0;
 
-    // 댓글수
+    // 댓글수 (댓글 생성/삭제 시 JPQL 벌크 업데이트로 관리)
     @Column(nullable = false)
     private int commentCount = 0;
+
+    // 좋아요수 (좋아요 생성/삭제 시 JPQL 벌크 업데이트로 관리)
+    @Column(nullable = false)
+    private int likeCount = 0;
 
     // 게시글 작성자
     @ManyToOne(fetch = FetchType.LAZY)

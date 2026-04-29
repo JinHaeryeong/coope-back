@@ -1,6 +1,7 @@
 package com.coope.server.community.application;
 
 import com.coope.server.community.CommunityTestUtils;
+import com.coope.server.community.domain.like.PostLikeRepository;
 import com.coope.server.community.domain.post.Post;
 import com.coope.server.community.domain.post.PostRepository;
 import com.coope.server.community.domain.post.enums.PostCategory;
@@ -35,6 +36,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.anyLong;
 
 @ExtendWith(MockitoExtension.class)
 public class PostServiceTest {
@@ -44,6 +46,9 @@ public class PostServiceTest {
 
     @Mock
     private PostCommentService postCommentService;
+
+    @Mock
+    private PostLikeRepository postLikeRepository;
 
     @InjectMocks
     private PostService postService;
@@ -92,6 +97,7 @@ public class PostServiceTest {
 
         given(postRepository.findById(100L)).willReturn(Optional.of(post));
         given(postCommentService.getComments(100L, author)).willReturn(Collections.emptyList());
+        given(postLikeRepository.existsByUserIdAndPostId(anyLong(), anyLong())).willReturn(false);
 
         // When
         PostDetailResponse response = postService.getPostDetail(100L, author);

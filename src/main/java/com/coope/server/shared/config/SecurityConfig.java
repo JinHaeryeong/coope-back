@@ -68,9 +68,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/inquiries/*/answers").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/notices", "/api/notices/{id}").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/notices/{id}/views").permitAll()
-                        // 커뮤니티
+                        // 커뮤니티 - 조회는 비로그인도 허용, 좋아요/작성/수정/삭제는 인증 필요
                         .requestMatchers(HttpMethod.GET, "/api/community/posts/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/community/posts/*/views").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/community/posts/*/likes").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/community/posts").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/community/posts/*").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/community/posts/*").authenticated()
