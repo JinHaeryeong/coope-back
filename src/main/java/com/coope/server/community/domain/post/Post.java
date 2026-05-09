@@ -30,6 +30,7 @@ public class Post extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 게시글 카테고리 (필터링의 핵심 기준)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PostCategory category;
@@ -46,6 +47,7 @@ public class Post extends BaseTimeEntity {
     // [모집 카드 전용] 목표 참여 인원
     private Integer targetMembers;
 
+    // 조회수
     @Column(nullable = false)
     private int viewCount = 0;
 
@@ -59,6 +61,7 @@ public class Post extends BaseTimeEntity {
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
+    // 댓글 목록 (orphanRemoval로 게시글 삭제 시 댓글 자동 삭제)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostComment> comments = new ArrayList<>();
 
