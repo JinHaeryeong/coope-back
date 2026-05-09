@@ -6,6 +6,7 @@ import com.coope.server.community.domain.like.PostLikeRepository;
 import com.coope.server.community.domain.post.Post;
 import com.coope.server.community.domain.post.PostRepository;
 import com.coope.server.community.domain.post.enums.PostCategory;
+import com.coope.server.community.domain.post.enums.TechStack;
 import com.coope.server.community.presentation.dto.PostCreateRequest;
 import com.coope.server.community.presentation.dto.PostDetailResponse;
 import com.coope.server.community.presentation.dto.PostResponse;
@@ -63,12 +64,12 @@ public class PostServiceTest {
         ReflectionTestUtils.setField(request, "category", PostCategory.RECRUITMENT);
         ReflectionTestUtils.setField(request, "title", "제목");
         ReflectionTestUtils.setField(request, "content", "내용");
-        ReflectionTestUtils.setField(request, "techStack", ""); // 빈 값
+        ReflectionTestUtils.setField(request, "techStacks", List.of()); // 빈 리스트
 
         // When & Then
         assertThatThrownBy(() -> postService.createPost(request, author))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("모집 게시글에는 기술 스택을 입력해야 합니다.");
+                .hasMessage("모집 게시글에는 기술 스택을 하나 이상 입력해야 합니다.");
     }
 
     @Test
@@ -78,7 +79,7 @@ public class PostServiceTest {
         User author = CommunityTestUtils.createTestUser(1L, "작성자", Role.ROLE_USER);
         PostCreateRequest request = new PostCreateRequest();
         ReflectionTestUtils.setField(request, "category", PostCategory.RECRUITMENT);
-        ReflectionTestUtils.setField(request, "techStack", "Java");
+        ReflectionTestUtils.setField(request, "techStacks", List.of(TechStack.JAVA));
         ReflectionTestUtils.setField(request, "currentMembers", 5);
         ReflectionTestUtils.setField(request, "targetMembers", 3); // 현재가 더 많음
 

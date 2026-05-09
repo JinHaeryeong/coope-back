@@ -2,15 +2,16 @@ package com.coope.server.community.presentation.dto;
 
 import com.coope.server.community.domain.post.Post;
 import com.coope.server.community.domain.post.enums.PostCategory;
+import com.coope.server.community.domain.post.enums.TechStack;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 게시글 목록 응답 DTO
- * 목록 조회에 필요한 요약 정보만 포함
  */
 @Getter
 @Builder
@@ -30,8 +31,8 @@ public class PostResponse {
 
     private LocalDateTime createdAt;
 
-    // 모집 카드 전용 요약 필드
-    private String techStack;
+    // 모집 카드 전용 필드
+    private List<TechStack> techStacks;
     private Integer currentMembers;
     private Integer targetMembers;
 
@@ -51,7 +52,7 @@ public class PostResponse {
                 .likeCount(post.getLikeCount())
                 .isLiked(isLiked)
                 .createdAt(post.getCreatedAt())
-                .techStack(post.getTechStack())
+                .techStacks(post.getTechStackValues())
                 .currentMembers(post.getCurrentMembers())
                 .targetMembers(post.getTargetMembers())
                 .build();

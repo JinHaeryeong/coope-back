@@ -1,8 +1,11 @@
 package com.coope.server.community.presentation.dto;
 
+import com.coope.server.community.domain.post.enums.TechStack;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * 게시글 수정 요청 DTO
@@ -20,7 +23,9 @@ public class PostUpdateRequest {
 
     // 모집 카드 전용 수정 필드
 
-    private String techStack;
+    // 기술 스택 목록 (TechStack enum 값만 허용)
+    private List<TechStack> techStacks;
+
     private Integer currentMembers;
     private Integer targetMembers;
 }

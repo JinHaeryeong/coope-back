@@ -84,7 +84,12 @@ public class PostService {
     @Transactional
     public PostResponse createPost(PostCreateRequest request, User author) {
         Post post = buildPost(request, author);
-        return PostResponse.from(postRepository.save(post));
+        Post saved = postRepository.save(post);
+        // techStacks는 Post 저장 후 연관관계 설정
+        if (PostCategory.RECRUITMENT.equals(request.getCategory()) && request.getTechStacks() != null) {
+            request.getTechStacks().forEach(saved::addTechStack);
+        }
+        return PostResponse.from(saved);
     }
 
     @Transactional
@@ -95,7 +100,7 @@ public class PostService {
         post.update(
                 request.getTitle(),
                 request.getContent(),
-                request.getTechStack(),
+                request.getTechStacks(),
                 request.getCurrentMembers(),
                 request.getTargetMembers()
         );
@@ -159,7 +164,6 @@ public class PostService {
             return Post.createRecruitmentPost(
                     request.getTitle(),
                     request.getContent(),
-                    request.getTechStack(),
                     request.getCurrentMembers(),
                     request.getTargetMembers(),
                     author
@@ -169,8 +173,8 @@ public class PostService {
     }
 
     private void validateRecruitmentFields(PostCreateRequest request) {
-        if (request.getTechStack() == null || request.getTechStack().isBlank()) {
-            throw new IllegalArgumentException("모집 게시글에는 기술 스택을 입력해야 합니다.");
+        if (request.getTechStacks() == null || request.getTechStacks().isEmpty()) {
+            throw new IllegalArgumentException("모집 게시글에는 기술 스택을 하나 이상 입력해야 합니다.");
         }
         if (request.getCurrentMembers() == null || request.getTargetMembers() == null) {
             throw new IllegalArgumentException("모집 게시글에는 현재 인원과 목표 인원을 입력해야 합니다.");
