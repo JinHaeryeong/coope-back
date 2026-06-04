@@ -160,27 +160,18 @@ public class PostService {
 
     private Post buildPost(PostCreateRequest request, User author) {
         if (PostCategory.RECRUITMENT.equals(request.getCategory())) {
-            validateRecruitmentFields(request);
+            if (request.getTechStacks() == null || request.getTechStacks().isEmpty()) {
+                throw new IllegalArgumentException("모집 게시글에는 기술 스택을 하나 이상 입력해야 합니다.");
+            }
             return Post.createRecruitmentPost(
                     request.getTitle(),
                     request.getContent(),
-                    request.getCurrentMembers(),
-                    request.getTargetMembers(),
+                    request.getCurrentMembers() != null ? request.getCurrentMembers() : 1,
+                    request.getTargetMembers() != null ? request.getTargetMembers() : 2,
                     author
             );
         }
         return Post.createGeneralPost(request.getCategory(), request.getTitle(), request.getContent(), author);
     }
 
-    private void validateRecruitmentFields(PostCreateRequest request) {
-        if (request.getTechStacks() == null || request.getTechStacks().isEmpty()) {
-            throw new IllegalArgumentException("모집 게시글에는 기술 스택을 하나 이상 입력해야 합니다.");
-        }
-        if (request.getCurrentMembers() == null || request.getTargetMembers() == null) {
-            throw new IllegalArgumentException("모집 게시글에는 현재 인원과 목표 인원을 입력해야 합니다.");
-        }
-        if (request.getCurrentMembers() > request.getTargetMembers()) {
-            throw new IllegalArgumentException("현재 인원은 목표 인원보다 클 수 없습니다.");
-        }
-    }
 }

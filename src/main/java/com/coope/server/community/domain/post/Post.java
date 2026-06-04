@@ -66,12 +66,18 @@ public class Post extends BaseTimeEntity {
     private List<PostComment> comments = new ArrayList<>();
 
     // [모집 카드 전용] 기술 스택 목록 (별도 테이블)
+    @org.hibernate.annotations.BatchSize(size = 50)
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostTechStack> techStacks = new ArrayList<>();
 
     @Builder
     private Post(PostCategory category, String title, String content,
                  Integer currentMembers, Integer targetMembers, User author) {
+
+        if (PostCategory.RECRUITMENT.equals(category)) {
+            validateMembers(currentMembers, targetMembers);
+        }
+
         this.category = category;
         this.title = title;
         this.content = content;
@@ -114,6 +120,11 @@ public class Post extends BaseTimeEntity {
     public void updateTechStacks(List<TechStack> newTechStacks) {
         this.techStacks.clear();
         if (newTechStacks != null) {
+            // 배열 내 null 원소 방어, 데이터베이스 NOT NULL 위반 에러(500) 사전 차단
+            boolean hasNullElement = newTechStacks.stream().anyMatch(java.util.Objects::isNull);
+            if (hasNullElement) {
+                throw new IllegalArgumentException("기술 스택 목록에 올바르지 않은 값(null)이 포함되어 있습니다.");
+            }
             newTechStacks.forEach(this::addTechStack);
         }
     }
@@ -128,6 +139,12 @@ public class Post extends BaseTimeEntity {
     // 게시글 내용 수정
     public void update(String title, String content,
                        List<TechStack> techStacks, Integer currentMembers, Integer targetMembers) {
+
+        // 데이터 수정 시점 정합성 방어
+        if (isRecruitment()) {
+            validateMembers(currentMembers, targetMembers);
+        }
+
         this.title = title;
         this.content = content;
         this.currentMembers = currentMembers;
@@ -148,5 +165,15 @@ public class Post extends BaseTimeEntity {
     // 모집 게시글 여부 확인
     public boolean isRecruitment() {
         return PostCategory.RECRUITMENT.equals(this.category);
+    }
+
+    // 모집 인원 정합성 검증 내부 메서드
+    private void validateMembers(Integer currentMembers, Integer targetMembers) {
+        if (currentMembers == null || targetMembers == null) {
+            throw new IllegalArgumentException("모집 게시글에는 현재 인원과 목표 인원을 입력해야 합니다.");
+        }
+        if (currentMembers > targetMembers) {
+            throw new IllegalArgumentException("현재 인원은 목표 인원보다 클 수 없습니다.");
+        }
     }
 }

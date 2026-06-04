@@ -51,8 +51,14 @@ public enum TechStack {
      */
     @JsonCreator
     public static TechStack from(String value) {
+        // 역직렬화 단계에서 null 또는 빈 값이 들어오면 예외 처리
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("기술 스택은 공백이거나 비어있을 수 없습니다.");
+        }
+
+        String normalized = value.trim();
         for (TechStack stack : values()) {
-            if (stack.displayName.equalsIgnoreCase(value)) {
+            if (stack.displayName.equalsIgnoreCase(normalized)) {
                 return stack;
             }
         }
